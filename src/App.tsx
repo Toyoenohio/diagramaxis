@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { Component, ReactNode, ErrorInfo, useState, useRef, useEffect, useCallback } from 'react';
 import { Header } from './components/layout/Header';
 import { LeftSidebar } from './components/layout/LeftSidebar';
 import { RightSidebar } from './components/layout/RightSidebar';
@@ -10,6 +10,56 @@ import { RelationModal } from './components/modals/RelationModal';
 import { StudyCasesModal } from './components/modals/StudyCasesModal';
 import { SettingsModal } from './components/modals/SettingsModal';
 import { Columns2, Square, Box } from 'lucide-react';
+
+// ErrorBoundary global (B3/R2 auditoría): un error no capturado de un panel no
+// debe dejar la app en blanco. Con fallback opcional para envolturas específicas.
+interface ErrorBoundaryProps {
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { hasError: false };
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('Error capturado por ErrorBoundary:', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        this.props.fallback ?? (
+          <div className="w-screen h-screen flex items-center justify-center bg-[#0f1013] text-[#f8fafc] p-6">
+            <div className="text-center flex flex-col gap-3 max-w-md">
+              <span className="font-mono text-[10px] uppercase tracking-widest text-[#e5a93b] font-bold">
+                DIAGRAMAXIS · Error
+              </span>
+              <h1 className="font-serif font-bold text-[22px]">Ocurrió un error inesperado</h1>
+              <p className="font-mono text-[11px] text-[#94a3b8] leading-relaxed">
+                La aplicación encontró un problema y mostró esta pantalla en lugar de quedar en blanco.
+                Puedes reintentar o recargar la página; tu trabajo puede exportarse como JSON desde el
+                encabezado.
+              </p>
+              <button
+                onClick={() => this.setState({ hasError: false })}
+                className="self-center px-5 py-2.5 bg-[#e5a93b] hover:bg-[#d49b28] text-[#0f1013] font-mono text-[11px] font-bold uppercase tracking-wider rounded-sm transition-colors"
+              >
+                Reintentar
+              </button>
+            </div>
+          </div>
+        )
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export const App: React.FC = () => {
   const [splitRatio, setSplitRatio] = useState<number>(0.5); // 50% diagrama / 50% 3D
@@ -47,7 +97,8 @@ export const App: React.FC = () => {
   }, [isResizing, resize]);
 
   return (
-    <div className="flex flex-col w-screen h-screen overflow-hidden bg-[#0f1013] text-[#f8fafc]">
+    <ErrorBoundary>
+      <div className="flex flex-col w-screen h-screen overflow-hidden bg-[#0f1013] text-[#f8fafc]">
       {/* Barra de Navegación Superior */}
       <Header />
 
@@ -118,7 +169,18 @@ export const App: React.FC = () => {
             }}
             className="h-full relative overflow-hidden bg-[#0f1013]"
           >
-            <Viewport3D />
+            <ErrorBoundary
+              fallback={
+                <div className="w-full h-full flex items-center justify-center bg-[#0f1013] p-6">
+                  <p className="font-mono text-[11px] text-[#94a3b8] text-center leading-relaxed max-w-[300px]">
+                    El visor 3D encontró un error y quedó desactivado. El tablero 2D y el resto de la
+                    herramienta siguen operativos.
+                  </p>
+                </div>
+              }
+            >
+              <Viewport3D />
+            </ErrorBoundary>
           </div>
         </div>
 
@@ -134,7 +196,8 @@ export const App: React.FC = () => {
       <RelationModal />
       <StudyCasesModal />
       <SettingsModal />
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 };
 

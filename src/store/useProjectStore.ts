@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Node, Edge } from '@xyflow/react';
+import { Node, Edge, applyNodeChanges } from '@xyflow/react';
 import {
   ProjectRelation,
   NodeParam,
@@ -12,6 +12,10 @@ import {
 import { CONCEPTS_DATA, ARTIFACTS_DATA } from '../data/architecturalMenu';
 import { detectConceptsInText } from '../utils/conceptDetector';
 import { STUDY_CASES } from '../data/studyCases';
+
+// Clave de persistencia de la configuración de IA (B5 auditoría): se guarda en
+// LocalStorage del navegador SOLO al guardar ajustes (apiKey/provider/customEndpoint).
+const AI_SETTINGS_STORAGE_KEY = 'diagramaxis-ai-settings-v1';
 
 interface ProjectState {
   // Metadatos
@@ -356,22 +360,19 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   },
 
   onNodesChange: (changes) => {
-    // Manejo básico de drag y posición de React Flow
+    // IMPORTANTE: applyNodeChanges devuelve NODOS NUEVOS (objetos inmutables).
+    // React Flow 12 (modo controlado) compara por referencia en adoptUserNodes
+    // (checkEquality): mutar node.position in-place conserva el fast-path con el
+    // internals.positionAbsolute viejo y el nodo NUNCA se mueve durante el drag.
     set((state) => {
-      const updated = [...state.nodes];
-      changes.forEach((change: any) => {
-        if (change.type === 'position' && change.position) {
-          const node = updated.find((n) => n.id === change.id);
-          if (node) {
-            node.position = change.position;
-          }
-        } else if (change.type === 'select') {
-          if (change.selected) {
-            state.selectedNodeId = change.id;
-          }
-        }
-      });
-      return { nodes: updated };
+      const next = applyNodeChanges(changes, state.nodes);
+      // Mantener en sync selectedNodeId con los cambios de selección de React Flow
+      const sel = changes.find((c: any) => c.type === 'select');
+      if (sel) {
+        if (sel.selected) return { nodes: next, selectedNodeId: sel.id };
+        if (state.selectedNodeId === sel.id) return { nodes: next, selectedNodeId: null };
+      }
+      return { nodes: next };
     });
   },
 
@@ -569,9 +570,15 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   clearToast: () => set({ toastMessage: null }),
 
   setAiSettings: (settings) => {
-    set((state) => ({
-      aiSettings: { ...state.aiSettings, ...settings },
-    }));
+    // Persistencia real en LocalStorage (B5 auditoría): la UI promete que la clave
+    // se guarda en el navegador, así que se persiste SOLO la config de IA al guardar.
+    const merged = { ...get().aiSettings, ...settings };
+    set({ aiSettings: merged });
+    try {
+      localStorage.setItem(AI_SETTINGS_STORAGE_KEY, JSON.stringify(merged));
+    } catch (e) {
+      console.warn('No se pudo guardar la configuración de IA en LocalStorage:', e);
+    }
     get().showToast('Ajustes de Inteligencia Artificial actualizados');
   },
 
@@ -656,3 +663,25 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     };
   },
 }));
+
+// Hidratación al arrancar: si el usuario guardó antes la configuración de IA en
+// LocalStorage, restaurarla sobre el estado inicial (sin pisar lo no persistido).
+try {
+  const raw = localStorage.getItem(AI_SETTINGS_STORAGE_KEY);
+  if (raw) {
+    const persisted = JSON.parse(raw) as Partial<AISettings>;
+    if (persisted && typeof persisted === 'object') {
+      const current = useProjectStore.getState().aiSettings;
+      useProjectStore.setState({
+        aiSettings: {
+          ...current,
+          ...(typeof persisted.provider === 'string' ? { provider: persisted.provider } : {}),
+          ...(typeof persisted.apiKey === 'string' ? { apiKey: persisted.apiKey } : {}),
+          ...(typeof persisted.customEndpoint === 'string' ? { customEndpoint: persisted.customEndpoint } : {}),
+        },
+      });
+    }
+  }
+} catch (e) {
+  console.warn('No se pudo restaurar la configuración de IA guardada:', e);
+}

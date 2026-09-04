@@ -78,6 +78,14 @@ Responde ÚNICAMENTE en formato JSON con la siguiente estructura:
       const data = await openaiRes.json();
       rawJson = data.choices?.[0]?.message?.content || '';
     }
+    // 3. Cloudflare Workers AI (B6 auditoría: el default del store es 'cloudflare'
+    // pero esta ruta no estaba implementada — se añade igual que en discourse.ts)
+    else if (context.env?.AI) {
+      const aiRes = await context.env.AI.run('@cf/meta/llama-3-8b-instruct', {
+        messages: [{ role: 'user', content: prompt }],
+      });
+      rawJson = aiRes.response || '';
+    }
 
     let references = [];
     if (rawJson) {

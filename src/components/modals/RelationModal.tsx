@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useProjectStore } from '../../store/useProjectStore';
 import { RELATIONS_CATALOG } from '../../data/architecturalMenu';
 import { X } from 'lucide-react';
@@ -8,23 +8,40 @@ export const RelationModal: React.FC = () => {
     isRelationModalOpen,
     activeConcepts,
     activeArtifacts,
-    selectedNodeId,
     addRelation,
     setModalOpen,
   } = useProjectStore();
 
   const allItems = useMemo(() => [...activeConcepts, ...activeArtifacts], [activeConcepts, activeArtifacts]);
 
-  const [fromNode, setFromNode] = useState<string>(
-    selectedNodeId && allItems.includes(selectedNodeId) ? selectedNodeId : allItems[0] || ''
-  );
-  const [toNode, setToNode] = useState<string>(
-    allItems.find((item) => item !== (selectedNodeId || allItems[0])) || allItems[1] || ''
-  );
+  // B4 auditoría: el modal está montado desde el arranque (cuando aún no hay
+  // fichas activas), así que el estado debe re-sembrarse CADA VEZ que se abre.
+  const [fromNode, setFromNode] = useState<string>('');
+  const [toNode, setToNode] = useState<string>('');
   const [relType, setRelType] = useState<string>('define');
   const [customLabel, setCustomLabel] = useState<string>('');
   const [direction, setDirection] = useState<'A→B' | 'B→A' | 'A↔B'>('A→B');
   const [intensity, setIntensity] = useState<number>(0.8);
+
+  const prevOpenRef = useRef(isRelationModalOpen);
+  useEffect(() => {
+    if (isRelationModalOpen && !prevOpenRef.current) {
+      // Re-sembrar al abrir con las fichas activas ACTUALES y preseleccionar
+      // origen/destino DISTINTOS (o el nodo seleccionado + otro distinto).
+      const st = useProjectStore.getState();
+      const items = [...st.activeConcepts, ...st.activeArtifacts];
+      const selected = st.selectedNodeId && items.includes(st.selectedNodeId) ? st.selectedNodeId : null;
+      const nextFrom = selected || items[0] || '';
+      const nextTo = items.find((item) => item !== nextFrom) || '';
+      setFromNode(nextFrom);
+      setToNode(nextTo);
+      setRelType('define');
+      setCustomLabel('');
+      setDirection('A→B');
+      setIntensity(0.8);
+    }
+    prevOpenRef.current = isRelationModalOpen;
+  }, [isRelationModalOpen]);
 
   if (!isRelationModalOpen || allItems.length < 2) return null;
 

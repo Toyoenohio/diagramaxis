@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useProjectStore } from '../../store/useProjectStore';
 import { AISettings } from '../../types';
 import { X, Key, ShieldCheck } from 'lucide-react';
@@ -6,8 +6,20 @@ import { X, Key, ShieldCheck } from 'lucide-react';
 export const SettingsModal: React.FC = () => {
   const { isSettingsModalOpen, setModalOpen, aiSettings, setAiSettings } = useProjectStore();
 
+  // B9 auditoría: re-sembrar al abrir con la configuración ACTUAL del store
+  // (incluida la restaurada desde LocalStorage al arrancar).
   const [provider, setProvider] = useState<AISettings['provider']>(aiSettings.provider || 'cloudflare');
   const [apiKey, setApiKey] = useState<string>(aiSettings.apiKey || '');
+
+  const prevOpenRef = useRef(isSettingsModalOpen);
+  useEffect(() => {
+    if (isSettingsModalOpen && !prevOpenRef.current) {
+      const st = useProjectStore.getState();
+      setProvider(st.aiSettings.provider || 'cloudflare');
+      setApiKey(st.aiSettings.apiKey || '');
+    }
+    prevOpenRef.current = isSettingsModalOpen;
+  }, [isSettingsModalOpen]);
 
   if (!isSettingsModalOpen) return null;
 

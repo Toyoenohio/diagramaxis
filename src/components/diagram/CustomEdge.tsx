@@ -65,7 +65,7 @@ export const CustomEdge: React.FC<EdgeProps> = memo(({
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
             pointerEvents: 'all',
           }}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[9.5px] font-mono border shadow-lg transition-all ${
+          className={`nodrag nopan flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[9.5px] font-mono border shadow-lg transition-all ${
             selected
               ? 'bg-[#e5a93b] text-[#0f1013] font-bold border-[#e5a93b] scale-105'
               : 'bg-[#17181d] text-[#e5a93b] border-[#e5a93b]/40 hover:border-[#e5a93b]'

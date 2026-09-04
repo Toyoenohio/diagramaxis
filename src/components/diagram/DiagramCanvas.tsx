@@ -66,6 +66,12 @@ const DiagramCanvasInner: React.FC = () => {
         className="bg-[#0f1013]"
       >
         <Background color="#9e7529" gap={26} size={1.2} />
+        {/* B11 auditoría (limitación aceptada): MiniMap (inferior-derecha) y Controls
+            (inferior-izquierda) flotan sobre el tablero en sus posiciones por defecto
+            de React Flow; un nodo paneado hasta esas esquinas queda cubierto y no se
+            puede arrastrar desde la zona solapada. Moverlos crearía solapes con la
+            barra de herramientas y los indicadores propios del panel, por lo que se
+            documenta como limitación conocida en lugar de re-posicionarlos. */}
         <Controls
           showInteractive={false}
           className="!bg-[#17181d] !border !border-[#2e323c] !rounded-sm !shadow-xl [&>button]:!bg-[#1f2128] [&>button]:!border-[#2e323c] [&>button]:!text-[#e5a93b]"

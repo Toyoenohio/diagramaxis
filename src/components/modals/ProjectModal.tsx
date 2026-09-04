@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useProjectStore } from '../../store/useProjectStore';
 import { X } from 'lucide-react';
 
@@ -14,10 +14,24 @@ export const ProjectModal: React.FC = () => {
     setModalOpen,
   } = useProjectStore();
 
+  // B9 auditoría: re-sembrar el estado cada vez que se abre el modal para no
+  // mostrar (ni sobrescribir) valores obsoletos del arranque de la app.
   const [pName, setPName] = useState(projectName);
   const [aName, setAName] = useState(architectName);
   const [loc, setLoc] = useState(location);
   const [termsAccepted, setTermsAccepted] = useState(isInitialized);
+
+  const prevOpenRef = useRef(isProjectModalOpen);
+  useEffect(() => {
+    if (isProjectModalOpen && !prevOpenRef.current) {
+      const st = useProjectStore.getState();
+      setPName(st.projectName);
+      setAName(st.architectName);
+      setLoc(st.location);
+      setTermsAccepted(st.isInitialized);
+    }
+    prevOpenRef.current = isProjectModalOpen;
+  }, [isProjectModalOpen]);
 
   if (!isProjectModalOpen) return null;
 

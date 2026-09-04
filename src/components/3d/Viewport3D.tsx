@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import * as THREE from 'three';
 import { useProjectStore } from '../../store/useProjectStore';
 import { CameraViewMode } from '../../types';
@@ -18,6 +18,10 @@ export const Viewport3D: React.FC = () => {
   const volumeGroupRef = useRef<THREE.Group | null>(null);
   const groundGroupRef = useRef<THREE.Group | null>(null);
   const humanGroupRef = useRef<THREE.Group | null>(null);
+
+  // Fallo de WebGL (B3 auditoría): si no se puede crear el contexto, mostramos
+  // un aviso y el tablero 2D sigue operativo en lugar de tumbar la app entera.
+  const [webglFailed, setWebglFailed] = useState(false);
 
   // Estado de órbita / cámara
   const orbitRef = useRef({
@@ -136,11 +140,21 @@ export const Viewport3D: React.FC = () => {
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 800);
     cameraRef.current = camera;
 
-    const renderer = new THREE.WebGLRenderer({
-      canvas,
-      antialias: true,
-      preserveDrawingBuffer: true,
-    });
+    // Protección WebGL (B3): si el contexto no puede crearse (sin GPU, VM,
+    // escritorio remoto, etc.) THREE lanza un error que antes dejaba la app en
+    // blanco. Aquí se captura, se avisa al usuario y el tablero 2D sigue vivo.
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: true,
+        preserveDrawingBuffer: true,
+      });
+    } catch (err) {
+      console.error('WebGL no disponible; visor 3D desactivado:', err);
+      setWebglFailed(true);
+      return;
+    }
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
@@ -411,7 +425,19 @@ export const Viewport3D: React.FC = () => {
       onMouseUp={handleMouseUp}
       onWheel={handleWheel}
     >
-      <canvas ref={canvasRef} className="block w-full h-full cursor-grab active:cursor-grabbing" />
+      {!webglFailed ? (
+        <canvas ref={canvasRef} className="block w-full h-full cursor-grab active:cursor-grabbing" />
+      ) : (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 text-center">
+          <span className="font-mono text-[10px] uppercase tracking-widest text-[#ea580c] font-bold">
+            Visor 3D no disponible
+          </span>
+          <p className="font-mono text-[11px] text-[#94a3b8] max-w-[300px] leading-relaxed">
+            Tu navegador o dispositivo no pudo crear un contexto WebGL, por lo que el visor volumétrico
+            quedó desactivado. El tablero 2D y el resto de la herramienta siguen operativos.
+          </p>
+        </div>
+      )}
 
       {/* Título de Cabecera 3D */}
       <div className="absolute top-3.5 left-3.5 pointer-events-none flex flex-col gap-0.5">

@@ -95,7 +95,7 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
         <button
           onClick={handleDelete}
           title="Retirar ficha del tablero"
-          className="text-[#94a3b8] hover:text-[#ef4444] p-0.5 rounded transition-colors"
+          className="nodrag nopan text-[#94a3b8] hover:text-[#ef4444] p-0.5 rounded transition-colors"
         >
           <X className="w-3.5 h-3.5" />
         </button>
@@ -144,7 +144,7 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
             step="0.05"
             value={param.weight || 0.6}
             onChange={handleWeightChange}
-            className="w-18 h-1 accent-[#e5a93b] cursor-pointer"
+            className="nodrag nopan w-18 h-1 accent-[#e5a93b] cursor-pointer"
           />
           <span className="text-[10px] font-mono font-bold text-[#e5a93b]">
             {(param.weight || 0.6).toFixed(1)}
