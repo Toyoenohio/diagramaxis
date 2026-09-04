@@ -519,8 +519,8 @@ export function buildArchitecturalGeometry(
     }
 
     // Atrio: DECISIÓN — el antiguo vacío cerrado (h*0.75 sin llegar a la cara
-    // superior) era invisible dentro del sólido opaco. Ahora es PAsante
-    // SUPERIOR: pozo de luz que conserva su piso original a -0.225h y abre la
+    // superior) era invisible dentro del sólido opaco. Ahora es pasante
+    // superior: pozo de luz que conserva su piso original a -0.225h y abre la
     // cubierta (+0.51h), de modo que se percibe desde arriba/axonométrica y
     // recibe la luz puntual del atrio.
     if (state.hasAtrium) {
