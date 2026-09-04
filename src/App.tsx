@@ -35,20 +35,20 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     if (this.state.hasError) {
       return (
         this.props.fallback ?? (
-          <div className="w-screen h-screen flex items-center justify-center bg-[#0f1013] text-[#f8fafc] p-6">
+          <div className="w-screen h-screen flex items-center justify-center bg-diagramaxis-bg text-diagramaxis-text p-6">
             <div className="text-center flex flex-col gap-3 max-w-md">
-              <span className="font-mono text-[10px] uppercase tracking-widest text-[#e5a93b] font-bold">
+              <span className="font-mono text-[10px] uppercase tracking-widest text-diagramaxis-gold font-bold">
                 DIAGRAMAXIS · Error
               </span>
               <h1 className="font-serif font-bold text-[22px]">Ocurrió un error inesperado</h1>
-              <p className="font-mono text-[11px] text-[#94a3b8] leading-relaxed">
+              <p className="font-mono text-[11px] text-diagramaxis-textMuted leading-relaxed">
                 La aplicación encontró un problema y mostró esta pantalla en lugar de quedar en blanco.
                 Puedes reintentar o recargar la página; tu trabajo puede exportarse como JSON desde el
                 encabezado.
               </p>
               <button
                 onClick={() => this.setState({ hasError: false })}
-                className="self-center px-5 py-2.5 bg-[#e5a93b] hover:bg-[#d49b28] text-[#0f1013] font-mono text-[11px] font-bold uppercase tracking-wider rounded-sm transition-colors"
+                className="self-center px-5 py-2.5 bg-diagramaxis-gold hover:bg-diagramaxis-goldHover text-diagramaxis-bg font-mono text-[11px] font-bold uppercase tracking-wider rounded-sm transition-colors"
               >
                 Reintentar
               </button>
@@ -98,7 +98,7 @@ export const App: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <div className="flex flex-col w-screen h-screen overflow-hidden bg-[#0f1013] text-[#f8fafc]">
+      <div className="flex flex-col w-screen h-screen overflow-hidden bg-diagramaxis-bg text-diagramaxis-text">
       {/* Barra de Navegación Superior */}
       <Header />
 
@@ -110,12 +110,12 @@ export const App: React.FC = () => {
         {/* Zona Central Dividida: Tablero + Visor 3D */}
         <div ref={containerRef} className="flex-1 flex overflow-hidden relative select-none">
           {/* Selector Flotante de Modo de Visualización */}
-          <div className="absolute top-3.5 right-3.5 z-30 flex items-center bg-[#17181d]/95 backdrop-blur-md border border-[#2e323c] rounded-sm p-1 gap-1 shadow-xl">
+          <div className="absolute top-3.5 right-3.5 z-30 flex items-center bg-diagramaxis-surface/95 backdrop-blur-md border border-diagramaxis-border rounded-sm p-1 gap-1 shadow-xl">
             <button
               onClick={() => setViewMode('split')}
               title="Vista Dividida (Tablero + 3D)"
               className={`p-1.5 rounded-xs transition-colors ${
-                viewMode === 'split' ? 'bg-[#e5a93b] text-[#0f1013]' : 'text-[#94a3b8] hover:text-[#f8fafc]'
+                viewMode === 'split' ? 'bg-diagramaxis-gold text-diagramaxis-bg' : 'text-diagramaxis-textMuted hover:text-diagramaxis-text'
               }`}
             >
               <Columns2 className="w-4 h-4" />
@@ -124,7 +124,7 @@ export const App: React.FC = () => {
               onClick={() => setViewMode('diagram')}
               title="Solo Tablero de Fichas (100%)"
               className={`p-1.5 rounded-xs transition-colors ${
-                viewMode === 'diagram' ? 'bg-[#e5a93b] text-[#0f1013]' : 'text-[#94a3b8] hover:text-[#f8fafc]'
+                viewMode === 'diagram' ? 'bg-diagramaxis-gold text-diagramaxis-bg' : 'text-diagramaxis-textMuted hover:text-diagramaxis-text'
               }`}
             >
               <Square className="w-4 h-4" />
@@ -133,7 +133,7 @@ export const App: React.FC = () => {
               onClick={() => setViewMode('3d')}
               title="Solo Visor 3D Modular (100%)"
               className={`p-1.5 rounded-xs transition-colors ${
-                viewMode === '3d' ? 'bg-[#e5a93b] text-[#0f1013]' : 'text-[#94a3b8] hover:text-[#f8fafc]'
+                viewMode === '3d' ? 'bg-diagramaxis-gold text-diagramaxis-bg' : 'text-diagramaxis-textMuted hover:text-diagramaxis-text'
               }`}
             >
               <Box className="w-4 h-4" />
@@ -146,7 +146,7 @@ export const App: React.FC = () => {
               width: viewMode === 'split' ? `${splitRatio * 100}%` : viewMode === 'diagram' ? '100%' : '0%',
               display: viewMode === '3d' ? 'none' : 'block',
             }}
-            className="h-full border-r border-[#2e323c] relative overflow-hidden bg-[#0f1013]"
+            className="h-full border-r border-diagramaxis-border relative overflow-hidden bg-diagramaxis-bg"
           >
             <DiagramCanvas />
           </div>
@@ -155,9 +155,9 @@ export const App: React.FC = () => {
           {viewMode === 'split' && (
             <div
               onMouseDown={startResizing}
-              className="w-1.5 hover:w-2 bg-[#2e323c] hover:bg-[#e5a93b] cursor-col-resize z-20 transition-all flex items-center justify-center group"
+              className="w-1.5 hover:w-2 bg-diagramaxis-border hover:bg-diagramaxis-gold cursor-col-resize z-20 transition-all flex items-center justify-center group"
             >
-              <div className="w-0.5 h-8 bg-[#64748b] group-hover:bg-[#0f1013] rounded-full" />
+              <div className="w-0.5 h-8 bg-diagramaxis-textDim group-hover:bg-diagramaxis-bg rounded-full" />
             </div>
           )}
 
@@ -167,12 +167,12 @@ export const App: React.FC = () => {
               width: viewMode === 'split' ? `${(1 - splitRatio) * 100}%` : viewMode === '3d' ? '100%' : '0%',
               display: viewMode === 'diagram' ? 'none' : 'block',
             }}
-            className="h-full relative overflow-hidden bg-[#0f1013]"
+            className="h-full relative overflow-hidden bg-diagramaxis-bg"
           >
             <ErrorBoundary
               fallback={
-                <div className="w-full h-full flex items-center justify-center bg-[#0f1013] p-6">
-                  <p className="font-mono text-[11px] text-[#94a3b8] text-center leading-relaxed max-w-[300px]">
+                <div className="w-full h-full flex items-center justify-center bg-diagramaxis-bg p-6">
+                  <p className="font-mono text-[11px] text-diagramaxis-textMuted text-center leading-relaxed max-w-[300px]">
                     El visor 3D encontró un error y quedó desactivado. El tablero 2D y el resto de la
                     herramienta siguen operativos.
                   </p>

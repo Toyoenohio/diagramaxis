@@ -8,22 +8,22 @@ const DECK_INFO = {
   'Temas Arquitectónicos': {
     subtitle: 'Cuestiones clave que abren el proyecto.',
     icon: '⬢',
-    color: '#e5a93b',
+    color: 'rgb(var(--da-gold))',
   },
   'Componentes de la Realidad': {
     subtitle: 'Elementos, actores y condiciones del contexto.',
     icon: '◎',
-    color: '#06b6d4',
+    color: 'rgb(var(--da-cyan))',
   },
   'Relaciones Paralógicas': {
     subtitle: 'Conexiones inesperadas que expanden las posibilidades.',
     icon: '⬡',
-    color: '#ea580c',
+    color: 'rgb(var(--da-orange))',
   },
   'Artefactos': {
     subtitle: 'Elementos del lenguaje proyectual.',
     icon: '◼',
-    color: '#c8af88',
+    color: 'rgb(var(--da-kraft-fg))',
   },
 };
 
@@ -75,14 +75,14 @@ export const LeftSidebar: React.FC = () => {
   }, [activeDeck, searchQuery]);
 
   return (
-    <aside className="w-[330px] min-w-[330px] h-full bg-[#17181d] border-r border-[#2e323c] flex flex-col z-20 select-none text-[#f8fafc]">
+    <aside className="w-[330px] min-w-[330px] h-full bg-diagramaxis-surface border-r border-diagramaxis-border flex flex-col z-20 select-none text-diagramaxis-text">
       {/* Selector de los 4 Mazos Circulares de la Caja DIAGRAMAXIS */}
-      <div className="p-3 bg-[#0f1013] border-b border-[#2e323c] flex flex-col gap-2">
+      <div className="p-3 bg-diagramaxis-bg border-b border-diagramaxis-border flex flex-col gap-2">
         <div className="flex items-center justify-between px-1">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-[#e5a93b] font-bold">
+          <span className="font-mono text-[10px] uppercase tracking-widest text-diagramaxis-gold font-bold">
             Bandeja de Fichas (4 Mazos)
           </span>
-          <Layers className="w-3.5 h-3.5 text-[#e5a93b]" />
+          <Layers className="w-3.5 h-3.5 text-diagramaxis-gold" />
         </div>
 
         <div className="grid grid-cols-2 gap-2">
@@ -94,14 +94,14 @@ export const LeftSidebar: React.FC = () => {
                 onClick={() => setActiveDeck(deckName)}
                 className={`p-2.5 rounded-sm border text-left flex flex-col gap-1 transition-all relative overflow-hidden ${
                   isSelected
-                    ? 'bg-[#1f2128] border-[#e5a93b] shadow-[0_0_12px_rgba(229,169,59,0.25)]'
-                    : 'bg-[#17181d] border-[#2e323c] hover:border-[#434855]'
+                    ? 'bg-diagramaxis-surface2 border-diagramaxis-gold shadow-[0_0_12px_rgb(var(--da-gold)/0.25)]'
+                    : 'bg-diagramaxis-surface border-diagramaxis-border hover:border-diagramaxis-borderLight'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span
                     className={`font-mono text-[11px] uppercase tracking-wider font-bold ${
-                      isSelected ? 'text-[#e5a93b]' : 'text-[#94a3b8]'
+                      isSelected ? 'text-diagramaxis-gold' : 'text-diagramaxis-textMuted'
                     }`}
                   >
                     {deckName === 'Temas Arquitectónicos' && '1. Temas'}
@@ -113,11 +113,11 @@ export const LeftSidebar: React.FC = () => {
                     {info.icon}
                   </span>
                 </div>
-                <span className="font-mono text-[8.5px] text-[#64748b] leading-tight line-clamp-1">
+                <span className="font-mono text-[8.5px] text-diagramaxis-textDim leading-tight line-clamp-1">
                   {info.subtitle}
                 </span>
                 {isSelected && (
-                  <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#e5a93b]" />
+                  <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-diagramaxis-gold" />
                 )}
               </button>
             );
@@ -126,30 +126,30 @@ export const LeftSidebar: React.FC = () => {
       </div>
 
       {/* Cabecera del Mazo Seleccionado */}
-      <div className="px-4 py-3 bg-[#1f2128] border-b border-[#2e323c] flex flex-col gap-1">
+      <div className="px-4 py-3 bg-diagramaxis-surface2 border-b border-diagramaxis-border flex flex-col gap-1">
         <div className="flex items-center justify-between">
-          <h3 className="font-serif italic font-bold text-[17px] text-[#f8fafc]">
+          <h3 className="font-serif italic font-bold text-[17px] text-diagramaxis-text">
             {activeDeck}
           </h3>
-          <span className="font-mono text-[10.5px] px-2 py-0.5 bg-[#0f1013] text-[#e5a93b] border border-[#e5a93b]/30 rounded-xs font-semibold">
+          <span className="font-mono text-[10.5px] px-2 py-0.5 bg-diagramaxis-bg text-diagramaxis-gold border border-diagramaxis-gold/30 rounded-xs font-semibold">
             {activeDeck === 'Artefactos' ? ARTIFACTS_DATA.length : CONCEPTS_DATA.filter(c => c.category === activeDeck).length} fichas
           </span>
         </div>
-        <p className="font-mono text-[10px] text-[#94a3b8]">
+        <p className="font-mono text-[10px] text-diagramaxis-textMuted">
           {DECK_INFO[activeDeck as keyof typeof DECK_INFO]?.subtitle}
         </p>
       </div>
 
       {/* Barra de Búsqueda */}
-      <div className="p-3 border-b border-[#2e323c] bg-[#17181d]">
+      <div className="p-3 border-b border-diagramaxis-border bg-diagramaxis-surface">
         <div className="relative flex items-center">
-          <Search className="w-4 h-4 text-[#64748b] absolute left-3 pointer-events-none" />
+          <Search className="w-4 h-4 text-diagramaxis-textDim absolute left-3 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={`Buscar en ${activeDeck}...`}
-            className="w-full pl-9 pr-3 py-2 bg-[#1f2128] border border-[#2e323c] focus:border-[#e5a93b] rounded-xs font-mono text-[13px] text-[#f8fafc] outline-none placeholder:text-[#64748b] transition-colors"
+            className="w-full pl-9 pr-3 py-2 bg-diagramaxis-surface2 border border-diagramaxis-border focus:border-diagramaxis-gold rounded-xs font-mono text-[13px] text-diagramaxis-text outline-none placeholder:text-diagramaxis-textDim transition-colors"
           />
         </div>
       </div>
@@ -158,7 +158,7 @@ export const LeftSidebar: React.FC = () => {
       <div className="flex-1 overflow-y-auto p-3.5 flex flex-col gap-4 custom-scrollbar">
         {activeDeck !== 'Artefactos' ? (
           Object.keys(subcategoryGroups).length === 0 ? (
-            <div className="p-6 text-center font-mono text-[12px] text-[#64748b]">
+            <div className="p-6 text-center font-mono text-[12px] text-diagramaxis-textDim">
               No se encontraron fichas para &quot;{searchQuery}&quot;.
             </div>
           ) : (
@@ -168,15 +168,15 @@ export const LeftSidebar: React.FC = () => {
                 <div key={subcategory} className="flex flex-col gap-2">
                   <div
                     onClick={() => toggleCategoryCollapse(subcategory)}
-                    className="flex items-center justify-between py-2 px-2.5 bg-[#1f2128] hover:bg-[#2a2d36] rounded-xs cursor-pointer border border-[#2e323c] transition-colors"
+                    className="flex items-center justify-between py-2 px-2.5 bg-diagramaxis-surface2 hover:bg-diagramaxis-surface3 rounded-xs cursor-pointer border border-diagramaxis-border transition-colors"
                   >
-                    <span className="font-mono text-[11px] uppercase tracking-widest text-[#e5a93b] font-bold">
+                    <span className="font-mono text-[11px] uppercase tracking-widest text-diagramaxis-gold font-bold">
                       {subcategory} ({concepts.length})
                     </span>
                     {isCollapsed ? (
-                      <ChevronRight className="w-4 h-4 text-[#64748b]" />
+                      <ChevronRight className="w-4 h-4 text-diagramaxis-textDim" />
                     ) : (
-                      <ChevronDown className="w-4 h-4 text-[#e5a93b]" />
+                      <ChevronDown className="w-4 h-4 text-diagramaxis-gold" />
                     )}
                   </div>
 
@@ -192,16 +192,16 @@ export const LeftSidebar: React.FC = () => {
                             title={`${c.name}: ${c.description}${op ? ` [Efecto 3D: ${op.label}]` : ''}`}
                             className={`flex items-center gap-2 font-mono text-[12.5px] px-3 py-2 rounded-sm border cursor-pointer transition-all ${
                               isActive
-                                ? 'bg-[#c8af88] text-[#2c2419] font-bold border-[#e5a93b] shadow-[0_0_12px_rgba(200,175,136,0.5)] scale-[1.03]'
-                                : 'bg-[#1f2128] text-[#cbd5e1] border-[#2e323c] hover:border-[#e5a93b] hover:bg-[#2a2d36] hover:text-[#f8fafc]'
+                                ? 'bg-diagramaxis-kraft text-diagramaxis-kraftDark font-bold border-diagramaxis-gold shadow-[0_0_12px_rgb(var(--da-kraft)/0.5)] scale-[1.03]'
+                                : 'bg-diagramaxis-surface2 text-diagramaxis-textBright border-diagramaxis-border hover:border-diagramaxis-gold hover:bg-diagramaxis-surface3 hover:text-diagramaxis-text'
                             }`}
                           >
-                            <Disc className={`w-3.5 h-3.5 ${isActive ? 'text-[#2c2419]' : 'text-[#e5a93b]'}`} />
+                            <Disc className={`w-3.5 h-3.5 ${isActive ? 'text-diagramaxis-kraftDark' : 'text-diagramaxis-gold'}`} />
                             <span>{c.name}</span>
                             {op && (
                               <span
                                 className={`w-2 h-2 rounded-full ${
-                                  isActive ? 'bg-[#ea580c]' : 'bg-[#e5a93b]'
+                                  isActive ? 'bg-diagramaxis-orange' : 'bg-diagramaxis-gold'
                                 }`}
                               />
                             )}
@@ -227,16 +227,16 @@ export const LeftSidebar: React.FC = () => {
                   title={`${art.name}: ${art.description}${op ? ` [Efecto 3D: ${op.label}]` : ''}`}
                   className={`flex items-center gap-2 font-mono text-[12.5px] px-3 py-2 rounded-sm border cursor-pointer transition-all ${
                     isActive
-                      ? 'bg-[#c8af88] text-[#2c2419] font-bold border-[#06b6d4] shadow-[0_0_12px_rgba(6,182,212,0.4)] scale-[1.03]'
-                      : 'bg-[#1f2128] text-[#38bdf8] border-[#06b6d4]/30 hover:border-[#06b6d4] hover:bg-[#2a2d36]'
+                      ? 'bg-diagramaxis-kraft text-diagramaxis-kraftDark font-bold border-diagramaxis-cyan shadow-[0_0_12px_rgb(var(--da-cyan)/0.4)] scale-[1.03]'
+                      : 'bg-diagramaxis-surface2 text-diagramaxis-cyanBright border-diagramaxis-cyan/30 hover:border-diagramaxis-cyan hover:bg-diagramaxis-surface3'
                   }`}
                 >
-                  <Disc className={`w-3.5 h-3.5 ${isActive ? 'text-[#2c2419]' : 'text-[#06b6d4]'}`} />
+                  <Disc className={`w-3.5 h-3.5 ${isActive ? 'text-diagramaxis-kraftDark' : 'text-diagramaxis-cyan'}`} />
                   <span>{art.name}</span>
                   {op && (
                     <span
                       className={`w-2 h-2 rounded-full ${
-                        isActive ? 'bg-[#ea580c]' : 'bg-[#06b6d4]'
+                        isActive ? 'bg-diagramaxis-orange' : 'bg-diagramaxis-cyan'
                       }`}
                     />
                   )}
@@ -248,12 +248,12 @@ export const LeftSidebar: React.FC = () => {
       </div>
 
       {/* Resumen Inferior de Fichas en Juego */}
-      <div className="p-3.5 border-t border-[#2e323c] bg-[#0f1013] flex items-center justify-between text-[11px] font-mono text-[#94a3b8]">
+      <div className="p-3.5 border-t border-diagramaxis-border bg-diagramaxis-bg flex items-center justify-between text-[11px] font-mono text-diagramaxis-textMuted">
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#e5a93b]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-diagramaxis-gold" />
           <span>Fichas con efecto 3D</span>
         </div>
-        <span className="text-[#e5a93b] font-bold text-[12px]">
+        <span className="text-diagramaxis-gold font-bold text-[12px]">
           {activeConcepts.length + activeArtifacts.length} en el tablero
         </span>
       </div>

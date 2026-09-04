@@ -51,11 +51,17 @@ export const CustomEdge: React.FC<EdgeProps> = memo(({
         id={id}
         path={edgePath}
         style={{
-          stroke: selected ? '#ffffff' : relationType === 'contradice' ? '#ea580c' : '#e5a93b',
+          stroke: selected
+            ? 'rgb(var(--da-text))'
+            : relationType === 'contradice'
+            ? 'rgb(var(--da-orange))'
+            : 'rgb(var(--da-gold))',
           strokeWidth,
           strokeDasharray: relationType === 'contradice' ? '6 4' : undefined,
           opacity: 0.6 + intensity * 0.4,
-          filter: selected ? 'drop-shadow(0 0 6px #e5a93b)' : 'drop-shadow(0 0 3px rgba(229, 169, 59, 0.4))',
+          filter: selected
+            ? 'drop-shadow(0 0 6px rgb(var(--da-gold)))'
+            : 'drop-shadow(0 0 3px rgb(var(--da-gold)/0.4))',
         }}
       />
       <EdgeLabelRenderer>
@@ -67,15 +73,15 @@ export const CustomEdge: React.FC<EdgeProps> = memo(({
           }}
           className={`nodrag nopan flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[9.5px] font-mono border shadow-lg transition-all ${
             selected
-              ? 'bg-[#e5a93b] text-[#0f1013] font-bold border-[#e5a93b] scale-105'
-              : 'bg-[#17181d] text-[#e5a93b] border-[#e5a93b]/40 hover:border-[#e5a93b]'
+              ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold scale-105'
+              : 'bg-diagramaxis-surface text-diagramaxis-gold border-diagramaxis-gold/40 hover:border-diagramaxis-gold'
           }`}
         >
           <span className="font-semibold">{relationType}</span>
           <button
             onClick={handleRemove}
             title="Cortar hilo de conexión"
-            className="hover:text-[#ef4444] text-[#94a3b8] transition-colors"
+            className="hover:text-diagramaxis-danger text-diagramaxis-textMuted transition-colors"
           >
             <X className="w-3 h-3" />
           </button>

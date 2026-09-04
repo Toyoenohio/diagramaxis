@@ -76,12 +76,12 @@ export const DiscourseEditor: React.FC = () => {
   const totalDetected = detectedConcepts.length + detectedArtifacts.length;
 
   return (
-    <div className="flex flex-col gap-3.5 text-[#f8fafc]">
-      <div className="flex items-center justify-between pb-1.5 border-b border-[#24354d]">
-        <span className="font-mono text-[9px] uppercase tracking-widest text-[#06b6d4] font-semibold">
+    <div className="flex flex-col gap-3.5 text-diagramaxis-text">
+      <div className="flex items-center justify-between pb-1.5 border-b border-diagramaxis-evalBorder">
+        <span className="font-mono text-[9px] uppercase tracking-widest text-diagramaxis-cyan font-semibold">
           Discurso Proyectual (Lingüístico)
         </span>
-        <span className="font-mono text-[10.5px] text-[#94a3b8]">
+        <span className="font-mono text-[10.5px] text-diagramaxis-textMuted">
           {wordCount} palabras · {totalDetected} detectados
         </span>
       </div>
@@ -91,7 +91,7 @@ export const DiscourseEditor: React.FC = () => {
         onChange={(e) => setDiscourse(e.target.value)}
         placeholder="Escribe aquí el discurso narrativo de tu propuesta arquitectónica... El sistema analiza en tiempo real los conceptos y artefactos de la metodología ARPV."
         rows={6}
-        className="w-full p-3 bg-[#162234] border border-[#24354d] focus:border-[#22c55e] rounded-sm font-serif italic text-[15px] text-[#f8fafc] leading-relaxed resize-none outline-none transition-colors placeholder:text-[#64748b]"
+        className="w-full p-3 bg-diagramaxis-evalBg border border-diagramaxis-evalBorder focus:border-diagramaxis-success rounded-sm font-serif italic text-[15px] text-diagramaxis-text leading-relaxed resize-none outline-none transition-colors placeholder:text-diagramaxis-textDim"
       />
 
       {/* Botones de Acción */}
@@ -99,16 +99,16 @@ export const DiscourseEditor: React.FC = () => {
         <button
           onClick={syncDiscourseToDiagram}
           disabled={!discourse.trim()}
-          className="flex items-center justify-center gap-1.5 px-3 py-2 font-mono text-[10.5px] uppercase tracking-wider bg-[#162234] hover:bg-[#1e2f46] text-[#38bdf8] border border-[#06b6d4]/40 disabled:opacity-30 rounded-sm transition-all"
+          className="flex items-center justify-center gap-1.5 px-3 py-2 font-mono text-[10.5px] uppercase tracking-wider bg-diagramaxis-evalBg hover:bg-diagramaxis-evalHover text-diagramaxis-cyanBright border border-diagramaxis-cyan/40 disabled:opacity-30 rounded-sm transition-all"
         >
-          <ArrowRight className="w-3.5 h-3.5 text-[#06b6d4]" />
+          <ArrowRight className="w-3.5 h-3.5 text-diagramaxis-cyan" />
           <span>Discurso → Grafo</span>
         </button>
 
         <button
           onClick={handleGenerateAI}
           disabled={isGeneratingDiscourse || (activeConcepts.length === 0 && activeArtifacts.length === 0)}
-          className="flex items-center justify-center gap-1.5 px-3 py-2 font-mono text-[10.5px] uppercase tracking-wider bg-[#22c55e] hover:bg-[#16a34a] text-[#090d14] font-bold disabled:opacity-30 rounded-sm transition-all shadow-[0_0_8px_rgba(34,197,94,0.3)]"
+          className="flex items-center justify-center gap-1.5 px-3 py-2 font-mono text-[10.5px] uppercase tracking-wider bg-diagramaxis-success hover:bg-diagramaxis-successHover text-diagramaxis-successInk font-bold disabled:opacity-30 rounded-sm transition-all shadow-[0_0_8px_rgb(var(--da-success)/0.3)]"
         >
           {isGeneratingDiscourse ? (
             <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -121,8 +121,8 @@ export const DiscourseEditor: React.FC = () => {
 
       {/* Conceptos Detectados */}
       {totalDetected > 0 && (
-        <div className="flex flex-col gap-2 pt-2.5 border-t border-[#24354d]">
-          <span className="font-mono text-[9px] uppercase tracking-wider text-[#94a3b8] font-semibold">
+        <div className="flex flex-col gap-2 pt-2.5 border-t border-diagramaxis-evalBorder">
+          <span className="font-mono text-[9px] uppercase tracking-wider text-diagramaxis-textMuted font-semibold">
             Términos Identificados en el Texto:
           </span>
           <div className="flex flex-wrap gap-1.5">
@@ -134,8 +134,8 @@ export const DiscourseEditor: React.FC = () => {
                   onClick={() => toggleConcept(c)}
                   className={`font-mono text-[10.5px] px-2.5 py-1 rounded-sm border transition-all ${
                     isActive
-                      ? 'border-[#22c55e] bg-[#22c55e]/20 text-[#22c55e] font-semibold shadow-[0_0_6px_rgba(34,197,94,0.2)]'
-                      : 'border-[#24354d] bg-[#162234] text-[#94a3b8] hover:border-[#22c55e] hover:text-[#f8fafc]'
+                      ? 'border-diagramaxis-success bg-diagramaxis-success/20 text-diagramaxis-success font-semibold shadow-[0_0_6px_rgb(var(--da-success)/0.2)]'
+                      : 'border-diagramaxis-evalBorder bg-diagramaxis-evalBg text-diagramaxis-textMuted hover:border-diagramaxis-success hover:text-diagramaxis-text'
                   }`}
                   title={isActive ? 'Activo en diagrama (clic para retirar)' : 'Inactivo (clic para activar en diagrama)'}
                 >
@@ -151,8 +151,8 @@ export const DiscourseEditor: React.FC = () => {
                   onClick={() => toggleArtifact(a)}
                   className={`font-mono text-[10.5px] px-2.5 py-1 rounded-sm border transition-all ${
                     isActive
-                      ? 'border-[#06b6d4] bg-[#06b6d4]/20 text-[#38bdf8] font-semibold shadow-[0_0_6px_rgba(6,182,212,0.2)]'
-                      : 'border-[#24354d] bg-[#162234] text-[#94a3b8] hover:border-[#06b6d4] hover:text-[#f8fafc]'
+                      ? 'border-diagramaxis-cyan bg-diagramaxis-cyan/20 text-diagramaxis-cyanBright font-semibold shadow-[0_0_6px_rgb(var(--da-cyan)/0.2)]'
+                      : 'border-diagramaxis-evalBorder bg-diagramaxis-evalBg text-diagramaxis-textMuted hover:border-diagramaxis-cyan hover:text-diagramaxis-text'
                   }`}
                   title={isActive ? 'Activo en diagrama (clic para retirar)' : 'Inactivo (clic para activar en diagrama)'}
                 >

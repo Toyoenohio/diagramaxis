@@ -2,62 +2,258 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   DIAGRAMAXIS · Sistema de temas (día por defecto / noche)
+   Paleta original "atelier oscuro" en .dark; modo claro = papel
+   cálido de atelier (los canales se consumen como rgb(var(--da-x)))
+   ============================================================ */
+:root {
+  color-scheme: light;
+  /* Papel cálido de atelier (escalones de luz decreciente al anidar) */
+  --da-bg: 250 249 246;          /* papel principal            #faf9f6 */
+  --da-surface: 243 239 231;     /* bandeja / panel            #f3efe7 */
+  --da-surface2: 236 230 219;    /* compartimento interior     #ece6db */
+  --da-surface3: 227 219 204;    /* hover / borde activo       #e3dbcc */
+  --da-border: 216 207 187;      /* separador suave            #d8cfbb */
+  --da-border-light: 171 159 132;
+  /* Oro (acento): familia a16207 calibrada a AA 4.5+ sobre el papel */
+  --da-gold: 147 86 4;
+  --da-gold-muted: 143 107 29;
+  --da-gold-hover: 120 70 3;
+  --da-gold-engraved: 111 71 3;
+  --da-orange: 184 63 11;
+  --da-orange-ink: 154 52 18;
+  /* Madera / corcho legibles sobre papel claro */
+  --da-kraft: 227 207 172;
+  --da-kraft-dark: 58 45 26;
+  --da-kraft-border: 174 140 96;
+  --da-kraft-fg: 122 88 40;
+  --da-cork: 178 132 76;
+  --da-cork-light: 205 165 116;
+  --da-block-white: 250 251 252;
+  /* Tinta cálida */
+  --da-text: 33 29 23;
+  --da-text-bright: 86 78 64;
+  --da-text-muted: 106 98 81;
+  --da-text-dim: 130 122 104;
+  /* Acentos semánticos ajustados a claro */
+  --da-cyan: 11 110 138;
+  --da-cyan-bright: 3 105 161;
+  --da-cyan-ink: 7 89 133;
+  --da-success: 22 101 52;
+  --da-success-hover: 19 85 44;
+  --da-success-ink: 250 249 246;
+  --da-warn: 154 71 5;
+  --da-danger: 185 28 28;
+  --da-white: 255 255 255;
+  /* Paneles de evaluación (huecos más profundos del papel) */
+  --da-eval-bg: 240 235 224;
+  --da-eval-deep: 227 219 203;
+  --da-eval-border: 213 202 181;
+  --da-eval-hover: 224 216 197;
+  --da-overlay: 33 27 18;
+  /* Fichas de madera grabada (modo claro) */
+  --da-node-head: 233 218 188;
+  --da-node-head-border: 202 178 138;
+  --da-chip-bg: 240 226 199;
+  --da-chip-border: 199 173 130;
+  --da-wood-a: 243 233 210;      /* ficha concepto: madera clara */
+  --da-wood-b: 228 208 170;
+  --da-wood-a-art: 234 241 240;  /* ficha artefacto: madera fría */
+  --da-wood-b-art: 212 224 223;
+  --da-wood-muted: 95 81 56;
+  --da-brand-chip: 43 38 28;     /* icono de marca en barra clara */
+  /* Componentes internos */
+  --da-range-track: 223 215 196;
+  --da-scroll-thumb: 203 191 166;
+  --da-scroll-thumb-hover: 150 112 31;
+  /* React Flow: variables XY para pane/selección/conexión/attribution */
+  --xy-selection-background-color: rgb(var(--da-gold) / 0.07);
+  --xy-selection-border: 1px dotted rgb(var(--da-gold) / 0.75);
+  --xy-connectionline-stroke: rgb(var(--da-gold));
+  --xy-edge-stroke: rgb(var(--da-gold));
+  --xy-minimap-background-color: rgb(var(--da-surface));
+  --xy-minimap-mask-background-color: rgba(228, 220, 200, 0.82);
+  --xy-attribution-background-color: transparent;
+  --da-3d-bg: 230 224 209;       /* papel del visor 3D */
+  --da-3d-ground: 216 206 182;
+  --da-3d-grid-major: 147 86 4;
+  --da-3d-grid-minor: 188 176 152;
+  --da-3d-fog: 230 224 209;
+}
+
+.dark {
+  color-scheme: dark;
+  /* Atelier oscuro original DIAGRAMAXIS */
+  --da-bg: 15 16 19;             /* #0f1013 */
+  --da-surface: 23 24 29;        /* #17181d */
+  --da-surface2: 31 33 40;       /* #1f2128 */
+  --da-surface3: 42 45 54;       /* #2a2d36 */
+  --da-border: 46 50 60;         /* #2e323c */
+  --da-border-light: 67 72 85;   /* #434855 */
+  --da-gold: 229 169 59;         /* #e5a93b */
+  --da-gold-muted: 158 117 41;   /* #9e7529 */
+  --da-gold-hover: 212 155 40;   /* #d49b28 */
+  --da-gold-engraved: 229 169 59;
+  --da-orange: 234 88 12;        /* #ea580c */
+  --da-orange-ink: 234 88 12;
+  --da-kraft: 200 175 136;       /* #c8af88 */
+  --da-kraft-dark: 44 36 25;     /* #2c2419 */
+  --da-kraft-border: 168 143 104;/* #a88f68 */
+  --da-kraft-fg: 200 175 136;
+  --da-cork: 150 103 56;         /* #966738 */
+  --da-cork-light: 184 131 80;   /* #b88350 */
+  --da-block-white: 248 250 252; /* #f8fafc */
+  --da-text: 248 250 252;        /* #f8fafc */
+  --da-text-bright: 203 213 225; /* #cbd5e1 */
+  --da-text-muted: 148 163 184;  /* #94a3b8 */
+  --da-text-dim: 100 116 139;    /* #64748b */
+  --da-cyan: 6 182 212;          /* #06b6d4 */
+  --da-cyan-bright: 56 189 248;  /* #38bdf8 */
+  --da-cyan-ink: 6 182 212;
+  --da-success: 34 197 94;       /* #22c55e */
+  --da-success-hover: 22 163 74; /* #16a34a */
+  --da-success-ink: 9 13 20;
+  --da-warn: 245 158 11;         /* #f59e0b */
+  --da-danger: 239 68 68;        /* #ef4444 */
+  --da-white: 255 255 255;
+  --da-eval-bg: 22 34 52;        /* #162234 */
+  --da-eval-deep: 9 13 20;       /* #090d14 */
+  --da-eval-border: 36 53 77;    /* #24354d */
+  --da-eval-hover: 30 47 70;     /* #1e2f46 */
+  --da-overlay: 9 13 20;
+  --da-node-head: 42 40 36;      /* #2a2824 */
+  --da-node-head-border: 61 56 48; /* #3d3830 */
+  --da-chip-bg: 42 37 29;        /* #2a251d */
+  --da-chip-border: 77 66 51;    /* #4d4233 */
+  --da-wood-a: 36 34 31;         /* #24221f */
+  --da-wood-b: 26 24 21;         /* #1a1815 */
+  --da-wood-a-art: 28 38 54;     /* #1c2636 */
+  --da-wood-b-art: 21 30 43;     /* #151e2b */
+  --da-wood-muted: 148 163 184;
+  --da-brand-chip: 15 16 19;
+  --da-range-track: 30 47 70;    /* #1e2f46 */
+  --da-scroll-thumb: 36 53 77;   /* #24354d */
+  --da-scroll-thumb-hover: 59 130 246; /* #3b82f6 */
+  --xy-selection-background-color: rgb(var(--da-gold) / 0.07);
+  --xy-selection-border: 1px dotted rgb(var(--da-gold) / 0.75);
+  --xy-connectionline-stroke: rgb(var(--da-gold));
+  --xy-edge-stroke: rgb(var(--da-gold));
+  --xy-minimap-background-color: rgb(var(--da-surface));
+  --xy-minimap-mask-background-color: rgba(15, 16, 19, 0.8);
+  --xy-attribution-background-color: transparent;
+  --da-3d-bg: 15 16 19;
+  --da-3d-ground: 20 21 26;      /* #14151a */
+  --da-3d-grid-major: 229 169 59;
+  --da-3d-grid-minor: 46 50 60;
+  --da-3d-fog: 15 16 19;
+}
+
 @layer base {
   body {
-    background-color: #090d14;
-    color: #f8fafc;
+    background-color: rgb(var(--da-bg));
+    color: rgb(var(--da-text));
     font-family: 'DM Mono', monospace;
     user-select: none;
     -webkit-user-select: none;
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
 
-  /* Estilos para inputs range en modo oscuro */
-  input[type="range"] {
+  /* Foco accesible sobrio (ambos temas) */
+  :focus-visible {
+    outline: 1px solid rgb(var(--da-gold));
+    outline-offset: 2px;
+  }
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline-offset: 0;
+  }
+
+  /* Selección de texto con acento de marca */
+  ::selection {
+    background: rgb(var(--da-gold) / 0.28);
+    color: inherit;
+  }
+
+  /* Inputs range con pista y pulgar del tema */
+  input[type='range'] {
     -webkit-appearance: none;
     appearance: none;
-    background: #1e2f46;
+    background: rgb(var(--da-range-track));
     border-radius: 9999px;
   }
 
-  input[type="range"]::-webkit-slider-thumb {
+  input[type='range']::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #22c55e;
+    background: rgb(var(--da-success));
     cursor: pointer;
-    box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+    box-shadow: 0 0 8px rgb(var(--da-success) / 0.5);
   }
 
-  input[type="range"]::-moz-range-thumb {
+  input[type='range']::-moz-range-thumb {
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #22c55e;
+    background: rgb(var(--da-success));
     cursor: pointer;
-    box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+    box-shadow: 0 0 8px rgb(var(--da-success) / 0.5);
     border: none;
   }
 }
 
-/* Scrollbars Oscuros Delgados */
+/* Scrollbars delgados sensibles al tema */
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;
   height: 5px;
 }
-
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
-
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #24354d;
+  background: rgb(var(--da-scroll-thumb));
   border-radius: 3px;
 }
-
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #3b82f6;
+  background: rgb(var(--da-scroll-thumb-hover));
+}
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--da-scroll-thumb)) transparent;
+}
+
+/* ============================================================
+   React Flow (@xyflow/react): pane, selección, línea de
+   conexión, minimapa, attribution — sensibles al tema.
+   ============================================================ */
+.react-flow .react-flow__background-pattern.dots {
+  fill: rgb(var(--da-gold-muted));
+}
+.react-flow .react-flow__background-pattern.lines,
+.react-flow .react-flow__background-pattern.cross {
+  stroke: rgb(var(--da-gold-muted));
+}
+
+.react-flow__pane {
+  cursor: default;
+}
+
+/* Attribution discreta que no rompe el fondo en claro */
+.react-flow__attribution {
+  background: transparent !important;
+  opacity: 0.75;
+}
+.react-flow__attribution a {
+  color: rgb(var(--da-text-dim)) !important;
+}
+
+/* Minimapa: nodos heredan color por prop; fondo y máscara por tema */
+.react-flow__minimap {
+  border-radius: 2px;
 }
 
 /* Animaciones */

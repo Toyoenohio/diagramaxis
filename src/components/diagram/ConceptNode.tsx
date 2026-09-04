@@ -44,48 +44,48 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
       onClick={() => setSelectedNodeId(id)}
       className={`relative min-w-[180px] max-w-[230px] rounded-sm transition-all shadow-xl select-none ${
         selected
-          ? 'ring-2 ring-[#e5a93b] shadow-[0_0_18px_rgba(229,169,59,0.4)]'
+          ? 'ring-2 ring-diagramaxis-gold shadow-[0_0_18px_rgb(var(--da-gold)/0.4)]'
           : 'shadow-md'
       }`}
       style={{
         background: isArtifact
-          ? 'linear-gradient(135deg, #1c2636 0%, #151e2b 100%)'
-          : 'linear-gradient(135deg, #24221f 0%, #1a1815 100%)',
+          ? 'linear-gradient(135deg, rgb(var(--da-wood-a-art)) 0%, rgb(var(--da-wood-b-art)) 100%)'
+          : 'linear-gradient(135deg, rgb(var(--da-wood-a)) 0%, rgb(var(--da-wood-b)) 100%)',
         border: selected
-          ? '1px solid #e5a93b'
+          ? '1px solid rgb(var(--da-gold))'
           : isArtifact
-          ? '1px solid rgba(6, 182, 212, 0.4)'
-          : '1px solid rgba(229, 169, 59, 0.3)',
+          ? '1px solid rgb(var(--da-cyan)/0.45)'
+          : '1px solid rgb(var(--da-gold)/0.32)',
       }}
     >
       {/* Conectores con estilo Pin de Tablero / Chincheta */}
       <Handle
         type="target"
         position={Position.Top}
-        className="!w-3 !h-3 !bg-[#e5a93b] !border-2 !border-[#0f1013] !shadow-[0_0_6px_rgba(229,169,59,0.8)]"
+        className="!w-3 !h-3 !bg-diagramaxis-gold !border-2 !border-diagramaxis-bg !shadow-[0_0_6px_rgb(var(--da-gold)/0.8)]"
       />
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!w-3 !h-3 !bg-[#ea580c] !border-2 !border-[#0f1013] !shadow-[0_0_6px_rgba(234,88,12,0.8)]"
+        className="!w-3 !h-3 !bg-diagramaxis-orange !border-2 !border-diagramaxis-bg !shadow-[0_0_6px_rgb(var(--da-orange)/0.8)]"
       />
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-3 !h-3 !bg-[#06b6d4] !border-2 !border-[#0f1013] !shadow-[0_0_6px_rgba(6,182,212,0.8)]"
+        className="!w-3 !h-3 !bg-diagramaxis-cyan !border-2 !border-diagramaxis-bg !shadow-[0_0_6px_rgb(var(--da-cyan)/0.8)]"
       />
       <Handle
         type="source"
         position={Position.Right}
-        className="!w-3 !h-3 !bg-[#22c55e] !border-2 !border-[#0f1013] !shadow-[0_0_6px_rgba(34,197,94,0.8)]"
+        className="!w-3 !h-3 !bg-diagramaxis-success !border-2 !border-diagramaxis-bg !shadow-[0_0_6px_rgb(var(--da-success)/0.8)]"
       />
 
       {/* Cabecera de la Ficha Grabada */}
       <div
         className={`px-3 py-1.5 border-b flex items-center justify-between text-[9px] uppercase tracking-wider font-mono font-bold ${
           isArtifact
-            ? 'bg-[#06b6d4]/15 text-[#38bdf8] border-[#06b6d4]/25'
-            : 'bg-[#2a2824] text-[#e5a93b] border-[#3d3830]'
+            ? 'bg-diagramaxis-cyan/15 text-diagramaxis-cyanInk border-diagramaxis-cyan/25'
+            : 'bg-diagramaxis-nodeHead text-diagramaxis-goldEngraved border-diagramaxis-nodeHeadBorder'
         }`}
       >
         <div className="flex items-center gap-1 truncate max-w-[140px]">
@@ -95,7 +95,7 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
         <button
           onClick={handleDelete}
           title="Retirar ficha del tablero"
-          className="nodrag nopan text-[#94a3b8] hover:text-[#ef4444] p-0.5 rounded transition-colors"
+          className="nodrag nopan text-diagramaxis-woodMuted hover:text-diagramaxis-danger p-0.5 rounded transition-colors"
         >
           <X className="w-3.5 h-3.5" />
         </button>
@@ -104,7 +104,7 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
       {/* Cuerpo de la Ficha */}
       <div className="p-3 flex flex-col gap-2">
         {/* Título grabado */}
-        <div className="font-serif italic text-[16px] leading-tight font-bold text-[#f8fafc]">
+        <div className="font-serif italic text-[16px] leading-tight font-bold text-diagramaxis-text">
           {nodeData.name}
         </div>
 
@@ -115,10 +115,10 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
               key={nat}
               className={`text-[8.5px] font-mono px-1.5 py-0.5 rounded-xs border font-semibold ${
                 nat === 'G'
-                  ? 'border-[#e5a93b]/50 text-[#e5a93b] bg-[#e5a93b]/10'
+                  ? 'border-diagramaxis-gold/50 text-diagramaxis-goldEngraved bg-diagramaxis-gold/10'
                   : nat === 'R'
-                  ? 'border-[#06b6d4]/50 text-[#06b6d4] bg-[#06b6d4]/10'
-                  : 'border-[#ea580c]/50 text-[#ea580c] bg-[#ea580c]/10'
+                  ? 'border-diagramaxis-cyan/50 text-diagramaxis-cyanInk bg-diagramaxis-cyan/10'
+                  : 'border-diagramaxis-orange/50 text-diagramaxis-orangeInk bg-diagramaxis-orange/10'
               }`}
             >
               {nat === 'G' ? 'Generador' : nat === 'R' ? 'Relacional' : 'Condicionante'}
@@ -128,15 +128,15 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
 
         {/* Indicador de Operación 3D */}
         {op && (
-          <div className="flex items-center gap-1.5 text-[9.5px] font-mono text-[#c8af88] bg-[#2a251d] px-2 py-1 rounded-xs border border-[#4d4233]">
-            <Sparkles className="w-3 h-3 text-[#e5a93b] shrink-0" />
+          <div className="flex items-center gap-1.5 text-[9.5px] font-mono text-diagramaxis-kraftFg bg-diagramaxis-chipBg px-2 py-1 rounded-xs border border-diagramaxis-chipBorder">
+            <Sparkles className="w-3 h-3 text-diagramaxis-goldEngraved shrink-0" />
             <span className="truncate">{op.label}</span>
           </div>
         )}
 
         {/* Slider de Peso Jerárquico */}
-        <div className="flex items-center justify-between gap-1.5 pt-1 border-t border-[#3d3830]">
-          <span className="text-[9px] font-mono text-[#94a3b8]">Peso:</span>
+        <div className="flex items-center justify-between gap-1.5 pt-1 border-t border-diagramaxis-nodeHeadBorder">
+          <span className="text-[9px] font-mono text-diagramaxis-woodMuted">Peso:</span>
           <input
             type="range"
             min="0.1"
@@ -144,9 +144,9 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
             step="0.05"
             value={param.weight || 0.6}
             onChange={handleWeightChange}
-            className="nodrag nopan w-18 h-1 accent-[#e5a93b] cursor-pointer"
+            className="nodrag nopan w-18 h-1 accent-diagramaxis-gold cursor-pointer"
           />
-          <span className="text-[10px] font-mono font-bold text-[#e5a93b]">
+          <span className="text-[10px] font-mono font-bold text-diagramaxis-goldEngraved">
             {(param.weight || 0.6).toFixed(1)}
           </span>
         </div>
