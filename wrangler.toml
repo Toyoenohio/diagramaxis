@@ -1,0 +1,7 @@
+name = "upa-proyectual"
+pages_build_output_dir = "dist"
+compatibility_date = "2024-09-01"
+
+[vars]
+# Variables de entorno opcionales para Cloudflare Pages Functions
+# AI_PROVIDER = "cloudflare" # "cloudflare" | "gemini" | "anthropic" | "openai"
