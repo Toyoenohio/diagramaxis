@@ -525,8 +525,8 @@ export const CONCEPTS_DATA: ArchitecturalConcept[] = [
     category: 'Componentes de la Realidad',
     subcategory: 'Espacio',
     natures: ['Co'],
-    description: 'Atmósfera acústica, reverberación y control de ruido ambiental.',
-    has3DOperation: false,
+    description: 'Atmósfera acústica, reverberación y barreras de control de ruido ambiental.',
+    has3DOperation: true,
   },
   {
     id: 'Orientación',
@@ -543,7 +543,7 @@ export const CONCEPTS_DATA: ArchitecturalConcept[] = [
     category: 'Componentes de la Realidad',
     subcategory: 'Espacio',
     natures: ['Co'],
-    description: 'Dirección e intensidad de las corrientes de aire para ventilación cruzada.',
+    description: 'Dirección e intensidad de las corrientes de aire para ventilación cruzada y aerodinámica.',
     has3DOperation: true,
   },
   {
@@ -552,8 +552,8 @@ export const CONCEPTS_DATA: ArchitecturalConcept[] = [
     category: 'Componentes de la Realidad',
     subcategory: 'Espacio',
     natures: ['Co'],
-    description: 'Cualidad olfativa del entorno (vegetación, tierra húmeda, maderas).',
-    has3DOperation: false,
+    description: 'Cualidad olfativa del entorno y patios de especies aromáticas biofílicas.',
+    has3DOperation: true,
   },
   {
     id: 'Humedad',
@@ -561,8 +561,8 @@ export const CONCEPTS_DATA: ArchitecturalConcept[] = [
     category: 'Componentes de la Realidad',
     subcategory: 'Espacio',
     natures: ['Co'],
-    description: 'Contenido de vapor de agua y sensación higrotérmica ambiental.',
-    has3DOperation: false,
+    description: 'Contenido de vapor de agua, láminas hídricas y refrigeración evaporativa pasiva.',
+    has3DOperation: true,
   },
   {
     id: 'Temperatura',

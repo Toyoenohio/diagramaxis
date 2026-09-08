@@ -9,6 +9,12 @@ export interface BuiltVolumeResult {
   lights: THREE.Light[];
   history: string[];
   finalDimensions: { w: number; h: number; d: number };
+  hasWindFlow?: boolean;
+  windIntensity?: number;
+  hasHumidity?: boolean;
+  humidityIntensity?: number;
+  hasVegetation?: boolean;
+  hasTopography?: boolean;
 }
 
 interface GeometricState {
@@ -66,6 +72,12 @@ interface GeometricState {
   pilotisHeight: number;
   hasLattice: boolean;
   hasWater: boolean;
+  hasWindFlow: boolean;
+  windIntensity: number;
+  hasHumidity: boolean;
+  humidityIntensity: number;
+  hasVegetation: boolean;
+  hasTopography: boolean;
   history: string[];
 }
 
@@ -167,6 +179,12 @@ export function buildArchitecturalGeometry(
     pilotisHeight: 0.3,
     hasLattice: false,
     hasWater: false,
+    hasWindFlow: false,
+    windIntensity: 0.5,
+    hasHumidity: false,
+    humidityIntensity: 0.5,
+    hasVegetation: false,
+    hasTopography: false,
     history: [],
   };
 
@@ -390,11 +408,120 @@ export function buildArchitecturalGeometry(
       case 'lattice':
         state.hasLattice = true;
         break;
+
+      case 'wind_flow':
+        state.hasWindFlow = true;
+        state.windIntensity = weight;
+        // Horada galería pasante de ventilación cruzada
+        state.subtractions.push({
+          type: 'hole',
+          dir: 'Z',
+          fracW: Math.max(0.2, 0.4 * weight),
+          fracH: Math.max(0.18, 0.3 * weight),
+        });
+        // Añade aletas deflectoras / captadores de viento aerodinámicos
+        state.additions.push({
+          ax: -(state.w * 0.32),
+          ay: -(state.h * 0.1),
+          az: -(state.d / 2 + 0.8),
+          aw: Math.max(0.6, state.w * 0.35 * weight),
+          ah: state.h * 0.6,
+          ad: 0.35,
+          label: 'Deflector de Viento',
+        });
+        break;
+
+      case 'humidity_microclimate':
+        state.hasHumidity = true;
+        state.humidityIntensity = weight;
+        state.hasWater = true;
+        state.hasCourt = true;
+        state.courtSize = Math.max(0.25, 0.42 * weight);
+        break;
+
+      case 'water_feature':
+        state.hasWater = true;
+        break;
+
+      case 'vegetation_buffer':
+        state.hasVegetation = true;
+        break;
+
+      case 'topography_terraces':
+        state.hasTopography = true;
+        state.hasBase = true;
+        state.baseH = Math.max(0.15, 0.28 * weight);
+        break;
+
+      case 'solar_orientation':
+        state.rotY += (op.angle || 0.35) * weight;
+        state.hasCanopy = true;
+        state.canopyDepth = Math.max(0.25, 0.45 * weight);
+        break;
+
+      case 'solar_shading':
+        state.hasCanopy = true;
+        state.hasLattice = true;
+        state.canopyDepth = Math.max(0.3, 0.5 * weight);
+        break;
+
+      case 'thermal_envelope':
+        state.w *= 1 + 0.12 * weight;
+        state.d *= 1 + 0.12 * weight;
+        state.additions.push({
+          ax: 0,
+          ay: 0,
+          az: state.d / 2 + 0.3,
+          aw: state.w * 1.02,
+          ah: state.h * 0.85,
+          ad: 0.35,
+          label: 'Doble Piel Térmica',
+        });
+        break;
+
+      case 'acoustic_barrier':
+        state.additions.push({
+          ax: state.w / 2 + 1.6,
+          ay: -(state.h * 0.2),
+          az: 0,
+          aw: 0.35,
+          ah: state.h * 0.6,
+          ad: state.d * 1.15,
+          label: 'Barrera Acústica',
+        });
+        break;
+
+      case 'panoramic_frame':
+        state.subtractions.push({
+          type: 'hole',
+          dir: 'Z',
+          fracW: Math.max(0.35, 0.62 * weight),
+          fracH: Math.max(0.2, 0.38 * weight),
+        });
+        state.additions.push({
+          ax: 0,
+          ay: state.h * 0.1,
+          az: -(state.d / 2 + 0.6),
+          aw: state.w * 0.68,
+          ah: state.h * 0.42,
+          ad: 0.9,
+          label: 'Marco Visual Panorámico',
+        });
+        break;
     }
   });
 
-  if (activeArtifacts.includes('Agua')) {
+  if (activeArtifacts.includes('Agua') || activeConcepts.includes('Humedad')) {
     state.hasWater = true;
+  }
+  if (activeConcepts.includes('Viento')) {
+    state.hasWindFlow = true;
+  }
+  if (activeConcepts.includes('Preexistencia natural') || activeConcepts.includes('Vegetación')) {
+    state.hasVegetation = true;
+  }
+  if (activeConcepts.includes('Topografía')) {
+    state.hasTopography = true;
   }
 
   // --- MATERIALES DE SIMULACIÓN OSCURA DE ALTO CONTRASTE ---
@@ -779,17 +906,84 @@ export function buildArchitecturalGeometry(
     resultMeshes.push(latM);
   }
 
-  // 8. ESPEJO DE AGUA
+  // 8. ESPEJO DE AGUA Y MICROCLIMA
   if (state.hasWater) {
-    const waterG = new THREE.BoxGeometry(state.w * 1.6, 0.1, state.d * 1.4);
+    const waterG = new THREE.BoxGeometry(state.w * 1.5, 0.12, state.d * 1.35);
     const waterM = new THREE.Mesh(waterG, matWater);
-    waterM.position.set(0, 0.05, state.d * 0.6);
+    waterM.position.set(0, 0.06, state.d * 0.55);
     waterM.receiveShadow = true;
-    waterM.userData = { conceptId: 'Agua' };
+    waterM.userData = { conceptId: 'Humedad' };
     resultMeshes.push(waterM);
+
+    // Borde pétreo del estanque
+    const rimG = new THREE.BoxGeometry(state.w * 1.56, 0.18, state.d * 1.41);
+    const rimM = new THREE.Mesh(rimG, matBase);
+    rimM.position.set(0, 0.05, state.d * 0.55);
+    rimM.receiveShadow = true;
+    resultMeshes.push(rimM);
   }
 
-  // 9. WIREFRAME OVERLAY (para modos wire / ghost) — sigue funcionando sobre la
+  // 9. VEGETACIÓN & CINTURÓN BIOFÍLICO
+  if (state.hasVegetation) {
+    const vegGroup = new THREE.Group();
+    vegGroup.name = 'vegetation_group';
+    const trunkMat = new THREE.MeshLambertMaterial({ color: 0x4a3728 });
+    const foliageMat = new THREE.MeshLambertMaterial({ color: 0x22c55e });
+    const trunkGeo = new THREE.CylinderGeometry(0.12, 0.18, 2.8, 8);
+    const foliageGeo = new THREE.SphereGeometry(1.2, 10, 8);
+
+    const treePositions = [
+      { x: -(state.w * 0.75), z: -(state.d * 0.65) },
+      { x: -(state.w * 0.85), z: 0 },
+      { x: -(state.w * 0.7), z: state.d * 0.7 },
+      { x: state.w * 0.8, z: -(state.d * 0.6) },
+      { x: state.w * 0.85, z: state.d * 0.5 },
+      { x: 0, z: -(state.d * 0.85) },
+    ];
+
+    treePositions.forEach((pos, idx) => {
+      const tree = new THREE.Group();
+      const scale = 0.8 + (idx % 3) * 0.25;
+      
+      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+      trunk.position.y = 1.4 * scale;
+      trunk.castShadow = true;
+      tree.add(trunk);
+
+      const foliage = new THREE.Mesh(foliageGeo, foliageMat);
+      foliage.position.y = (2.8 + 0.8) * scale;
+      foliage.scale.set(scale, scale * 1.25, scale);
+      foliage.castShadow = true;
+      foliage.receiveShadow = true;
+      tree.add(foliage);
+
+      tree.position.set(pos.x, 0, pos.z);
+      vegGroup.add(tree);
+    });
+
+    resultGroups.push(vegGroup);
+  }
+
+  // 10. TERRAZAS TOPOGRÁFICAS
+  if (state.hasTopography) {
+    const topoGroup = new THREE.Group();
+    topoGroup.name = 'topography_group';
+    const topoMat = new THREE.MeshLambertMaterial({ color: 0x334155 });
+    
+    for (let t = 1; t <= 3; t++) {
+      const tw = state.w * (1.3 + t * 0.25);
+      const td = state.d * (1.3 + t * 0.25);
+      const th = 0.45;
+      const tGeo = new THREE.BoxGeometry(tw, th, td);
+      const tMesh = new THREE.Mesh(tGeo, topoMat);
+      tMesh.position.set(t * 0.8, -th * t, t * 0.5);
+      tMesh.receiveShadow = true;
+      topoGroup.add(tMesh);
+    }
+    resultGroups.push(topoGroup);
+  }
+
+  // 11. WIREFRAME OVERLAY (para modos wire / ghost) — sigue funcionando sobre la
   // geometría perforada: clona la malla CSG resultante, hoyos incluidos.
   if (isWire || isGhost) {
     resultMeshes.forEach((mesh) => {
@@ -816,5 +1010,11 @@ export function buildArchitecturalGeometry(
     lights: resultLights,
     history: state.history,
     finalDimensions: { w: state.w, h: state.h, d: state.d },
+    hasWindFlow: state.hasWindFlow,
+    windIntensity: state.windIntensity,
+    hasHumidity: state.hasHumidity,
+    humidityIntensity: state.humidityIntensity,
+    hasVegetation: state.hasVegetation,
+    hasTopography: state.hasTopography,
   };
 }

@@ -46,6 +46,24 @@ export const Viewport3D: React.FC = () => {
   const volumeGroupRef = useRef<THREE.Group | null>(null);
   const groundGroupRef = useRef<THREE.Group | null>(null);
   const humanGroupRef = useRef<THREE.Group | null>(null);
+  const windGroupRef = useRef<THREE.Group | null>(null);
+  const mistGroupRef = useRef<THREE.Group | null>(null);
+  const windParticlesRef = useRef<{ positions: Float32Array; speeds: Float32Array; geom: THREE.BufferGeometry } | null>(null);
+  const mistParticlesRef = useRef<{ positions: Float32Array; geom: THREE.BufferGeometry } | null>(null);
+
+  const [envInfo, setEnvInfo] = useState<{
+    hasWind: boolean;
+    windSpeed: number;
+    hasHumidity: boolean;
+    hasVegetation: boolean;
+    hasTopography: boolean;
+  }>({
+    hasWind: false,
+    windSpeed: 0,
+    hasHumidity: false,
+    hasVegetation: false,
+    hasTopography: false,
+  });
 
   // Fallo de WebGL (B3 auditoría): si no se puede crear el contexto, mostramos
   // un aviso y el tablero 2D sigue operativo en lugar de tumbar la app entera.
@@ -234,6 +252,14 @@ export const Viewport3D: React.FC = () => {
     scene.add(humanGroup);
     humanGroupRef.current = humanGroup;
 
+    const windGroup = new THREE.Group();
+    scene.add(windGroup);
+    windGroupRef.current = windGroup;
+
+    const mistGroup = new THREE.Group();
+    scene.add(mistGroup);
+    mistGroupRef.current = mistGroup;
+
     // Grid técnico dorado/charcoal (colores por tema)
     const grid = new THREE.GridHelper(
       120,
@@ -263,6 +289,34 @@ export const Viewport3D: React.FC = () => {
     let animationFrameId: number;
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
+
+      // Animar partículas de flujo de viento
+      if (windParticlesRef.current) {
+        const { positions, speeds, geom } = windParticlesRef.current;
+        const count = positions.length / 3;
+        for (let i = 0; i < count; i++) {
+          const idx = i * 3;
+          positions[idx + 2] += speeds[i];
+          if (positions[idx + 2] > 45) {
+            positions[idx + 2] = -45;
+            positions[idx] = (Math.random() - 0.5) * 35;
+          }
+        }
+        geom.attributes.position.needsUpdate = true;
+      }
+
+      // Animar neblina de humedad
+      if (mistParticlesRef.current) {
+        const { positions, geom } = mistParticlesRef.current;
+        const count = positions.length / 3;
+        const time = Date.now() * 0.002;
+        for (let i = 0; i < count; i++) {
+          const idx = i * 3;
+          positions[idx + 1] = 0.2 + Math.sin(time + i * 0.5) * 0.2 + 0.15;
+        }
+        geom.attributes.position.needsUpdate = true;
+      }
+
       if (rendererRef.current && sceneRef.current && cameraRef.current) {
         rendererRef.current.render(sceneRef.current, cameraRef.current);
       }
@@ -359,7 +413,7 @@ export const Viewport3D: React.FC = () => {
       obj.geometry?.dispose();
     }
 
-    const { meshes, groups, lights } = buildArchitecturalGeometry(
+    const built = buildArchitecturalGeometry(
       activeConcepts,
       activeArtifacts,
       nodeParams,
@@ -367,14 +421,92 @@ export const Viewport3D: React.FC = () => {
       shadingMode
     );
 
-    meshes.forEach((m) => volumeGroup.add(m));
-    groups.forEach((g) => volumeGroup.add(g));
+    built.meshes.forEach((m) => volumeGroup.add(m));
+    built.groups.forEach((g) => volumeGroup.add(g));
+
+    setEnvInfo({
+      hasWind: !!built.hasWindFlow,
+      windSpeed: built.hasWindFlow ? 2.5 + (built.windIntensity || 0.5) * 4.5 : 0,
+      hasHumidity: !!built.hasHumidity,
+      hasVegetation: !!built.hasVegetation,
+      hasTopography: !!built.hasTopography,
+    });
+
+    // Reconstruir viento animado
+    if (windGroupRef.current) {
+      while (windGroupRef.current.children.length > 0) {
+        windGroupRef.current.remove(windGroupRef.current.children[0]);
+      }
+      windParticlesRef.current = null;
+
+      if (built.hasWindFlow) {
+        const count = 320;
+        const positions = new Float32Array(count * 3);
+        const speeds = new Float32Array(count);
+
+        for (let i = 0; i < count; i++) {
+          const idx = i * 3;
+          const isTunnel = Math.random() < 0.4;
+          positions[idx] = isTunnel
+            ? (Math.random() - 0.5) * (baseDimensions.w * 0.45)
+            : (Math.random() - 0.5) * (baseDimensions.w * 2.4);
+          positions[idx + 1] = isTunnel
+            ? 1.2 + Math.random() * (baseDimensions.h * 0.45)
+            : Math.random() * (baseDimensions.h * 1.5) + 0.4;
+          positions[idx + 2] = (Math.random() - 0.5) * 80;
+          speeds[i] = 0.35 + (built.windIntensity || 0.5) * 0.5 + Math.random() * 0.2;
+        }
+
+        const pGeom = new THREE.BufferGeometry();
+        pGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const pMat = new THREE.PointsMaterial({
+          color: 0x06b6d4, // Cyan técnico
+          size: 0.4,
+          transparent: true,
+          opacity: 0.85,
+        });
+        const points = new THREE.Points(pGeom, pMat);
+        windGroupRef.current.add(points);
+
+        windParticlesRef.current = { positions, speeds, geom: pGeom };
+      }
+    }
+
+    // Reconstruir neblina de humedad
+    if (mistGroupRef.current) {
+      while (mistGroupRef.current.children.length > 0) {
+        mistGroupRef.current.remove(mistGroupRef.current.children[0]);
+      }
+      mistParticlesRef.current = null;
+
+      if (built.hasHumidity) {
+        const count = 140;
+        const positions = new Float32Array(count * 3);
+        for (let i = 0; i < count; i++) {
+          const idx = i * 3;
+          positions[idx] = (Math.random() - 0.5) * (baseDimensions.w * 1.5);
+          positions[idx + 1] = 0.2 + Math.random() * 0.6;
+          positions[idx + 2] = baseDimensions.d * 0.55 + (Math.random() - 0.5) * (baseDimensions.d * 1.3);
+        }
+        const mGeom = new THREE.BufferGeometry();
+        mGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const mMat = new THREE.PointsMaterial({
+          color: 0x38bdf8,
+          size: 0.55,
+          transparent: true,
+          opacity: 0.5,
+        });
+        const mPoints = new THREE.Points(mGeom, mMat);
+        mistGroupRef.current.add(mPoints);
+        mistParticlesRef.current = { positions, geom: mGeom };
+      }
+    }
 
     // Luces secundarias de atrio
     const oldLights = scene.children.filter((c) => c.name === 'atrium_light');
     oldLights.forEach((l) => scene.remove(l));
 
-    lights.forEach((l) => {
+    built.lights.forEach((l) => {
       l.name = 'atrium_light';
       scene.add(l);
     });
@@ -533,14 +665,44 @@ export const Viewport3D: React.FC = () => {
         </div>
       )}
 
-      {/* Título de Cabecera 3D */}
-      <div className="absolute top-3.5 left-3.5 pointer-events-none flex flex-col gap-0.5">
-        <span className="font-mono text-[10px] tracking-widest text-diagramaxis-gold font-bold uppercase">
-          Masa Modular 3D · DIAGRAMAXIS
-        </span>
-        <span className="font-serif italic text-[16px] text-diagramaxis-text font-medium">
-          {projectName || 'Volumen Proyectual'}
-        </span>
+      {/* Título de Cabecera 3D y Telemetría Ambiental */}
+      <div className="absolute top-3.5 left-3.5 pointer-events-none flex flex-col gap-1.5 z-10">
+        <div className="flex flex-col gap-0.5">
+          <span className="font-mono text-[10px] tracking-widest text-diagramaxis-gold font-bold uppercase">
+            Masa Modular 3D · DIAGRAMAXIS
+          </span>
+          <span className="font-serif italic text-[16px] text-diagramaxis-text font-medium">
+            {projectName || 'Volumen Proyectual'}
+          </span>
+        </div>
+
+        {/* Badges de Simulación Ambiental Activa */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+          {envInfo.hasWind && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-diagramaxis-surface/90 backdrop-blur-md border border-diagramaxis-cyan/50 text-diagramaxis-cyan rounded-xs font-mono text-[10.5px] font-semibold shadow-md">
+              <span className="w-2 h-2 rounded-full bg-diagramaxis-cyan animate-pulse" />
+              <span>Viento: {envInfo.windSpeed.toFixed(1)} m/s (Ventilación Cruzada)</span>
+            </div>
+          )}
+          {envInfo.hasHumidity && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-diagramaxis-surface/90 backdrop-blur-md border border-sky-400/50 text-sky-400 rounded-xs font-mono text-[10.5px] font-semibold shadow-md">
+              <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
+              <span>Humedad: Microclima Evaporativo</span>
+            </div>
+          )}
+          {envInfo.hasVegetation && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-diagramaxis-surface/90 backdrop-blur-md border border-emerald-400/50 text-emerald-400 rounded-xs font-mono text-[10.5px] font-semibold shadow-md">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span>Cinturón Biofílico</span>
+            </div>
+          )}
+          {envInfo.hasTopography && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-diagramaxis-surface/90 backdrop-blur-md border border-amber-400/50 text-amber-400 rounded-xs font-mono text-[10.5px] font-semibold shadow-md">
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
+              <span>Terrazas Topográficas</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Selector de Vistas de Cámara */}

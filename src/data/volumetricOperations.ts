@@ -330,6 +330,75 @@ export const VOLUMETRIC_OPERATIONS: Record<string, VolumetricOperation> = {
     label: 'Estructura aporticada',
     pedagogicalTip: 'Malla de soportes puntuales que liberan la envolvente de cargas.',
   },
+
+  // --- COMPONENTES DE LA REALIDAD: ESPACIO & MEDIO AMBIENTE ---
+  'Viento': {
+    op: 'wind_flow',
+    factor: 1.0,
+    label: 'Canalización aerodinámica y ventilación cruzada',
+    pedagogicalTip: 'Horada galerías de ventilación pasante en la dirección dominante del viento, bisela aristas y activa el flujo animado de brisas en el visor.',
+  },
+  'Humedad': {
+    op: 'humidity_microclimate',
+    factor: 1.0,
+    label: 'Espejo de agua y microclima evaporativo',
+    pedagogicalTip: 'Integra un espejo de agua basal para refrigeración evaporativa pasiva, abre patios de sombra y genera una neblina higrotérmica ambiental.',
+  },
+  'Agua': {
+    op: 'water_feature',
+    factor: 1.0,
+    label: 'Lámina de agua basal y canal hídrico',
+    pedagogicalTip: 'Extiende un plano de agua reflectante en la cota del terreno que cualifica térmicamente el entorno y refleja la masa edificada.',
+  },
+  'Visuales': {
+    op: 'panoramic_frame',
+    size: 0.55,
+    label: 'Encuadre visual panorámico',
+    pedagogicalTip: 'Abre un gran vano rasgado y voladizo direccionado hacia las líneas de fuga visuales y remates del paisaje exterior.',
+  },
+  'Orientación': {
+    op: 'solar_orientation',
+    angle: 0.35,
+    label: 'Adaptación heliofánica y aleros',
+    pedagogicalTip: 'Ajusta la orientación del volumen respecto al asoleamiento e incorpora aleros protectores contra la radiación directa.',
+  },
+  'Temperatura': {
+    op: 'thermal_envelope',
+    factor: 1.3,
+    label: 'Inercia térmica y doble piel',
+    pedagogicalTip: 'Engrosa la envolvente perimetral generando una cámara de aire amortiguadora que estabiliza el gradiente térmico interior.',
+  },
+  'Sonido': {
+    op: 'acoustic_barrier',
+    size: 0.35,
+    label: 'Barrera acústica y deflectores',
+    pedagogicalTip: 'Dispone pantallas acústicas perimetrales y muros deflectores angulados que absorben y desvían el ruido ambiental.',
+  },
+  'Preexistencia natural': {
+    op: 'vegetation_buffer',
+    factor: 1.0,
+    label: 'Cinturón vegetal y relieve vivo',
+    pedagogicalTip: 'Genera una barrera arbórea y masa vegetal perimetral que actúa como filtro biofílico y amortiguador microclimático.',
+  },
+  'Preexistencia artificial': {
+    op: 'add',
+    face: 'ext',
+    size: 0.45,
+    label: 'Consolidación de medianera y trama',
+    pedagogicalTip: 'Adosa volúmenes testigo que representan la preexistencia construida y dialogan con la masa proyectada.',
+  },
+  'Topografía': {
+    op: 'topography_terraces',
+    steps: 3,
+    label: 'Terrazas topográficas y zócalo',
+    pedagogicalTip: 'Moldea el suelo en terrazas escalonadas adaptativas donde el edificio se enclava o suspende.',
+  },
+  'Vegetación': {
+    op: 'vegetation_buffer',
+    factor: 1.0,
+    label: 'Vegetación amortiguadora',
+    pedagogicalTip: 'Integra especies vegetales que sombrean fachadas, retienen humedad y oxigenan el microclima interior y exterior.',
+  },
 };
 
 export function getVolumetricOperation(id: string): VolumetricOperation | null {

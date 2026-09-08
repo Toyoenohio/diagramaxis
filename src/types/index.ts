@@ -68,7 +68,17 @@ export type OperationType =
   | 'terrace'
   | 'canopy'
   | 'pilotis'
-  | 'lattice';
+  | 'lattice'
+  | 'wind_flow'
+  | 'humidity_microclimate'
+  | 'solar_orientation'
+  | 'solar_shading'
+  | 'vegetation_buffer'
+  | 'topography_terraces'
+  | 'acoustic_barrier'
+  | 'thermal_envelope'
+  | 'panoramic_frame'
+  | 'water_feature';
 
 export interface VolumetricOperation {
   op: OperationType;
