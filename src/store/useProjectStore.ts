@@ -69,7 +69,9 @@ interface ProjectState {
   toggleConcept: (id: string) => void;
   toggleArtifact: (id: string) => void;
   setNodeParam: (id: string, field: 'weight' | 'intensity', value: number) => void;
+  setNodeCustomParam: (id: string, key: string, value: any) => void;
   addRelation: (rel: Omit<ProjectRelation, 'id'>) => void;
+  updateRelation: (id: string, updates: Partial<ProjectRelation>) => void;
   removeRelation: (id: string) => void;
   setSelectedNodeId: (id: string | null) => void;
 
@@ -309,6 +311,31 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     });
   },
 
+  setNodeCustomParam: (id, key, value) => {
+    const { nodeParams, nodes } = get();
+    const current = nodeParams[id] || { weight: 0.6, intensity: 0.5, custom: {} };
+    const custom = { ...(current.custom || {}), [key]: value };
+    const updated = { ...current, custom };
+
+    const updatedNodes = nodes.map((n) => {
+      if (n.id === id) {
+        return {
+          ...n,
+          data: {
+            ...n.data,
+            custom,
+          },
+        };
+      }
+      return n;
+    });
+
+    set({
+      nodeParams: { ...nodeParams, [id]: updated },
+      nodes: updatedNodes,
+    });
+  },
+
   addRelation: (relData) => {
     const { relations, edges } = get();
     const id = `rel_${relData.from}_${relData.to}_${Date.now()}`;
@@ -332,6 +359,40 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       isRelationModalOpen: false,
     });
     get().showToast(`Relación: ${relData.from} ${relData.dir} ${relData.to} [${relData.type}]`);
+  },
+
+  updateRelation: (id, updates) => {
+    const { relations, edges } = get();
+    const updatedRelations = relations.map((r) => {
+      if (r.id === id) {
+        return { ...r, ...updates };
+      }
+      return r;
+    });
+
+    const targetRel = updatedRelations.find((r) => r.id === id);
+    const updatedEdges = edges.map((e) => {
+      if (e.id === id && targetRel) {
+        return {
+          ...e,
+          data: {
+            ...e.data,
+            relationType: targetRel.type,
+            direction: targetRel.dir,
+            intensity: targetRel.intensity,
+          },
+        };
+      }
+      return e;
+    });
+
+    set({
+      relations: updatedRelations,
+      edges: updatedEdges,
+    });
+    if (targetRel) {
+      get().showToast(`Relación actualizada: ${targetRel.type} (${targetRel.dir})`);
+    }
   },
 
   removeRelation: (id) => {

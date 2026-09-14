@@ -17,7 +17,9 @@ export const RightSidebar: React.FC = () => {
     setSelectedNodeId,
     nodeParams,
     setNodeParam,
+    setNodeCustomParam,
     relations,
+    updateRelation,
     removeRelation,
     baseDimensions,
     setBaseDimensions,
@@ -205,6 +207,260 @@ export const RightSidebar: React.FC = () => {
                         />
                       </div>
                     </div>
+
+                    {/* Modificadores Operacionales Configurables */}
+                    {currentOp && (
+                      <div className="flex flex-col gap-3 pt-3 border-t border-diagramaxis-border">
+                        <span className="font-mono text-[10px] uppercase tracking-widest text-diagramaxis-gold font-bold">
+                          Modificadores Volumétricos 3D
+                        </span>
+
+                        {/* Vacíos / Perforaciones / Vanos / Túneles / Carve */}
+                        {(currentOp.op === 'perforate' || currentOp.op === 'carve' || currentOp.op === 'open') && (
+                          <div className="flex flex-col gap-2.5 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
+                            <div className="flex flex-col gap-1">
+                              <label className="font-mono text-[10px] text-diagramaxis-textMuted uppercase">
+                                Eje de Horadado / Vacío:
+                              </label>
+                              <div className="grid grid-cols-3 gap-1 font-mono text-[11px]">
+                                {(['X', 'Y', 'Z'] as const).map((ax) => (
+                                  <button
+                                    key={ax}
+                                    type="button"
+                                    onClick={() => setNodeCustomParam(currentNodeId, 'voidAxis', ax)}
+                                    className={`py-1 rounded-xs border transition-colors ${
+                                      (currentParam.custom?.voidAxis || currentOp.dir || 'Z') === ax
+                                        ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                                        : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
+                                    }`}
+                                  >
+                                    Eje {ax}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <div className="flex justify-between font-mono text-[10.5px]">
+                                <span className="text-diagramaxis-textMuted">Ancho del Vacío:</span>
+                                <span className="font-bold text-diagramaxis-gold">
+                                  {Math.round(((currentParam.custom?.voidW as number) ?? (currentOp.size || 0.35)) * 100)}%
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="0.1"
+                                max="0.85"
+                                step="0.05"
+                                value={(currentParam.custom?.voidW as number) ?? (currentOp.size || 0.35)}
+                                onChange={(e) => setNodeCustomParam(currentNodeId, 'voidW', parseFloat(e.target.value))}
+                                className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+                              />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <div className="flex justify-between font-mono text-[10.5px]">
+                                <span className="text-diagramaxis-textMuted">Alto del Vacío:</span>
+                                <span className="font-bold text-diagramaxis-gold">
+                                  {Math.round(((currentParam.custom?.voidH as number) ?? (currentOp.size || 0.35)) * 100)}%
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="0.1"
+                                max="0.85"
+                                step="0.05"
+                                value={(currentParam.custom?.voidH as number) ?? (currentOp.size || 0.35)}
+                                onChange={(e) => setNodeCustomParam(currentNodeId, 'voidH', parseFloat(e.target.value))}
+                                className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+                              />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <div className="flex justify-between font-mono text-[10.5px]">
+                                <span className="text-diagramaxis-textMuted">Desfase Horizontal (X):</span>
+                                <span className="font-bold text-diagramaxis-cyan">
+                                  {(((currentParam.custom?.voidX as number) ?? 0) * 100).toFixed(0)}%
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="-0.35"
+                                max="0.35"
+                                step="0.05"
+                                value={(currentParam.custom?.voidX as number) ?? 0}
+                                onChange={(e) => setNodeCustomParam(currentNodeId, 'voidX', parseFloat(e.target.value))}
+                                className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
+                              />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <div className="flex justify-between font-mono text-[10.5px]">
+                                <span className="text-diagramaxis-textMuted">Desfase Vertical (Y):</span>
+                                <span className="font-bold text-diagramaxis-cyan">
+                                  {(((currentParam.custom?.voidY as number) ?? 0) * 100).toFixed(0)}%
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="-0.35"
+                                max="0.35"
+                                step="0.05"
+                                value={(currentParam.custom?.voidY as number) ?? 0}
+                                onChange={(e) => setNodeCustomParam(currentNodeId, 'voidY', parseFloat(e.target.value))}
+                                className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Desfragmentación / Fractura */}
+                        {(currentOp.op === 'fracture' || currentNodeId === 'Desfragmentación') && (
+                          <div className="flex flex-col gap-2.5 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
+                            <div className="flex flex-col gap-1">
+                              <label className="font-mono text-[10px] text-diagramaxis-textMuted uppercase">
+                                Cantidad de Bloques / Fragmentos:
+                              </label>
+                              <div className="grid grid-cols-4 gap-1 font-mono text-[11px]">
+                                {[2, 3, 4, 5].map((cnt) => (
+                                  <button
+                                    key={cnt}
+                                    type="button"
+                                    onClick={() => setNodeCustomParam(currentNodeId, 'fragments', cnt)}
+                                    className={`py-1 rounded-xs border transition-colors ${
+                                      ((currentParam.custom?.fragments as number) || 2) === cnt
+                                        ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                                        : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
+                                    }`}
+                                  >
+                                    {cnt}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <div className="flex justify-between font-mono text-[10.5px]">
+                                <span className="text-diagramaxis-textMuted">Distancia de Fisura (Gap):</span>
+                                <span className="font-bold text-diagramaxis-gold">
+                                  {(((currentParam.custom?.gap as number) ?? 0.15) * 100).toFixed(0)}%
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="0.05"
+                                max="0.35"
+                                step="0.02"
+                                value={(currentParam.custom?.gap as number) ?? 0.15}
+                                onChange={(e) => setNodeCustomParam(currentNodeId, 'gap', parseFloat(e.target.value))}
+                                className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+                              />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <div className="flex justify-between font-mono text-[10.5px]">
+                                <span className="text-diagramaxis-textMuted">Dislocación / Desfase:</span>
+                                <span className="font-bold text-diagramaxis-cyan">
+                                  {(((currentParam.custom?.dislocation as number) ?? 0.12) * 100).toFixed(0)}%
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="0.0"
+                                max="0.35"
+                                step="0.02"
+                                value={(currentParam.custom?.dislocation as number) ?? 0.12}
+                                onChange={(e) => setNodeCustomParam(currentNodeId, 'dislocation', parseFloat(e.target.value))}
+                                className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Colosal / Monumentalidad */}
+                        {(currentNodeId === 'Colosal' || currentOp.op === 'extend') && (
+                          <div className="flex flex-col gap-2 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
+                            <div className="flex justify-between font-mono text-[10.5px]">
+                              <span className="text-diagramaxis-textMuted">Escala vs Figura Humana:</span>
+                              <span className="font-bold text-diagramaxis-gold">
+                                {((currentParam.custom?.colossalScale as number) ?? (currentNodeId === 'Colosal' ? 2.5 : 1.0)).toFixed(1)}x
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min="1.0"
+                              max="4.0"
+                              step="0.1"
+                              value={(currentParam.custom?.colossalScale as number) ?? (currentNodeId === 'Colosal' ? 2.5 : 1.0)}
+                              onChange={(e) => setNodeCustomParam(currentNodeId, 'colossalScale', parseFloat(e.target.value))}
+                              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+                            />
+                            <span className="font-mono text-[9.5px] text-diagramaxis-textMuted">
+                              Compara visualmente con la silueta humana dorada de 1.75m.
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Patio / Atrio */}
+                        {(currentOp.op === 'courtyard' || currentOp.op === 'atrium') && (
+                          <div className="flex flex-col gap-2.5 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
+                            <div className="flex flex-col gap-1">
+                              <div className="flex justify-between font-mono text-[10.5px]">
+                                <span className="text-diagramaxis-textMuted">Ancho de Patio:</span>
+                                <span className="font-bold text-diagramaxis-gold">
+                                  {Math.round(((currentParam.custom?.courtW as number) ?? 0.45) * 100)}%
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="0.15"
+                                max="0.75"
+                                step="0.05"
+                                value={(currentParam.custom?.courtW as number) ?? 0.45}
+                                onChange={(e) => setNodeCustomParam(currentNodeId, 'courtW', parseFloat(e.target.value))}
+                                className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+                              />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <div className="flex justify-between font-mono text-[10.5px]">
+                                <span className="text-diagramaxis-textMuted">Profundidad de Patio:</span>
+                                <span className="font-bold text-diagramaxis-gold">
+                                  {Math.round(((currentParam.custom?.courtD as number) ?? 0.45) * 100)}%
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="0.15"
+                                max="0.75"
+                                step="0.05"
+                                value={(currentParam.custom?.courtD as number) ?? 0.45}
+                                onChange={(e) => setNodeCustomParam(currentNodeId, 'courtD', parseFloat(e.target.value))}
+                                className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+                              />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <div className="flex justify-between font-mono text-[10.5px]">
+                                <span className="text-diagramaxis-textMuted">Desfase X:</span>
+                                <span className="font-bold text-diagramaxis-cyan">
+                                  {(((currentParam.custom?.courtX as number) ?? 0) * 100).toFixed(0)}%
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="-0.25"
+                                max="0.25"
+                                step="0.05"
+                                value={(currentParam.custom?.courtX as number) ?? 0}
+                                onChange={(e) => setNodeCustomParam(currentNodeId, 'courtX', parseFloat(e.target.value))}
+                                className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -306,30 +562,99 @@ export const RightSidebar: React.FC = () => {
                 No hay hilos tendidos aún. Usa el botón &quot;+ Nuevo Hilo&quot; o conecta los pines de las fichas directamente en el tablero.
               </div>
             ) : (
-              <div className="flex flex-col gap-2.5">
+              <div className="flex flex-col gap-3">
                 {relations.map((r) => (
                   <div
                     key={r.id}
-                    className="p-3 bg-diagramaxis-surface2 border border-diagramaxis-border hover:border-diagramaxis-gold rounded-sm flex items-center justify-between gap-2 shadow-xs transition-colors"
+                    className="p-3 bg-diagramaxis-surface2 border border-diagramaxis-border hover:border-diagramaxis-gold rounded-sm flex flex-col gap-2.5 shadow-xs transition-colors"
                   >
-                    <div className="flex flex-col gap-1 min-w-0">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 font-serif italic text-[14px] text-diagramaxis-text">
                         <span className="font-bold text-diagramaxis-gold truncate max-w-[95px]">{r.from}</span>
                         <span className="font-mono text-[11px] text-diagramaxis-textDim">{r.dir}</span>
                         <span className="font-bold text-diagramaxis-cyan truncate max-w-[95px]">{r.to}</span>
                       </div>
-                      <span className="font-mono text-[10.5px] text-diagramaxis-textMuted">
-                        Vínculo: <strong className="text-diagramaxis-text">{r.type}</strong> (Fuerza: {(r.intensity || 0.7).toFixed(1)})
-                      </span>
+                      <button
+                        onClick={() => removeRelation(r.id)}
+                        title="Cortar hilo"
+                        className="text-diagramaxis-textDim hover:text-diagramaxis-danger p-1 font-mono text-[11px] transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
 
-                    <button
-                      onClick={() => removeRelation(r.id)}
-                      title="Cortar hilo"
-                      className="text-diagramaxis-textDim hover:text-diagramaxis-danger p-1.5 font-mono text-[11px]"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                    {/* Selector de Tipo de Relación en Línea */}
+                    <div className="flex flex-col gap-1">
+                      <div className="flex justify-between font-mono text-[10px] uppercase text-diagramaxis-textMuted">
+                        <span>Tipo de Vínculo:</span>
+                      </div>
+                      <select
+                        value={r.type}
+                        onChange={(e) => updateRelation(r.id, { type: e.target.value })}
+                        className="w-full p-1.5 bg-diagramaxis-bg border border-diagramaxis-border focus:border-diagramaxis-gold rounded-xs font-mono text-[11.5px] text-diagramaxis-text outline-none"
+                      >
+                        <optgroup label="Compositivas">
+                          <option value="define">define</option>
+                          <option value="amplifica">amplifica (+fuerza)</option>
+                          <option value="restringe">restringe (-fuerza)</option>
+                          <option value="complementa">complementa</option>
+                          <option value="contradice">contradice (tensión)</option>
+                          <option value="sustituye">sustituye</option>
+                        </optgroup>
+                        <optgroup label="Jerárquicas">
+                          <option value="origina">origina</option>
+                          <option value="precede">precede</option>
+                          <option value="subordina">subordina</option>
+                          <option value="jerarquiza">jerarquiza</option>
+                        </optgroup>
+                        <optgroup label="Espaciales">
+                          <option value="contiene">contiene</option>
+                          <option value="transita">transita</option>
+                          <option value="tensiona">tensiona</option>
+                          <option value="articula">articula</option>
+                          <option value="separa">separa</option>
+                        </optgroup>
+                      </select>
+                    </div>
+
+                    {/* Dirección y Fuerza */}
+                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-diagramaxis-border/60">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-mono text-[9px] uppercase text-diagramaxis-textMuted">Dirección:</span>
+                        <div className="flex gap-1 font-mono text-[10px]">
+                          {(['A→B', 'B→A', 'A↔B'] as const).map((dir) => (
+                            <button
+                              key={dir}
+                              type="button"
+                              onClick={() => updateRelation(r.id, { dir })}
+                              className={`flex-1 py-1 rounded-xs border text-center transition-colors ${
+                                r.dir === dir
+                                  ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                                  : 'bg-diagramaxis-bg border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
+                              }`}
+                            >
+                              {dir}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <div className="flex justify-between font-mono text-[9px] uppercase text-diagramaxis-textMuted">
+                          <span>Fuerza:</span>
+                          <span className="font-bold text-diagramaxis-cyan">{(r.intensity || 0.7).toFixed(1)}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0.1"
+                          max="1.0"
+                          step="0.05"
+                          value={r.intensity || 0.7}
+                          onChange={(e) => updateRelation(r.id, { intensity: parseFloat(e.target.value) })}
+                          className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer mt-1"
+                        />
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

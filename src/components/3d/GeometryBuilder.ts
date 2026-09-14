@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Brush, Evaluator, SUBTRACTION } from 'three-bvh-csg';
-import { NodeParam, RenderShadingMode } from '../../types';
+import { NodeParam, RenderShadingMode, ProjectRelation } from '../../types';
 import { getVolumetricOperation } from '../../data/volumetricOperations';
 
 export interface BuiltVolumeResult {
@@ -38,9 +38,7 @@ interface GeometricState {
   /**
    * Sustracciones reales (CSG). Las dimensiones se guardan como FRACCIONES de
    * las dimensiones del estado en el momento de crearse la operación, y al
-   * construir el CSG se multiplican por las dimensiones FINALES del sólido:
-   * así el vacío escala de forma coherente con el sólido aunque una operación
-   * de extensión llegue después, y los cortes pasantes atraviesan de verdad.
+   * construir el CSG se multiplican por las dimensiones FINALES del sólido.
    */
   subtractions: Array<{
     type: string;
@@ -49,6 +47,7 @@ interface GeometricState {
     fracW?: number;
     fracH?: number;
     fracD?: number;
+    cxFrac?: number;
     cyFrac?: number;
     czFrac?: number;
   }>;
@@ -56,6 +55,8 @@ interface GeometricState {
   hollowFactor: number;
   fractured: boolean;
   fracGap: number;
+  fracCount?: number;
+  fracDislocation?: number;
   gradeSteps: number;
   gradeDir: 'X' | 'Z';
   deformMag: number;
@@ -66,6 +67,10 @@ interface GeometricState {
   hasTerrace: boolean;
   hasCourt: boolean;
   courtSize: number;
+  courtW?: number;
+  courtD?: number;
+  courtX?: number;
+  courtZ?: number;
   hasAtrium: boolean;
   atriumSize: number;
   hasPilotis: boolean;
@@ -143,7 +148,8 @@ export function buildArchitecturalGeometry(
   activeArtifacts: string[],
   nodeParams: Record<string, NodeParam>,
   baseDimensions: { w: number; h: number; d: number },
-  shadingMode: RenderShadingMode
+  shadingMode: RenderShadingMode,
+  relations: ProjectRelation[] = []
 ): BuiltVolumeResult {
   const resultMeshes: THREE.Mesh[] = [];
   const resultGroups: THREE.Group[] = [];
@@ -163,6 +169,8 @@ export function buildArchitecturalGeometry(
     hollowFactor: 0.65,
     fractured: false,
     fracGap: 0,
+    fracCount: 2,
+    fracDislocation: 0.12,
     gradeSteps: 0,
     gradeDir: 'X',
     deformMag: 0,
@@ -173,6 +181,10 @@ export function buildArchitecturalGeometry(
     hasTerrace: false,
     hasCourt: false,
     courtSize: 0.45,
+    courtW: 0.45,
+    courtD: 0.45,
+    courtX: 0,
+    courtZ: 0,
     hasAtrium: false,
     atriumSize: 0.38,
     hasPilotis: false,
@@ -194,16 +206,61 @@ export function buildArchitecturalGeometry(
     const op = getVolumetricOperation(id);
     if (!op) return;
 
+    // Modulación relacional en tiempo real
+    let factorMod = 1.0;
+    let contradiction = false;
+
+    relations.forEach((rel) => {
+      const isTarget = rel.to === id;
+      const isSource = rel.from === id;
+      const isBidi = rel.dir === 'A↔B';
+      const intensity = rel.intensity ?? 0.7;
+
+      if (isTarget || (isBidi && isSource)) {
+        if (rel.type === 'amplifica') {
+          factorMod *= 1 + intensity * 0.45;
+        } else if (rel.type === 'restringe') {
+          factorMod *= Math.max(0.2, 1 - intensity * 0.45);
+        } else if (rel.type === 'contradice') {
+          contradiction = true;
+        } else if (rel.type === 'tensiona') {
+          factorMod *= 1 + intensity * 0.25;
+        }
+      }
+    });
+
     const param = nodeParams[id] || { weight: 0.6, intensity: 0.5 };
-    const weight = Math.max(0.25, param.weight || 0.6);
+    const weight = Math.max(0.2, (param.weight || 0.6) * factorMod);
+    const custom = param.custom || {};
+
+    if (contradiction) {
+      state.rotY += 0.25 * weight;
+      state.shearX += 0.15 * weight;
+    }
 
     state.history.push(op.label || id);
 
     switch (op.op) {
-      case 'extend':
-        if (op.axis === 'Y') state.h *= 1 + (op.factor! - 1) * weight;
-        else if (op.axis === 'X') state.w *= 1 + (op.factor! - 1) * weight;
-        else if (op.axis === 'XZ') {
+      case 'extend': {
+        const customScale = typeof custom.colossalScale === 'number'
+          ? (custom.colossalScale as number)
+          : typeof custom.scaleMultiplier === 'number'
+          ? (custom.scaleMultiplier as number)
+          : null;
+
+        if (customScale && (id === 'Colosal' || op.axis === 'XYZ')) {
+          state.w *= customScale;
+          state.h *= customScale;
+          state.d *= customScale;
+        } else if (id === 'Colosal') {
+          state.w *= 2.5 * weight;
+          state.h *= 2.5 * weight;
+          state.d *= 2.5 * weight;
+        } else if (op.axis === 'Y') {
+          state.h *= 1 + (op.factor! - 1) * weight;
+        } else if (op.axis === 'X') {
+          state.w *= 1 + (op.factor! - 1) * weight;
+        } else if (op.axis === 'XZ') {
           state.w *= 1 + (op.factor! - 1) * weight * 0.7;
           state.d *= 1 + (op.factor! - 1) * weight * 0.7;
         } else if (op.axis === 'XYZ') {
@@ -212,6 +269,7 @@ export function buildArchitecturalGeometry(
           state.d *= 1 + (op.factor! - 1) * weight * 0.55;
         }
         break;
+      }
 
       case 'compress':
         if (op.axis === 'Y') state.h *= op.factor! + (1 - op.factor!) * (1 - weight);
@@ -219,32 +277,26 @@ export function buildArchitecturalGeometry(
         break;
 
       case 'perforate': {
-        // Túnel / Vano / lucernarios: corte REAL pasante en el eje dir
-        const pSize = Math.max(0.18, Math.min(0.7, (op.size || 0.3) * weight * 1.2));
-        if (op.dir === 'Y') {
-          // Cenital: pozo vertical pasante (también atravesaba antes con h*1.15)
-          state.subtractions.push({
-            type: 'hole',
-            dir: 'Y',
-            fracW: pSize,
-            fracD: pSize,
-          });
-        } else if (op.dir === 'Z') {
-          // Frontal pasante (Túnel, Vano)
-          state.subtractions.push({
-            type: 'hole',
-            dir: 'Z',
-            fracW: pSize,
-            fracH: pSize * 1.2,
-          });
-        } else if (op.dir === 'X') {
-          state.subtractions.push({
-            type: 'hole',
-            dir: 'X',
-            fracH: pSize * 1.1,
-            fracD: pSize,
-          });
-        }
+        // Túnel / Vano / lucernarios: corte REAL pasante en el eje dir con modificadores configurables
+        const pSize = Math.max(0.12, Math.min(0.85, (op.size || 0.3) * weight * 1.2));
+        const cDir = (custom.voidAxis as string) || op.dir || 'Z';
+        const fracW = typeof custom.voidW === 'number' ? (custom.voidW as number) : pSize;
+        const fracH = typeof custom.voidH === 'number' ? (custom.voidH as number) : (cDir === 'Z' ? pSize * 1.2 : pSize);
+        const fracD = typeof custom.voidD === 'number' ? (custom.voidD as number) : (cDir === 'X' ? pSize : 1.0);
+        const cxFrac = typeof custom.voidX === 'number' ? (custom.voidX as number) : 0;
+        const cyFrac = typeof custom.voidY === 'number' ? (custom.voidY as number) : 0;
+        const czFrac = typeof custom.voidZ === 'number' ? (custom.voidZ as number) : 0;
+
+        state.subtractions.push({
+          type: 'hole',
+          dir: cDir,
+          fracW,
+          fracH,
+          fracD,
+          cxFrac,
+          cyFrac,
+          czFrac,
+        });
         break;
       }
 
@@ -254,16 +306,24 @@ export function buildArchitecturalGeometry(
         break;
 
       case 'carve': {
-        // Sustracción / Umbral: nicho que abre la cara frontal sin ser pasante
+        // Sustracción / Umbral: nicho con modificadores configurables
         const cSize = (op.size || 0.4) * weight;
+        const fracW = typeof custom.voidW === 'number' ? (custom.voidW as number) : cSize;
+        const fracH = typeof custom.voidH === 'number' ? (custom.voidH as number) : cSize * 0.85;
+        const fracD = typeof custom.voidD === 'number' ? (custom.voidD as number) : 0.55;
+        const cxFrac = typeof custom.voidX === 'number' ? (custom.voidX as number) : 0;
+        const cyFrac = typeof custom.voidY === 'number' ? (custom.voidY as number) : -0.1;
+        const czFrac = typeof custom.voidZ === 'number' ? (custom.voidZ as number) : -0.25;
+
         state.subtractions.push({
           type: 'carve',
           face: op.face || 'front',
-          fracW: cSize,
-          fracH: cSize * 0.85,
-          fracD: 0.55,
-          cyFrac: -0.1,
-          czFrac: -0.25,
+          fracW,
+          fracH,
+          fracD,
+          cxFrac,
+          cyFrac,
+          czFrac,
         });
         break;
       }
@@ -278,10 +338,13 @@ export function buildArchitecturalGeometry(
         });
         break;
 
-      case 'fracture':
+      case 'fracture': {
         state.fractured = true;
-        state.fracGap = (op.gap || 0.15) * weight;
+        state.fracGap = typeof custom.gap === 'number' ? (custom.gap as number) : (op.gap || 0.15) * weight;
+        state.fracCount = typeof custom.fragments === 'number' ? Math.max(2, Math.min(5, Math.round(custom.fragments as number))) : 2;
+        state.fracDislocation = typeof custom.dislocation === 'number' ? (custom.dislocation as number) : 0.12;
         break;
+      }
 
       case 'add': {
         const aSize = (op.size || 0.38) * weight;
@@ -363,10 +426,16 @@ export function buildArchitecturalGeometry(
         });
         break;
 
-      case 'courtyard':
+      case 'courtyard': {
+        const custom = param.custom || {};
         state.hasCourt = true;
         state.courtSize = (op.size || 0.45) * weight;
+        state.courtW = typeof custom.courtW === 'number' ? (custom.courtW as number) : state.courtSize;
+        state.courtD = typeof custom.courtD === 'number' ? (custom.courtD as number) : state.courtSize;
+        state.courtX = typeof custom.courtX === 'number' ? (custom.courtX as number) : 0;
+        state.courtZ = typeof custom.courtZ === 'number' ? (custom.courtZ as number) : 0;
         break;
+      }
 
       case 'atrium':
         state.hasAtrium = true;
@@ -605,8 +674,9 @@ export function buildArchitecturalGeometry(
       let cw = state.w;
       let ch = state.h;
       let cd = state.d;
-      let cy = 0;
-      let cz = 0;
+      let cx = (sub.cxFrac ?? 0) * state.w;
+      let cy = (sub.cyFrac ?? 0) * state.h;
+      let cz = (sub.czFrac ?? 0) * state.d;
       if (sub.type === 'hole') {
         if (sub.dir === 'Z') {
           cw = (sub.fracW ?? 0) * state.w;
@@ -626,22 +696,20 @@ export function buildArchitecturalGeometry(
         cw = (sub.fracW ?? 0) * state.w;
         ch = (sub.fracH ?? 0) * state.h;
         cd = (sub.fracD ?? 0) * state.d;
-        cy = (sub.cyFrac ?? 0) * state.h;
-        cz = (sub.czFrac ?? 0) * state.d;
       }
       if (cw < minDim * 0.01 || ch < minDim * 0.01 || cd < minDim * 0.01) return;
-      cuts.push({ geo: new THREE.BoxGeometry(cw, ch, cd), x: 0, y: cy, z: cz });
+      cuts.push({ geo: new THREE.BoxGeometry(cw, ch, cd), x: cx, y: cy, z: cz });
     });
 
-    // Patio central: pozo vertical pasante de lado a lado (semántica h*1.15
-    // previa, ahora horadado real: se ve a través y las paredes son visibles).
+    // Patio central: pozo vertical pasante de lado a lado
     if (state.hasCourt) {
-      const cs = Math.max(0.05, state.courtSize || 0.45);
+      const cw = Math.max(0.05, state.courtW || state.courtSize || 0.45);
+      const cd = Math.max(0.05, state.courtD || state.courtSize || 0.45);
       cuts.push({
-        geo: new THREE.BoxGeometry(state.w * cs, state.h * PASS_EPS, state.d * cs),
-        x: 0,
+        geo: new THREE.BoxGeometry(state.w * cw, state.h * PASS_EPS, state.d * cd),
+        x: (state.courtX || 0) * state.w,
         y: 0,
-        z: 0,
+        z: (state.courtZ || 0) * state.d,
       });
     }
 
@@ -716,25 +784,25 @@ export function buildArchitecturalGeometry(
 
   // 1. VOLUMEN PRINCIPAL
   if (state.fractured) {
-    const hw = state.w / 2 - state.fracGap * state.w;
-    const g1 = makeBoxGeo(hw, state.h, state.d, state.deformMag);
-    const g2 = makeBoxGeo(hw, state.h, state.d, state.deformMag);
+    const count = Math.max(2, Math.min(5, state.fracCount || 2));
+    const totalGap = state.fracGap * state.w * (count - 1);
+    const blockW = Math.max(0.5, (state.w - totalGap) / count);
+    const startX = -state.w / 2 + blockW / 2;
 
-    const m1 = new THREE.Mesh(g1, matMain);
-    const m2 = new THREE.Mesh(g2, matMain);
+    for (let i = 0; i < count; i++) {
+      const bx = startX + i * (blockW + state.fracGap * state.w);
+      const dislocation = state.fracDislocation || 0.12;
+      const by = posY + (i % 2 === 1 ? state.h * dislocation * 1.5 : 0);
+      const bz = (i % 2 === 1 ? dislocation * state.d * 0.4 : 0);
 
-    m1.position.set(-(hw / 2 + state.fracGap * state.w), posY, 0);
-    m2.position.set(hw / 2 + state.fracGap * state.w, posY + state.h * state.fracGap * 1.5, 0);
-
-    m1.rotation.y = state.rotY;
-    m2.rotation.y = state.rotY + 0.15;
-
-    m1.castShadow = true;
-    m1.receiveShadow = true;
-    m2.castShadow = true;
-    m2.receiveShadow = true;
-
-    resultMeshes.push(m1, m2);
+      const bg = makeBoxGeo(blockW, state.h, state.d, state.deformMag);
+      const bm = new THREE.Mesh(bg, matMain);
+      bm.position.set(bx, by, bz);
+      bm.rotation.y = state.rotY + (i - (count - 1) / 2) * 0.08;
+      bm.castShadow = true;
+      bm.receiveShadow = true;
+      resultMeshes.push(bm);
+    }
   } else if (state.gradeSteps > 1) {
     const steps = state.gradeSteps;
     for (let i = 0; i < steps; i++) {

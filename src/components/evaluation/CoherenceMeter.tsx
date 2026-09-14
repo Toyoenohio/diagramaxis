@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useProjectStore } from '../../store/useProjectStore';
-import { ShieldCheck, Lightbulb } from 'lucide-react';
+import { ShieldCheck, Lightbulb, Calculator, ChevronDown, ChevronUp } from 'lucide-react';
 
 export const CoherenceMeter: React.FC = () => {
   const { getCoherenceReport } = useProjectStore();
+  const [showFormula, setShowFormula] = useState(false);
   const report = getCoherenceReport();
 
   const getScoreColor = (score: number) => {
@@ -27,8 +28,41 @@ export const CoherenceMeter: React.FC = () => {
         <span className="font-mono text-[9px] uppercase tracking-widest text-diagramaxis-cyan font-semibold">
           Evaluador de Coherencia Proyectual
         </span>
-        <span className="font-mono text-[10px] text-diagramaxis-textDim">Sistema ARPV</span>
+        <button
+          onClick={() => setShowFormula(!showFormula)}
+          className="flex items-center gap-1 font-mono text-[10px] text-diagramaxis-gold hover:underline cursor-pointer"
+          title="Ver fórmula matemática y criterios"
+        >
+          <Calculator className="w-3 h-3" />
+          <span>Fórmula ARPV</span>
+          {showFormula ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+        </button>
       </div>
+
+      {/* Explicación Transparente de la Fórmula Matemática */}
+      {showFormula && (
+        <div className="p-3 bg-diagramaxis-evalDeep border border-diagramaxis-gold/50 rounded-sm flex flex-col gap-2 font-mono text-[10.5px] leading-relaxed shadow-lg">
+          <div className="flex items-center justify-between border-b border-diagramaxis-border pb-1">
+            <span className="font-bold text-diagramaxis-gold uppercase text-[10px]">
+              Fórmula Matemática de Coherencia Tripartita:
+            </span>
+          </div>
+          <div className="p-2 bg-diagramaxis-bg rounded-xs border border-diagramaxis-border text-center text-diagramaxis-cyan font-bold text-[11px]">
+            Score = (Discurso × 0.40) + (Topología × 0.40) + (Madurez × 0.20)
+          </div>
+          <ul className="flex flex-col gap-1.5 text-diagramaxis-textBright text-[10px]">
+            <li>
+              <strong className="text-diagramaxis-gold">1. Discurso (40%):</strong> % de conceptos del tablero mencionados y fundamentados en el Discurso Proyectual.
+            </li>
+            <li>
+              <strong className="text-diagramaxis-cyan">2. Topología (40%):</strong> Densidad del grafo de hilos conectores frente al óptimo ($N-1$). Penaliza nodos aislados sin relaciones.
+            </li>
+            <li>
+              <strong className="text-diagramaxis-success">3. Madurez (20%):</strong> Profundidad reflexiva del texto pedagógico (&gt;80 caracteres fundamentados).
+            </li>
+          </ul>
+        </div>
+      )}
 
       {/* Indicador Principal */}
       <div className="p-3.5 bg-diagramaxis-evalBg border border-diagramaxis-evalBorder rounded-sm flex items-center justify-between gap-3 shadow-md">

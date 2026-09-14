@@ -44,38 +44,52 @@ export const ReferencesList: React.FC = () => {
 
       const data = await response.json();
       if (Array.isArray(data.references)) {
-        setReferences(data.references);
+        const sanitized: ArchitecturalReference[] = data.references
+          .map((ref: any) => ({
+            ...ref,
+            conceptosClave: Array.isArray(ref.conceptosClave)
+              ? ref.conceptosClave.filter((c: string) => allItems.includes(c))
+              : [],
+          }))
+          .map((ref: any) => {
+            if (!ref.conceptosClave || ref.conceptosClave.length === 0) {
+              ref.conceptosClave = allItems.slice(0, 2);
+            }
+            return ref;
+          });
+        setReferences(sanitized);
         showToast('Referencias arquitectónicas cargadas');
       } else {
         throw new Error('Formato inválido');
       }
     } catch (err) {
       console.warn('Fallback a base de datos de referencias local:', err);
-      // Fallback local pedagógico
+      // Fallback local pedagógico estrictamente con los conceptos activos del usuario
+      const topActive = allItems.slice(0, 3);
       const fallbackRefs: ArchitecturalReference[] = [
+        {
+          obra: 'Villa Savoye',
+          arquitecto: 'Le Corbusier',
+          año: '1929',
+          ubicacion: 'Poissy, Francia',
+          explicacion: `Articulación paradigmática donde convergen ${topActive.join(', ')} en un sistema de proporciones canónicas y fluidez espacial.`,
+          conceptosClave: topActive,
+        },
         {
           obra: 'Convento de La Tourette',
           arquitecto: 'Le Corbusier',
           año: '1960',
           ubicacion: 'Éveux, Francia',
-          explicacion: 'Masa monolítica de hormigón que se implanta en ladera articulando recorridos procesionales, conductos de luz cenital y brise-soleil rítmicos.',
-          conceptosClave: ['Monolítico', 'Elevación', 'Luz', 'Ritmo Regular'],
+          explicacion: `Masa que cualifica la luz y la gravedad integrando ${topActive.slice(0, 2).join(' y ')}.`,
+          conceptosClave: topActive.slice(0, 2),
         },
         {
-          obra: 'Casa Farnsworth',
-          arquitecto: 'Mies van der Rohe',
-          año: '1951',
-          ubicacion: 'Plano, Illinois, EE. UU.',
-          explicacion: 'Elevación de dos planos horizontales de acero blanco flotando sobre la pradera con cerramiento de vidrio continuo y disolución de límites.',
-          conceptosClave: ['Elevación', 'Horizontalidad', 'Plano', 'Abierto'],
-        },
-        {
-          obra: 'Museo Guggenheim Bilbao',
-          arquitecto: 'Frank Gehry',
-          año: '1997',
-          ubicacion: 'Bilbao, España',
-          explicacion: 'Composición desfragmentada no euclidiana con titanio y piedra caliza que genera un hito urbano colosal y dinámico en la ría.',
-          conceptosClave: ['Irregular', 'Desfragmentación', 'Colosal', 'Hito'],
+          obra: 'Termas de Vals',
+          arquitecto: 'Peter Zumthor',
+          año: '1996',
+          ubicacion: 'Vals, Suiza',
+          explicacion: `Excavación volumétrica y experiencia fenomenológica del espacio aplicando ${topActive[0] || 'la masa'}.`,
+          conceptosClave: [topActive[0] || allItems[0]],
         },
       ];
       setReferences(fallbackRefs);

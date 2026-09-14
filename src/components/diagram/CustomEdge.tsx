@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -28,7 +28,8 @@ export const CustomEdge: React.FC<EdgeProps> = memo(({
     targetPosition,
   });
 
-  const { removeRelation } = useProjectStore();
+  const [isEditing, setIsEditing] = useState(false);
+  const { removeRelation, updateRelation } = useProjectStore();
 
   const edgeData = data as {
     relationType?: string;
@@ -43,6 +44,12 @@ export const CustomEdge: React.FC<EdgeProps> = memo(({
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();
     removeRelation(id);
+  };
+
+  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    e.stopPropagation();
+    updateRelation(id, { type: e.target.value });
+    setIsEditing(false);
   };
 
   return (
@@ -71,17 +78,61 @@ export const CustomEdge: React.FC<EdgeProps> = memo(({
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
             pointerEvents: 'all',
           }}
-          className={`nodrag nopan flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[9.5px] font-mono border shadow-lg transition-all ${
+          className={`nodrag nopan flex items-center gap-1.5 px-2 py-1 rounded-sm text-[9.5px] font-mono border shadow-lg transition-all ${
             selected
               ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold scale-105'
               : 'bg-diagramaxis-surface text-diagramaxis-gold border-diagramaxis-gold/40 hover:border-diagramaxis-gold'
           }`}
         >
-          <span className="font-semibold">{relationType}</span>
+          {isEditing ? (
+            <select
+              autoFocus
+              value={relationType}
+              onChange={handleTypeChange}
+              onBlur={() => setIsEditing(false)}
+              className="bg-diagramaxis-bg text-diagramaxis-gold border border-diagramaxis-gold rounded-xs px-1 py-0.5 text-[9.5px] font-mono outline-none"
+            >
+              <optgroup label="Compositivas">
+                <option value="define">define</option>
+                <option value="amplifica">amplifica</option>
+                <option value="restringe">restringe</option>
+                <option value="complementa">complementa</option>
+                <option value="contradice">contradice</option>
+                <option value="sustituye">sustituye</option>
+              </optgroup>
+              <optgroup label="Jerárquicas">
+                <option value="origina">origina</option>
+                <option value="precede">precede</option>
+                <option value="subordina">subordina</option>
+                <option value="jerarquiza">jerarquiza</option>
+              </optgroup>
+              <optgroup label="Espaciales">
+                <option value="contiene">contiene</option>
+                <option value="transita">transita</option>
+                <option value="tensiona">tensiona</option>
+                <option value="articula">articula</option>
+                <option value="separa">separa</option>
+              </optgroup>
+            </select>
+          ) : (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditing(true);
+              }}
+              title="Click para cambiar tipo de relación"
+              className="font-semibold hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <span>{relationType}</span>
+              <span className="text-[8px] opacity-70">▾</span>
+            </button>
+          )}
+
           <button
             onClick={handleRemove}
             title="Cortar hilo de conexión"
-            className="hover:text-diagramaxis-danger text-diagramaxis-textMuted transition-colors"
+            className="hover:text-diagramaxis-danger text-diagramaxis-textMuted transition-colors ml-0.5"
           >
             <X className="w-3 h-3" />
           </button>

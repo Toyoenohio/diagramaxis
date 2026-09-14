@@ -88,6 +88,7 @@ export const Viewport3D: React.FC = () => {
     activeConcepts,
     activeArtifacts,
     nodeParams,
+    relations,
     baseDimensions,
     northRotation,
     cameraMode,
@@ -418,7 +419,8 @@ export const Viewport3D: React.FC = () => {
       activeArtifacts,
       nodeParams,
       baseDimensions,
-      shadingMode
+      shadingMode,
+      relations
     );
 
     built.meshes.forEach((m) => volumeGroup.add(m));
@@ -492,9 +494,9 @@ export const Viewport3D: React.FC = () => {
         mGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         const mMat = new THREE.PointsMaterial({
           color: 0x38bdf8,
-          size: 0.55,
+          size: 0.6,
           transparent: true,
-          opacity: 0.5,
+          opacity: 0.45,
         });
         const mPoints = new THREE.Points(mGeom, mMat);
         mistGroupRef.current.add(mPoints);
@@ -512,7 +514,7 @@ export const Viewport3D: React.FC = () => {
     });
 
     updateCameraPosition();
-  }, [activeConcepts, activeArtifacts, nodeParams, baseDimensions, shadingMode, updateCameraPosition]);
+  }, [activeConcepts, activeArtifacts, nodeParams, relations, baseDimensions, shadingMode, updateCameraPosition]);
 
   // Actualizar figura humana
   useEffect(() => {

@@ -1,8 +1,8 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { useProjectStore } from '../../store/useProjectStore';
 import { getVolumetricOperation } from '../../data/volumetricOperations';
-import { X, Sparkles, Disc } from 'lucide-react';
+import { X, Sparkles, Disc, HelpCircle } from 'lucide-react';
 
 interface ConceptNodeData {
   id: string;
@@ -18,6 +18,7 @@ interface ConceptNodeData {
 export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) => {
   const nodeData = data as unknown as ConceptNodeData;
   const { toggleConcept, toggleArtifact, setNodeParam, nodeParams, setSelectedNodeId } = useProjectStore();
+  const [showTaxonomyHelp, setShowTaxonomyHelp] = useState(false);
 
   const param = nodeParams[id] || { weight: 0.6, intensity: 0.5 };
   const op = getVolumetricOperation(id);
@@ -42,7 +43,7 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
   return (
     <div
       onClick={() => setSelectedNodeId(id)}
-      className={`relative min-w-[180px] max-w-[230px] rounded-sm transition-all shadow-xl select-none ${
+      className={`relative min-w-[190px] max-w-[240px] rounded-sm transition-all shadow-xl select-none ${
         selected
           ? 'ring-2 ring-diagramaxis-gold shadow-[0_0_18px_rgb(var(--da-gold)/0.4)]'
           : 'shadow-md'
@@ -58,26 +59,41 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
           : '1px solid rgb(var(--da-gold)/0.32)',
       }}
     >
-      {/* Conectores con estilo Pin de Tablero / Chincheta */}
+      {/* Conectores con estilo Pin de Tablero / Chincheta con Clarificación Semántica */}
+      {/* 1. Puerto Superior: Entrada Jerárquica / Causa (Dorado) */}
       <Handle
         type="target"
         position={Position.Top}
-        className="!w-3 !h-3 !bg-diagramaxis-gold !border-2 !border-diagramaxis-bg !shadow-[0_0_6px_rgb(var(--da-gold)/0.8)]"
+        id="port-top"
+        title="Pin Superior (Dorado): Entrada Jerárquica / Causa. Recibe condicionantes de orden superior o entidades determinantes."
+        className="!w-3.5 !h-3.5 !bg-diagramaxis-gold !border-2 !border-diagramaxis-bg !shadow-[0_0_8px_rgb(var(--da-gold)/0.9)] cursor-crosshair hover:scale-125 transition-transform"
       />
+
+      {/* 2. Puerto Inferior: Salida Generativa / Efecto (Naranja) */}
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!w-3 !h-3 !bg-diagramaxis-orange !border-2 !border-diagramaxis-bg !shadow-[0_0_6px_rgb(var(--da-orange)/0.8)]"
+        id="port-bottom"
+        title="Pin Inferior (Naranja): Salida Generativa / Efecto. Emite operaciones morfológicas derivadas y transformaciones."
+        className="!w-3.5 !h-3.5 !bg-diagramaxis-orange !border-2 !border-diagramaxis-bg !shadow-[0_0_8px_rgb(var(--da-orange)/0.9)] cursor-crosshair hover:scale-125 transition-transform"
       />
+
+      {/* 3. Puerto Izquierdo: Entrada Condicionante / Contexto (Cyan) */}
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-3 !h-3 !bg-diagramaxis-cyan !border-2 !border-diagramaxis-bg !shadow-[0_0_6px_rgb(var(--da-cyan)/0.8)]"
+        id="port-left"
+        title="Pin Izquierdo (Cyan): Entrada Condicionante / Contexto. Recibe factores ambientales, climáticos o del entorno."
+        className="!w-3.5 !h-3.5 !bg-diagramaxis-cyan !border-2 !border-diagramaxis-bg !shadow-[0_0_8px_rgb(var(--da-cyan)/0.9)] cursor-crosshair hover:scale-125 transition-transform"
       />
+
+      {/* 4. Puerto Derecho: Salida Articuladora / Vínculo (Verde) */}
       <Handle
         type="source"
         position={Position.Right}
-        className="!w-3 !h-3 !bg-diagramaxis-success !border-2 !border-diagramaxis-bg !shadow-[0_0_6px_rgb(var(--da-success)/0.8)]"
+        id="port-right"
+        title="Pin Derecho (Verde): Salida Articuladora / Vínculo. Conecta ensambles espaciales y relaciones compositivas."
+        className="!w-3.5 !h-3.5 !bg-diagramaxis-success !border-2 !border-diagramaxis-bg !shadow-[0_0_8px_rgb(var(--da-success)/0.9)] cursor-crosshair hover:scale-125 transition-transform"
       />
 
       {/* Cabecera de la Ficha Grabada */}
@@ -88,18 +104,73 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
             : 'bg-diagramaxis-nodeHead text-diagramaxis-goldEngraved border-diagramaxis-nodeHeadBorder'
         }`}
       >
-        <div className="flex items-center gap-1 truncate max-w-[140px]">
+        <div className="flex items-center gap-1 truncate max-w-[130px]">
           <Disc className="w-2.5 h-2.5 shrink-0" />
           <span className="truncate">{nodeData.subcategory || 'Ficha'}</span>
         </div>
-        <button
-          onClick={handleDelete}
-          title="Retirar ficha del tablero"
-          className="nodrag nopan text-diagramaxis-woodMuted hover:text-diagramaxis-danger p-0.5 rounded transition-colors"
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
+
+        <div className="flex items-center gap-1">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowTaxonomyHelp(!showTaxonomyHelp);
+            }}
+            title="Ayuda taxonómica y propósito de las etiquetas"
+            className="nodrag nopan text-diagramaxis-woodMuted hover:text-diagramaxis-gold p-0.5 rounded transition-colors"
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={handleDelete}
+            title="Retirar ficha del tablero"
+            className="nodrag nopan text-diagramaxis-woodMuted hover:text-diagramaxis-danger p-0.5 rounded transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
+
+      {/* Popover Explicativo de Taxonomía y Metadatos */}
+      {showTaxonomyHelp && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="nodrag nopan absolute top-7 left-0 right-0 z-30 bg-diagramaxis-surface2 border border-diagramaxis-gold shadow-2xl p-2.5 rounded-sm flex flex-col gap-1.5 font-mono text-[10px] text-diagramaxis-text"
+        >
+          <div className="flex items-center justify-between border-b border-diagramaxis-border pb-1 font-bold text-diagramaxis-gold">
+            <span>Taxonomía ARPV</span>
+            <button onClick={() => setShowTaxonomyHelp(false)} className="hover:text-diagramaxis-danger">
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+          <div>
+            <strong className="text-diagramaxis-gold">Categoría:</strong>{' '}
+            <span className="text-diagramaxis-textMuted">{nodeData.category} ({nodeData.subcategory})</span>
+            <p className="text-[9px] text-diagramaxis-textBright leading-tight mt-0.5">
+              {nodeData.subcategory === 'Firmitas' && 'Dimensión constructiva, tectónica y gravitacional (firmeza/estructura).'}
+              {nodeData.subcategory === 'Venustas' && 'Dimensión estética, formal, ritmo y proporción (belleza/forma).'}
+              {nodeData.subcategory === 'Utilitas' && 'Dimensión programática, funcional y de habitabilidad (uso/espacio).'}
+              {!['Firmitas', 'Venustas', 'Utilitas'].includes(nodeData.subcategory) && 'Marco conceptual del sistema proyectual.'}
+            </p>
+          </div>
+          <div>
+            <strong className="text-diagramaxis-cyan">Naturalezas:</strong>
+            <ul className="text-[9px] text-diagramaxis-textBright list-disc list-inside leading-tight mt-0.5">
+              <li><strong>G (Generador):</strong> Engendra la geometría y la forma rectora.</li>
+              <li><strong>R (Relacional):</strong> Vincula o tensiona dos o más conceptos.</li>
+              <li><strong>Co (Condicionante):</strong> Restringe o deforma según el entorno.</li>
+            </ul>
+          </div>
+          {op && (
+            <div>
+              <strong className="text-diagramaxis-orange">Operación 3D:</strong>{' '}
+              <span className="text-diagramaxis-textBright">{op.label}</span>
+              <p className="text-[9px] text-diagramaxis-textMuted leading-tight mt-0.5">
+                {op.pedagogicalTip || 'Transformación morfológica aplicada al sólido Three.js.'}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Cuerpo de la Ficha */}
       <div className="p-3 flex flex-col gap-2">
