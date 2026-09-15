@@ -24,6 +24,8 @@ interface GeometricState {
   rotY: number;
   shearX: number;
   shearZ: number;
+  taperTop: number;
+  taperFront: number;
   additions: Array<{
     ax: number;
     ay: number;
@@ -53,6 +55,7 @@ interface GeometricState {
   }>;
   hollowed: boolean;
   hollowFactor: number;
+  wallThickness: number;
   fractured: boolean;
   fracGap: number;
   fracCount?: number;
@@ -64,6 +67,7 @@ interface GeometricState {
   canopyDepth: number;
   hasBase: boolean;
   baseH: number;
+  baseRadius: number;
   hasTerrace: boolean;
   hasCourt: boolean;
   courtSize: number;
@@ -75,7 +79,34 @@ interface GeometricState {
   atriumSize: number;
   hasPilotis: boolean;
   pilotisHeight: number;
+  pilotisCount: number;
   hasLattice: boolean;
+  latticeDensity: number;
+  latticeThickness: number;
+  hasBridges: boolean;
+  bridgeCount: number;
+  bridgeThickness: number;
+  hasSpiralRamp: boolean;
+  rampTurns: number;
+  rampWidth: number;
+  hasCantilever: boolean;
+  cantileverLength: number;
+  cantileverAngle: number;
+  hasPerimeterCircuit: boolean;
+  circuitWidth: number;
+  circuitAngle: number;
+  hasThreshold: boolean;
+  thresholdDepth: number;
+  thresholdPermeability: number;
+  isMonolithic: boolean;
+  monolithicBevel: number;
+  hasLandmark: boolean;
+  landmarkHeight: number;
+  landmarkScale: number;
+  isAnthropocentric: boolean;
+  hasLightFissure: boolean;
+  lightFissureWidth: number;
+  solarIntensity: number;
   hasWater: boolean;
   hasWindFlow: boolean;
   windIntensity: number;
@@ -163,13 +194,16 @@ export function buildArchitecturalGeometry(
     rotY: 0,
     shearX: 0,
     shearZ: 0,
+    taperTop: 0,
+    taperFront: 0,
     additions: [],
     subtractions: [],
     hollowed: false,
     hollowFactor: 0.65,
+    wallThickness: 0.15,
     fractured: false,
-    fracGap: 0,
-    fracCount: 2,
+    fracGap: 0.18,
+    fracCount: 3,
     fracDislocation: 0.12,
     gradeSteps: 0,
     gradeDir: 'X',
@@ -178,6 +212,7 @@ export function buildArchitecturalGeometry(
     canopyDepth: 0.35,
     hasBase: false,
     baseH: 0.15,
+    baseRadius: 2.2,
     hasTerrace: false,
     hasCourt: false,
     courtSize: 0.45,
@@ -188,8 +223,35 @@ export function buildArchitecturalGeometry(
     hasAtrium: false,
     atriumSize: 0.38,
     hasPilotis: false,
-    pilotisHeight: 0.3,
+    pilotisHeight: 2.0,
+    pilotisCount: 4,
     hasLattice: false,
+    latticeDensity: 4,
+    latticeThickness: 0.04,
+    hasBridges: false,
+    bridgeCount: 2,
+    bridgeThickness: 0.25,
+    hasSpiralRamp: false,
+    rampTurns: 1.25,
+    rampWidth: 0.3,
+    hasCantilever: false,
+    cantileverLength: 0.6,
+    cantileverAngle: 12,
+    hasPerimeterCircuit: false,
+    circuitWidth: 0.35,
+    circuitAngle: 45,
+    hasThreshold: false,
+    thresholdDepth: 0.3,
+    thresholdPermeability: 0.5,
+    isMonolithic: false,
+    monolithicBevel: 0.05,
+    hasLandmark: false,
+    landmarkHeight: 1.5,
+    landmarkScale: 2.0,
+    isAnthropocentric: false,
+    hasLightFissure: false,
+    lightFissureWidth: 0.25,
+    solarIntensity: 1.2,
     hasWater: false,
     hasWindFlow: false,
     windIntensity: 0.5,
@@ -242,20 +304,19 @@ export function buildArchitecturalGeometry(
 
     switch (op.op) {
       case 'extend': {
-        const customScale = typeof custom.colossalScale === 'number'
-          ? (custom.colossalScale as number)
-          : typeof custom.scaleMultiplier === 'number'
-          ? (custom.scaleMultiplier as number)
-          : null;
-
-        if (customScale && (id === 'Colosal' || op.axis === 'XYZ')) {
-          state.w *= customScale;
-          state.h *= customScale;
-          state.d *= customScale;
-        } else if (id === 'Colosal') {
-          state.w *= 2.5 * weight;
-          state.h *= 2.5 * weight;
-          state.d *= 2.5 * weight;
+        if (id === 'Colosal') {
+          const colScale = typeof custom.escalaMonumental === 'number'
+            ? (custom.escalaMonumental as number)
+            : typeof custom.colossalScale === 'number'
+            ? (custom.colossalScale as number)
+            : 4.0;
+          state.w *= colScale;
+          state.h *= colScale;
+          state.d *= colScale;
+        } else if (id === 'Verticalidad') {
+          const esb = typeof custom.esbeltez === 'number' ? (custom.esbeltez as number) : 2.5;
+          state.h *= esb;
+          state.taperTop = typeof custom.conicidad === 'number' ? (custom.conicidad as number) / 100 : 0.15;
         } else if (op.axis === 'Y') {
           state.h *= 1 + (op.factor! - 1) * weight;
         } else if (op.axis === 'X') {
@@ -271,39 +332,176 @@ export function buildArchitecturalGeometry(
         break;
       }
 
+      case 'anthropocentric': {
+        state.isAnthropocentric = true;
+        state.taperFront = typeof custom.proximidadConvergencia === 'number' ? (custom.proximidadConvergencia as number) : 0.5;
+        break;
+      }
+
+      case 'anthropometric': {
+        const mod = typeof custom.escalaModulos === 'number' ? (custom.escalaModulos as number) : 3;
+        const unit = 1.8;
+        state.w = Math.max(1, Math.round(mod)) * unit;
+        state.h = Math.max(1, Math.round(mod)) * unit;
+        state.d = Math.max(1, Math.round(mod)) * unit;
+        break;
+      }
+
+      case 'perimeter_circuit': {
+        state.hasPerimeterCircuit = true;
+        state.circuitWidth = typeof custom.anchoCircuito === 'number' ? (custom.anchoCircuito as number) : 0.35;
+        state.circuitAngle = typeof custom.anguloAproximacion === 'number' ? (custom.anguloAproximacion as number) : 45;
+        break;
+      }
+
+      case 'threshold_transition': {
+        state.hasThreshold = true;
+        state.thresholdDepth = typeof custom.profundidadUmbral === 'number' ? (custom.profundidadUmbral as number) : 0.3;
+        state.thresholdPermeability = typeof custom.permeabilidad === 'number' ? (custom.permeabilidad as number) / 100 : 0.5;
+        break;
+      }
+
+      case 'monolithic': {
+        state.isMonolithic = true;
+        state.monolithicBevel = typeof custom.bisel === 'number' ? (custom.bisel as number) : 0.05;
+        state.fractured = false;
+        state.additions = [];
+        break;
+      }
+
+      case 'order_regularize': {
+        const sym = typeof custom.fuerzaSimetria === 'number' ? (custom.fuerzaSimetria as number) / 100 : 0.8;
+        state.shearX *= (1 - sym);
+        state.shearZ *= (1 - sym);
+        const mean = (state.w + state.d) / 2;
+        state.w = state.w * (1 - sym) + mean * sym;
+        state.d = state.d * (1 - sym) + mean * sym;
+        break;
+      }
+
+      case 'axial_path': {
+        const axW = typeof custom.aperturaEje === 'number' ? (custom.aperturaEje as number) : 0.4;
+        const axAng = typeof custom.orientacionEje === 'number' ? (custom.orientacionEje as number) : 0;
+        state.subtractions.push({
+          type: 'hole',
+          dir: 'Z',
+          fracW: Math.max(0.1, axW),
+          fracH: Math.max(0.1, axW * 1.3),
+          fracD: 1.05,
+        });
+        if (axAng !== 0) state.rotY += (axAng * Math.PI) / 180 * 0.2;
+        break;
+      }
+
+      case 'coplanar_align': {
+        const snap = typeof custom.rigidezCoplanar === 'number' ? (custom.rigidezCoplanar as number) / 100 : 0.85;
+        state.rotY *= (1 - snap);
+        state.shearX *= (1 - snap);
+        state.shearZ *= (1 - snap);
+        break;
+      }
+
+      case 'landmark': {
+        state.hasLandmark = true;
+        state.landmarkHeight = typeof custom.prominenciaRemate === 'number' ? (custom.prominenciaRemate as number) : 1.5;
+        state.landmarkScale = typeof custom.contrasteEscala === 'number' ? (custom.contrasteEscala as number) : 2.0;
+        break;
+      }
+
+      case 'centripetal': {
+        state.hasCourt = true;
+        state.courtSize = typeof custom.radioNucleo === 'number' ? (custom.radioNucleo as number) : 0.35;
+        break;
+      }
+
+      case 'grid_lattice': {
+        state.hasLattice = true;
+        state.latticeDensity = typeof custom.densidadSubdivisiones === 'number' ? Math.max(1, Math.min(10, Math.round(custom.densidadSubdivisiones as number))) : 4;
+        state.latticeThickness = typeof custom.grosorPerfil === 'number' ? (custom.grosorPerfil as number) : 0.04;
+        break;
+      }
+
+      case 'connector_bridge': {
+        state.hasBridges = true;
+        state.bridgeCount = typeof custom.numeroPuentes === 'number' ? Math.max(1, Math.min(5, Math.round(custom.numeroPuentes as number))) : 2;
+        state.bridgeThickness = typeof custom.grosorConector === 'number' ? (custom.grosorConector as number) : 0.25;
+        break;
+      }
+
+      case 'spiral_ramp': {
+        state.hasSpiralRamp = true;
+        state.rampTurns = typeof custom.vueltasRampa === 'number' ? (custom.vueltasRampa as number) : 1.25;
+        state.rampWidth = typeof custom.anchoBanda === 'number' ? (custom.anchoBanda as number) : 0.3;
+        break;
+      }
+
+      case 'cantilever_flare': {
+        state.hasCantilever = true;
+        state.cantileverLength = typeof custom.longitudProyeccion === 'number' ? (custom.longitudProyeccion as number) : 0.6;
+        state.cantileverAngle = typeof custom.anguloFlare === 'number' ? (custom.anguloFlare as number) : 12;
+        break;
+      }
+
       case 'compress':
         if (op.axis === 'Y') state.h *= op.factor! + (1 - op.factor!) * (1 - weight);
         else if (op.axis === 'X') state.w *= op.factor! + (1 - op.factor!) * (1 - weight);
         break;
 
       case 'perforate': {
-        // Túnel / Vano / lucernarios: corte REAL pasante en el eje dir con modificadores configurables
-        const pSize = Math.max(0.12, Math.min(0.85, (op.size || 0.3) * weight * 1.2));
-        const cDir = (custom.voidAxis as string) || op.dir || 'Z';
-        const fracW = typeof custom.voidW === 'number' ? (custom.voidW as number) : pSize;
-        const fracH = typeof custom.voidH === 'number' ? (custom.voidH as number) : (cDir === 'Z' ? pSize * 1.2 : pSize);
-        const fracD = typeof custom.voidD === 'number' ? (custom.voidD as number) : (cDir === 'X' ? pSize : 1.0);
-        const cxFrac = typeof custom.voidX === 'number' ? (custom.voidX as number) : 0;
-        const cyFrac = typeof custom.voidY === 'number' ? (custom.voidY as number) : 0;
-        const czFrac = typeof custom.voidZ === 'number' ? (custom.voidZ as number) : 0;
+        if (id === 'Iluminación') {
+          state.hasLightFissure = true;
+          state.lightFissureWidth = typeof custom.aperturaFisura === 'number' ? (custom.aperturaFisura as number) / 100 : 0.25;
+          state.solarIntensity = typeof custom.penetracionSolar === 'number' ? (custom.penetracionSolar as number) : 1.2;
+          state.subtractions.push({
+            type: 'hole',
+            dir: 'Y',
+            fracW: Math.max(0.08, state.lightFissureWidth),
+            fracH: 1.05,
+            fracD: 0.8,
+          });
+        } else if (id === 'Perforación') {
+          const rad = typeof custom.radioHoradacion === 'number' ? (custom.radioHoradacion as number) / 100 : 0.4;
+          const prof = typeof custom.profundidadCorte === 'number' ? (custom.profundidadCorte as number) : 1.0;
+          state.subtractions.push({
+            type: 'hole',
+            dir: 'Z',
+            fracW: Math.max(0.1, rad),
+            fracH: Math.max(0.1, rad),
+            fracD: prof >= 0.95 ? 1.05 : prof,
+          });
+        } else {
+          // Túnel / Vano / lucernarios: corte REAL pasante en el eje dir con modificadores configurables
+          const pSize = Math.max(0.12, Math.min(0.85, (op.size || 0.3) * weight * 1.2));
+          const cDir = (custom.voidAxis as string) || op.dir || 'Z';
+          const fracW = typeof custom.voidW === 'number' ? (custom.voidW as number) : pSize;
+          const fracH = typeof custom.voidH === 'number' ? (custom.voidH as number) : (cDir === 'Z' ? pSize * 1.2 : pSize);
+          const fracD = typeof custom.voidD === 'number' ? (custom.voidD as number) : (cDir === 'X' ? pSize : 1.0);
+          const cxFrac = typeof custom.voidX === 'number' ? (custom.voidX as number) : 0;
+          const cyFrac = typeof custom.voidY === 'number' ? (custom.voidY as number) : 0;
+          const czFrac = typeof custom.voidZ === 'number' ? (custom.voidZ as number) : 0;
 
-        state.subtractions.push({
-          type: 'hole',
-          dir: cDir,
-          fracW,
-          fracH,
-          fracD,
-          cxFrac,
-          cyFrac,
-          czFrac,
-        });
+          state.subtractions.push({
+            type: 'hole',
+            dir: cDir,
+            fracW,
+            fracH,
+            fracD,
+            cxFrac,
+            cyFrac,
+            czFrac,
+          });
+        }
         break;
       }
 
-      case 'hollow':
+      case 'hollow': {
         state.hollowed = true;
-        state.hollowFactor = op.factor || 0.65;
+        const thick = typeof custom.espesorMuro === 'number' ? (custom.espesorMuro as number) : 0.15;
+        const air = typeof custom.camaraAire === 'number' ? (custom.camaraAire as number) / 100 : 0.75;
+        state.wallThickness = thick;
+        state.hollowFactor = Math.max(0.2, air * (1 - thick));
         break;
+      }
 
       case 'carve': {
         // Sustracción / Umbral: nicho con modificadores configurables
@@ -340,8 +538,16 @@ export function buildArchitecturalGeometry(
 
       case 'fracture': {
         state.fractured = true;
-        state.fracGap = typeof custom.gap === 'number' ? (custom.gap as number) : (op.gap || 0.15) * weight;
-        state.fracCount = typeof custom.fragments === 'number' ? Math.max(2, Math.min(5, Math.round(custom.fragments as number))) : 2;
+        state.fracGap = typeof custom.dispersion === 'number'
+          ? (custom.dispersion as number)
+          : typeof custom.gap === 'number'
+          ? (custom.gap as number)
+          : 0.18;
+        state.fracCount = typeof custom.subdivision === 'number'
+          ? Math.max(2, Math.min(8, Math.round(custom.subdivision as number)))
+          : typeof custom.fragments === 'number'
+          ? Math.max(2, Math.min(8, Math.round(custom.fragments as number)))
+          : 3;
         state.fracDislocation = typeof custom.dislocation === 'number' ? (custom.dislocation as number) : 0.12;
         break;
       }
@@ -458,6 +664,9 @@ export function buildArchitecturalGeometry(
       case 'base':
         state.hasBase = true;
         state.baseH = (op.height || 0.18) * weight;
+        if (typeof custom.radioInfluencia === 'number') {
+          state.baseRadius = custom.radioInfluencia as number;
+        }
         break;
 
       case 'terrace':
@@ -471,7 +680,12 @@ export function buildArchitecturalGeometry(
 
       case 'pilotis':
         state.hasPilotis = true;
-        state.pilotisHeight = (op.height || 0.3) * weight;
+        state.pilotisHeight = typeof custom.alturaDespegue === 'number'
+          ? (custom.alturaDespegue as number)
+          : (op.height ? op.height * state.h : 2.0);
+        state.pilotisCount = typeof custom.densidadPilotis === 'number'
+          ? Math.round(custom.densidadPilotis as number)
+          : (op.steps || 4);
         break;
 
       case 'lattice':
@@ -629,20 +843,31 @@ export function buildArchitecturalGeometry(
     opacity: 0.75,
   });
 
-  const matLattice = new THREE.MeshBasicMaterial({
-    color: new THREE.Color(0x22c55e),
-    wireframe: true,
-  });
-
-  const posY = state.h / 2 + (state.hasPilotis ? state.h * state.pilotisHeight : 0);
+  const posY = state.h / 2 + (state.hasPilotis ? state.pilotisHeight : 0);
 
   // Helper para generar geometría facetada o pura (sólido simple, sin CSG)
   function makeBoxGeo(w: number, h: number, d: number, deform: number = 0): THREE.BoxGeometry {
-    const segs = deform > 0 ? 8 : 1;
+    const segs = deform > 0 || state.taperTop > 0 || state.taperFront > 0 ? 8 : 1;
     const geo = new THREE.BoxGeometry(w, h, d, segs, segs, segs);
-    if (deform > 0) {
-      const pos = geo.attributes.position;
-      for (let i = 0; i < pos.count; i++) {
+    const pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const y = pos.getY(i);
+      const z = pos.getZ(i);
+
+      // Verticalidad: Conicidad superior (afinamiento progresivo en la cúspide)
+      if (state.taperTop > 0 && y > 0) {
+        const factor = Math.max(0.2, 1 - (y / (h / 2)) * state.taperTop);
+        pos.setX(i, pos.getX(i) * factor);
+        pos.setZ(i, pos.getZ(i) * factor);
+      }
+
+      // Antropocéntrico: Convergencia focal hacia el observador frontal
+      if (state.taperFront > 0 && z > 0) {
+        const factor = Math.max(0.3, 1 - (z / (d / 2)) * (state.taperFront * 0.4));
+        pos.setX(i, pos.getX(i) * factor);
+      }
+
+      if (deform > 0) {
         const onEdge =
           Math.abs(pos.getX(i)) > (w / 2) * 0.85 ||
           Math.abs(pos.getY(i)) > (h / 2) * 0.85 ||
@@ -652,9 +877,9 @@ export function buildArchitecturalGeometry(
           pos.setZ(i, pos.getZ(i) + (Math.random() - 0.5) * deform * d);
         }
       }
-      pos.needsUpdate = true;
-      geo.computeVertexNormals();
     }
+    pos.needsUpdate = true;
+    geo.computeVertexNormals();
     return geo;
   }
 
@@ -784,25 +1009,47 @@ export function buildArchitecturalGeometry(
 
   // 1. VOLUMEN PRINCIPAL
   if (state.fractured) {
-    const count = Math.max(2, Math.min(5, state.fracCount || 2));
-    const totalGap = state.fracGap * state.w * (count - 1);
-    const blockW = Math.max(0.5, (state.w - totalGap) / count);
-    const startX = -state.w / 2 + blockW / 2;
+    const count = Math.max(2, Math.min(8, state.fracCount || 3));
+    const Nx = count;
+    const Ny = count > 3 ? 2 : count;
+    const Nz = count;
+    const gapX = state.fracGap * (state.w / Nx);
+    const gapY = state.fracGap * (state.h / Ny);
+    const gapZ = state.fracGap * (state.d / Nz);
+    const bw = Math.max(0.15, (state.w - (Nx - 1) * gapX) / Nx);
+    const bh = Math.max(0.15, (state.h - (Ny - 1) * gapY) / Ny);
+    const bd = Math.max(0.15, (state.d - (Nz - 1) * gapZ) / Nz);
 
-    for (let i = 0; i < count; i++) {
-      const bx = startX + i * (blockW + state.fracGap * state.w);
-      const dislocation = state.fracDislocation || 0.12;
-      const by = posY + (i % 2 === 1 ? state.h * dislocation * 1.5 : 0);
-      const bz = (i % 2 === 1 ? dislocation * state.d * 0.4 : 0);
+    const startX = -state.w / 2 + bw / 2;
+    const startY = posY - state.h / 2 + bh / 2;
+    const startZ = -state.d / 2 + bd / 2;
 
-      const bg = makeBoxGeo(blockW, state.h, state.d, state.deformMag);
-      const bm = new THREE.Mesh(bg, matMain);
-      bm.position.set(bx, by, bz);
-      bm.rotation.y = state.rotY + (i - (count - 1) / 2) * 0.08;
-      bm.castShadow = true;
-      bm.receiveShadow = true;
-      resultMeshes.push(bm);
+    const fracGroup = new THREE.Group();
+    fracGroup.name = 'fractured_mass';
+    const edgeMat = new THREE.LineBasicMaterial({ color: 0x1c1917, linewidth: 1.5 });
+
+    for (let ix = 0; ix < Nx; ix++) {
+      for (let iy = 0; iy < Ny; iy++) {
+        for (let iz = 0; iz < Nz; iz++) {
+          const bx = startX + ix * (bw + gapX);
+          const by = startY + iy * (bh + gapY);
+          const bz = startZ + iz * (bd + gapZ);
+
+          const bg = makeBoxGeo(bw, bh, bd, state.deformMag);
+          const bm = new THREE.Mesh(bg, matMain);
+          bm.position.set(bx, by, bz);
+          bm.castShadow = true;
+          bm.receiveShadow = true;
+          fracGroup.add(bm);
+
+          const edgeGeo = new THREE.EdgesGeometry(bg);
+          const edgeMesh = new THREE.LineSegments(edgeGeo, edgeMat);
+          bm.add(edgeMesh);
+        }
+      }
     }
+    fracGroup.rotation.y = state.rotY;
+    resultGroups.push(fracGroup);
   } else if (state.gradeSteps > 1) {
     const steps = state.gradeSteps;
     for (let i = 0; i < steps; i++) {
@@ -900,17 +1147,19 @@ export function buildArchitecturalGeometry(
 
   // 2. PILOTIS (Elevación sobre columnas)
   if (state.hasPilotis) {
-    const pH = state.h * state.pilotisHeight;
+    const pH = state.pilotisHeight;
     const colGroup = new THREE.Group();
-    const colsX = 4;
-    const colsZ = 3;
-    const colR = 0.15;
-    const colGeo = new THREE.CylinderGeometry(colR, colR, pH, 12);
-
-    for (let ix = 0; ix < colsX; ix++) {
-      for (let iz = 0; iz < colsZ; iz++) {
-        const cx = -(state.w * 0.4) + (ix / (colsX - 1)) * (state.w * 0.8);
-        const cz = -(state.d * 0.4) + (iz / (colsZ - 1)) * (state.d * 0.8);
+    colGroup.name = 'pilotis_group';
+    const count = state.pilotisCount;
+    if (count > 0) {
+      const colR = Math.max(0.1, Math.min(0.35, state.w * 0.025));
+      const colGeo = new THREE.CylinderGeometry(colR, colR, pH, 16);
+      const colsPerSide = Math.max(2, Math.ceil(Math.sqrt(count)));
+      for (let i = 0; i < count; i++) {
+        const row = Math.floor(i / colsPerSide);
+        const col = i % colsPerSide;
+        const cx = -state.w * 0.4 + (colsPerSide > 1 ? (col / (colsPerSide - 1)) * (state.w * 0.8) : 0);
+        const cz = -state.d * 0.4 + (colsPerSide > 1 ? (row / (colsPerSide - 1)) * (state.d * 0.8) : 0);
         const colMesh = new THREE.Mesh(colGeo, matPilotis);
         colMesh.position.set(cx, pH / 2, cz);
         colMesh.castShadow = true;
@@ -932,15 +1181,16 @@ export function buildArchitecturalGeometry(
     resultMeshes.push(am);
   });
 
-  // 4. BASAMENTO
+  // 4. BASAMENTO / ESPACIO EXTERIOR
   if (state.hasBase) {
-    const bh = Math.max(0.6, state.baseH * state.h);
-    const bg = new THREE.BoxGeometry(state.w * 1.12, bh, state.d * 1.12);
+    const bRad = state.baseRadius || 2.2;
+    const bh = Math.max(0.4, state.baseH * state.h);
+    const bg = new THREE.BoxGeometry(state.w + bRad * 2, bh, state.d + bRad * 2);
     const bm = new THREE.Mesh(bg, matBase);
     bm.position.set(0, bh / 2, 0);
     bm.castShadow = true;
     bm.receiveShadow = true;
-    bm.userData = { conceptId: 'Basamento' };
+    bm.userData = { conceptId: 'Espacio exterior' };
     resultMeshes.push(bm);
   }
 
@@ -965,13 +1215,165 @@ export function buildArchitecturalGeometry(
     resultMeshes.push(cm);
   }
 
-  // 7. CELOSÍA / TAMIZ
+  // 7. RETÍCULA MODULAR 3D
   if (state.hasLattice) {
-    const latG = new THREE.PlaneGeometry(state.w * 0.8, state.h * 0.7, 12, 8);
-    const latM = new THREE.Mesh(latG, matLattice);
-    latM.position.set(0, posY, -(state.d / 2 + 0.05));
-    latM.userData = { conceptId: 'Tamiz' };
-    resultMeshes.push(latM);
+    const latticeGroup = new THREE.Group();
+    latticeGroup.name = 'grid_lattice_group';
+    const dens = state.latticeDensity || 4;
+    const thick = Math.max(0.02, state.latticeThickness || 0.04) * (state.w / 4);
+    const frameMat = new THREE.MeshLambertMaterial({ color: 0xca8a04 });
+
+    for (let i = 0; i <= dens; i++) {
+      const vx = -state.w / 2 + (i / dens) * state.w;
+      const vGeo = new THREE.BoxGeometry(thick, state.h, thick);
+      const vMesh = new THREE.Mesh(vGeo, frameMat);
+      vMesh.position.set(vx, posY, state.d / 2 + thick / 2);
+      latticeGroup.add(vMesh);
+
+      const hy = posY - state.h / 2 + (i / dens) * state.h;
+      const hGeo = new THREE.BoxGeometry(state.w, thick, thick);
+      const hMesh = new THREE.Mesh(hGeo, frameMat);
+      hMesh.position.set(0, hy, state.d / 2 + thick / 2);
+      latticeGroup.add(hMesh);
+    }
+    resultGroups.push(latticeGroup);
+  }
+
+  // 8. RECORRIDO EXTERIOR (Circuito perimetral y foso)
+  if (state.hasPerimeterCircuit) {
+    const circuitGroup = new THREE.Group();
+    circuitGroup.name = 'perimeter_circuit_group';
+    const cWidth = Math.max(0.6, (state.circuitWidth || 0.35) * state.w);
+    const cMat = new THREE.MeshLambertMaterial({ color: 0x78716c });
+    const outerRadius = Math.max(state.w, state.d) * 0.75;
+
+    const circGeo = new THREE.RingGeometry(outerRadius, outerRadius + cWidth, 32);
+    circGeo.rotateX(-Math.PI / 2);
+    const circMesh = new THREE.Mesh(circGeo, cMat);
+    circMesh.position.set(0, 0.02, 0);
+    circMesh.receiveShadow = true;
+    circuitGroup.add(circMesh);
+
+    const appAngleRad = ((state.circuitAngle || 45) * Math.PI) / 180;
+    const pathLen = outerRadius + cWidth * 2;
+    const pathGeo = new THREE.BoxGeometry(cWidth, 0.04, pathLen);
+    const pathMesh = new THREE.Mesh(pathGeo, cMat);
+    pathMesh.position.set(Math.sin(appAngleRad) * (pathLen / 2), 0.02, Math.cos(appAngleRad) * (pathLen / 2));
+    pathMesh.rotation.y = appAngleRad;
+    circuitGroup.add(pathMesh);
+
+    resultGroups.push(circuitGroup);
+  }
+
+  // 9. TRANSICIÓN (Umbral de doble piel permeable)
+  if (state.hasThreshold) {
+    const threshGroup = new THREE.Group();
+    threshGroup.name = 'threshold_transition_group';
+    const tDepth = Math.max(0.4, (state.thresholdDepth || 0.3) * state.w);
+    const opacity = Math.max(0.15, Math.min(0.95, 1 - (state.thresholdPermeability || 0.5)));
+    const tMat = new THREE.MeshLambertMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: opacity,
+      side: THREE.DoubleSide,
+    });
+    const paneGeo = new THREE.BoxGeometry(state.w * 1.08, state.h * 1.02, tDepth);
+    const paneMesh = new THREE.Mesh(paneGeo, tMat);
+    paneMesh.position.set(0, posY, state.d / 2 + tDepth / 2 + 0.05);
+    threshGroup.add(paneMesh);
+    resultGroups.push(threshGroup);
+  }
+
+  // 10. CONECTIVIDAD (Puentes y ductos de enlace)
+  if (state.hasBridges) {
+    const bridgeGroup = new THREE.Group();
+    bridgeGroup.name = 'bridges_group';
+    const bCount = state.bridgeCount || 2;
+    const bThick = Math.max(0.3, (state.bridgeThickness || 0.25) * state.w * 0.4);
+    const bMat = new THREE.MeshLambertMaterial({ color: 0x0284c7 });
+
+    for (let b = 0; b < bCount; b++) {
+      const bLen = state.w * 0.75;
+      const bGeo = new THREE.BoxGeometry(bLen, bThick, bThick);
+      const bMesh = new THREE.Mesh(bGeo, bMat);
+      const bY = posY - state.h * 0.2 + (b / Math.max(1, bCount - 1)) * (state.h * 0.4);
+      const sign = b % 2 === 0 ? 1 : -1;
+      bMesh.position.set(sign * (state.w / 2 + bLen / 2), bY, 0);
+      bMesh.castShadow = true;
+      bridgeGroup.add(bMesh);
+    }
+    resultGroups.push(bridgeGroup);
+  }
+
+  // 11. RECORRIDO (Rampa helicoidal continua)
+  if (state.hasSpiralRamp) {
+    const rampGroup = new THREE.Group();
+    rampGroup.name = 'spiral_ramp_group';
+    const turns = state.rampTurns || 1.25;
+    const rampW = Math.max(0.4, (state.rampWidth || 0.3) * state.w);
+    const rampMat = new THREE.MeshLambertMaterial({ color: 0xd97706 });
+    const steps = Math.round(turns * 28);
+    const radius = Math.max(state.w, state.d) * 0.68;
+
+    for (let s = 0; s < steps; s++) {
+      const theta = (s / steps) * turns * Math.PI * 2;
+      const yPos = (s / steps) * state.h;
+      const segGeo = new THREE.BoxGeometry(rampW, 0.12, (radius * turns * Math.PI * 2) / steps * 1.2);
+      const segMesh = new THREE.Mesh(segGeo, rampMat);
+      segMesh.position.set(Math.cos(theta) * radius, yPos + (state.hasPilotis ? state.pilotisHeight : 0), Math.sin(theta) * radius);
+      segMesh.rotation.y = -theta;
+      segMesh.castShadow = true;
+      rampGroup.add(segMesh);
+    }
+    resultGroups.push(rampGroup);
+  }
+
+  // 12. EXPANSIÓN (Proyección telescópica y voladizos en flare)
+  if (state.hasCantilever) {
+    const cGroup = new THREE.Group();
+    cGroup.name = 'cantilever_group';
+    const cLen = Math.max(0.5, (state.cantileverLength || 0.6) * state.w);
+    const cAngleRad = ((state.cantileverAngle || 12) * Math.PI) / 180;
+    const cMat = new THREE.MeshLambertMaterial({ color: 0xe5a93b });
+
+    const trayGeo = new THREE.BoxGeometry(cLen, 0.22, state.d * 0.85);
+    const trayL = new THREE.Mesh(trayGeo, cMat);
+    trayL.position.set(-(state.w / 2 + cLen / 2), posY + state.h * 0.1, 0);
+    trayL.rotation.z = cAngleRad;
+    trayL.castShadow = true;
+    cGroup.add(trayL);
+
+    const trayR = new THREE.Mesh(trayGeo, cMat);
+    trayR.position.set(state.w / 2 + cLen / 2, posY + state.h * 0.2, 0);
+    trayR.rotation.z = -cAngleRad;
+    trayR.castShadow = true;
+    cGroup.add(trayR);
+
+    resultGroups.push(cGroup);
+  }
+
+  // 13. HITO (Torre o remate focal destacado)
+  if (state.hasLandmark) {
+    const lmGroup = new THREE.Group();
+    lmGroup.name = 'landmark_group';
+    const lmHeight = (state.landmarkHeight || 1.5) * state.h;
+    const lmScale = state.landmarkScale || 2.0;
+    const lmSize = (state.w * 0.2) * (lmScale / 2);
+    const lmMat = new THREE.MeshLambertMaterial({ color: 0xd97706 });
+    const lmGeo = new THREE.BoxGeometry(lmSize, lmHeight, lmSize);
+    const lmMesh = new THREE.Mesh(lmGeo, lmMat);
+    lmMesh.position.set(state.w / 2 - lmSize / 2, posY + state.h / 2 + lmHeight / 2, state.d / 2 - lmSize / 2);
+    lmMesh.castShadow = true;
+    lmGroup.add(lmMesh);
+    resultGroups.push(lmGroup);
+  }
+
+  // 14. ILUMINACIÓN CENITAL (Haz solar)
+  if (state.hasLightFissure) {
+    const sunLight = new THREE.PointLight(0xfff7ed, 2.5 * state.solarIntensity, state.h * 5);
+    sunLight.position.set(0, posY + state.h * 0.6, 0);
+    sunLight.castShadow = true;
+    resultLights.push(sunLight);
   }
 
   // 8. ESPEJO DE AGUA Y MICROCLIMA

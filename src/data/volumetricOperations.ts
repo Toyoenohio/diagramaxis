@@ -1,42 +1,165 @@
 import { VolumetricOperation } from '../types';
 
 export const VOLUMETRIC_OPERATIONS: Record<string, VolumetricOperation> = {
-  // --- EXTENSIONES & ESCALA ---
+  // =========================================================================
+  // --- TEMAS ARQUITECTÓNICOS: LOS 22 CONCEPTOS DE FIRMITAS ---
+  // =========================================================================
+  'Antropocéntrico': {
+    op: 'anthropocentric',
+    factor: 1.0,
+    label: 'Escala humana focalizada',
+    pedagogicalTip: 'Ajusta la jerarquía volumétrica haciendo que el cubo responda a una escala humana focalizada con convergencia de caras hacia el observador.',
+  },
+  'Antropométrico': {
+    op: 'anthropometric',
+    steps: 3,
+    label: 'Modulación modular antropométrica',
+    pedagogicalTip: 'Modulación dimensional en múltiplos estandarizados de altura humana (1 módulo base ≈ 1.80m).',
+  },
+  'Recorrido exterior': {
+    op: 'perimeter_circuit',
+    size: 0.35,
+    angle: 45,
+    label: 'Circuito perimetral y foso',
+    pedagogicalTip: 'Proyecta un foso perimetral o pasarela orbital de aproximación alrededor del prisma.',
+  },
+  'Transición': {
+    op: 'threshold_transition',
+    depth: 0.3,
+    factor: 0.5,
+    label: 'Umbral y filtro intermedio',
+    pedagogicalTip: 'Genera un umbral o diafragma de doble piel semitransparente entre el exterior y el núcleo.',
+  },
+  'Monolítico': {
+    op: 'monolithic',
+    factor: 1.0,
+    mag: 0.05,
+    label: 'Bloque pétreo macizo',
+    pedagogicalTip: 'Suprime juntas y divisiones internas forzando un bloque continuo con biselado pétreo.',
+  },
+  'Colosal': {
+    op: 'extend',
+    axis: 'XYZ',
+    factor: 4.0,
+    label: 'Escala monumental colosal',
+    pedagogicalTip: 'Escala volumétrica exponencial que altera drásticamente las relaciones de tamaño relativas a la escena.',
+  },
+  'Orden': {
+    op: 'order_regularize',
+    factor: 0.8,
+    label: 'Regularización y armonía ortogonal',
+    pedagogicalTip: 'Regulariza y alinea proporciones hacia múltiplos ortogonales claros y proporciones armónicas.',
+  },
   'Verticalidad': {
     op: 'extend',
     axis: 'Y',
-    factor: 1.7,
-    label: 'Extensión vertical',
-    pedagogicalTip: 'Eleva la proporción del prisma acentuando la verticalidad frente a la gravedad.',
+    factor: 2.5,
+    label: 'Tensión vertical y esbeltez',
+    pedagogicalTip: 'Tensión ascendente que estira el eje vertical mientras estrecha ligeramente la cúspide.',
   },
   'Elevación': {
     op: 'pilotis',
     factor: 1.4,
     height: 0.35,
+    steps: 4,
     label: 'Elevación sobre pilotis',
-    pedagogicalTip: 'Despeja la planta baja mediante pilotis, despegando la masa habitada del terreno.',
+    pedagogicalTip: 'Separa el volumen del plano cero mediante la aparición de pilotis y levitación de masa.',
   },
-  'Alto': {
-    op: 'extend',
-    axis: 'Y',
-    factor: 1.6,
-    label: 'Desarrollo en altura',
-    pedagogicalTip: 'Aumenta la dimensión en Z/Y otorgando esbeltez al volumen.',
+  'Desfragmentación': {
+    op: 'fracture',
+    gap: 0.18,
+    steps: 3,
+    label: 'Fractura en sub-bloques articulados',
+    pedagogicalTip: 'Quiebra el cubo sólido en múltiples prismas menores articulados que se separan entre sí en cuadrícula regular.',
+  },
+  'Iluminación': {
+    op: 'perforate',
+    dir: 'Y',
+    size: 0.25,
+    factor: 1.2,
+    label: 'Fisuras cenitales y penetración solar',
+    pedagogicalTip: 'Genera fisuras de luz cenital o vanos reflectantes por donde entra la radiación luminosa.',
+  },
+  'Recorrido axial': {
+    op: 'axial_path',
+    dir: 'Z',
+    size: 0.4,
+    angle: 0,
+    label: 'Túnel axial pasante',
+    pedagogicalTip: 'Traza un túnel o canal lineal directo que perfora el cubo de un extremo a otro en un único eje rector.',
+  },
+  'Espacio interior': {
+    op: 'hollow',
+    factor: 0.75,
+    depth: 0.15,
+    label: 'Vaciado interior habitable (Hollowing)',
+    pedagogicalTip: 'Vaciado interno del cubo dejando únicamente la corteza estructural con espesor calibrable.',
+  },
+  'Espacio exterior': {
+    op: 'base',
+    height: 0.2,
+    size: 2.2,
+    label: 'Plataformas exteriores y podio',
+    pedagogicalTip: 'Proyecta plataformas horizontales bajas y losas que extienden la influencia del cubo hacia el entorno.',
+  },
+  'Perforación': {
+    op: 'perforate',
+    dir: 'Z',
+    size: 0.4,
+    depth: 1.0,
+    label: 'Horadación pasante ortogonal',
+    pedagogicalTip: 'Horadación o vaciado transversal completo de caras con profundidad de corte graduable.',
+  },
+  'Alineación': {
+    op: 'coplanar_align',
+    factor: 0.85,
+    label: 'Alineación y rigidez coplanar',
+    pedagogicalTip: 'Atrae aristas o bloques sueltos para que coincidan con un plano límite de referencia.',
+  },
+  'Hito': {
+    op: 'landmark',
+    factor: 1.5,
+    steps: 2,
+    label: 'Remate focal sobresaliente (Hito)',
+    pedagogicalTip: 'Destaca una arista o torre singular por encima del conjunto para crear contraste focal.',
+  },
+  'Centro': {
+    op: 'centripetal',
+    factor: 0.6,
+    size: 0.35,
+    label: 'Organización centrípeta y claustro',
+    pedagogicalTip: 'Organiza la masa de modo centrípeto, atrayendo volúmenes hacia un núcleo central o patio claustral.',
+  },
+  'Retícula': {
+    op: 'grid_lattice',
+    steps: 4,
+    depth: 0.04,
+    label: 'Trama reticular tridimensional',
+    pedagogicalTip: 'Proyecta una trama de subdivisiones tridimensionales regulares sobre las caras del cubo.',
+  },
+  'Conectividad': {
+    op: 'connector_bridge',
+    steps: 2,
+    size: 0.25,
+    label: 'Puentes y pasarelas de conexión',
+    pedagogicalTip: 'Genera pasarelas, puentes o ductos de unión física entre caras o cuerpos articulados.',
+  },
+  'Recorrido': {
+    op: 'spiral_ramp',
+    factor: 1.25,
+    size: 0.3,
+    label: 'Rampa helicoidal envolvente',
+    pedagogicalTip: 'Genera una rampa continua que envuelve helicoidalmente el volumen desde la base hasta la cúspide.',
   },
   'Expansión': {
-    op: 'extend',
-    axis: 'XZ',
-    factor: 1.45,
-    label: 'Expansión horizontal',
-    pedagogicalTip: 'Extiende los límites laterales hacia el exterior.',
+    op: 'cantilever_flare',
+    size: 0.6,
+    angle: 12,
+    label: 'Proyección telescópica y voladizos',
+    pedagogicalTip: 'Proyección telescópica o voladizo de caras exteriores hacia los laterales abriendo el cubo al entorno.',
   },
-  'Colosal': {
-    op: 'extend',
-    axis: 'XYZ',
-    factor: 1.6,
-    label: 'Escala monumental',
-    pedagogicalTip: 'Escala la masa en las tres dimensiones hacia proporciones monumentales.',
-  },
+
+  // --- OTROS CONCEPTOS & PARÁMETROS GENERALES ---
   'Ancho': {
     op: 'extend',
     axis: 'X',
@@ -90,31 +213,12 @@ export const VOLUMETRIC_OPERATIONS: Record<string, VolumetricOperation> = {
   },
 
   // --- SUSTRACCIONES & PERFORACIONES ---
-  'Perforación': {
-    op: 'perforate',
-    dir: 'Z',
-    size: 0.35,
-    label: 'Perforación pasante',
-    pedagogicalTip: 'Sustrae un túnel pasante de lado a lado permitiendo cruzar visualmente la masa.',
-  },
-  'Espacio interior': {
-    op: 'hollow',
-    factor: 0.65,
-    label: 'Vaciado interior',
-    pedagogicalTip: 'Crea una cavidad interna habitable conservando el espesor de los muros perimetrales.',
-  },
   'Sustracción': {
     op: 'carve',
     face: 'front',
     size: 0.4,
     label: 'Sustracción volumétrica',
     pedagogicalTip: 'Talla una porción del volumen exterior modelando terrazas o entrantes.',
-  },
-  'Desfragmentación': {
-    op: 'fracture',
-    gap: 0.15,
-    label: 'Fractura y dislocación',
-    pedagogicalTip: 'Quiebra el bloque único en dos masas dislocadas conectadas por el intersticio.',
   },
   'Abierto': {
     op: 'open',
@@ -125,13 +229,6 @@ export const VOLUMETRIC_OPERATIONS: Record<string, VolumetricOperation> = {
   },
 
   // --- LUZ & PERFORACIONES CENITALES ---
-  'Iluminación': {
-    op: 'perforate',
-    dir: 'Y',
-    size: 0.3,
-    label: 'Perforación cenital',
-    pedagogicalTip: 'Abre lucernarios en la cubierta permitiendo la entrada cenital de rayos de sol.',
-  },
   'Luz': {
     op: 'perforate',
     dir: 'Y',
@@ -154,20 +251,6 @@ export const VOLUMETRIC_OPERATIONS: Record<string, VolumetricOperation> = {
     size: 0.4,
     label: 'Volumen adosado',
     pedagogicalTip: 'Acopla un nuevo cuerpo volumétrico articulado a la masa principal.',
-  },
-  'Conectividad': {
-    op: 'add',
-    face: 'side',
-    size: 0.35,
-    label: 'Cuerpo articulador',
-    pedagogicalTip: 'Añade un volumen conector lateral que enlaza recintos.',
-  },
-  'Hito': {
-    op: 'add',
-    face: 'top',
-    size: 0.25,
-    label: 'Remate sobresaliente',
-    pedagogicalTip: 'Eleva una torre o hito en cubierta como referencia visual dominante.',
   },
 
   // --- SESGO, ROTACIÓN & ASIMETRÍA ---

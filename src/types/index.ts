@@ -78,7 +78,21 @@ export type OperationType =
   | 'acoustic_barrier'
   | 'thermal_envelope'
   | 'panoramic_frame'
-  | 'water_feature';
+  | 'water_feature'
+  | 'anthropocentric'
+  | 'anthropometric'
+  | 'perimeter_circuit'
+  | 'threshold_transition'
+  | 'monolithic'
+  | 'order_regularize'
+  | 'axial_path'
+  | 'coplanar_align'
+  | 'landmark'
+  | 'centripetal'
+  | 'grid_lattice'
+  | 'connector_bridge'
+  | 'spiral_ramp'
+  | 'cantilever_flare';
 
 export interface VolumetricOperation {
   op: OperationType;

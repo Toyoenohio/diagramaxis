@@ -5,6 +5,7 @@ import { getVolumetricOperation } from '../../data/volumetricOperations';
 import { DiscourseEditor } from '../discourse/DiscourseEditor';
 import { ReferencesList } from '../discourse/ReferencesList';
 import { CoherenceMeter } from '../evaluation/CoherenceMeter';
+import { FirmitasSliders, FIRMITAS_LIST } from './FirmitasSliders';
 import { Sparkles, X, Plus } from 'lucide-react';
 
 export const RightSidebar: React.FC = () => {
@@ -215,8 +216,16 @@ export const RightSidebar: React.FC = () => {
                           Modificadores Volumétricos 3D
                         </span>
 
-                        {/* Vacíos / Perforaciones / Vanos / Túneles / Carve */}
-                        {(currentOp.op === 'perforate' || currentOp.op === 'carve' || currentOp.op === 'open') && (
+                        {FIRMITAS_LIST.includes(currentNodeId as any) ? (
+                          <FirmitasSliders
+                            conceptId={currentNodeId}
+                            custom={currentParam.custom || {}}
+                            onChange={(key, val) => setNodeCustomParam(currentNodeId, key, val)}
+                          />
+                        ) : (
+                          <>
+                            {/* Vacíos / Perforaciones / Vanos / Túneles / Carve */}
+                            {(currentOp.op === 'perforate' || currentOp.op === 'carve' || currentOp.op === 'open') && (
                           <div className="flex flex-col gap-2.5 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
                             <div className="flex flex-col gap-1">
                               <label className="font-mono text-[10px] text-diagramaxis-textMuted uppercase">
@@ -459,10 +468,12 @@ export const RightSidebar: React.FC = () => {
                             </div>
                           </div>
                         )}
-                      </div>
+                      </>
                     )}
                   </div>
                 )}
+              </div>
+            )}
 
                 {/* Control del Volumen Base */}
                 <div className="p-3.5 bg-diagramaxis-surface2 border border-diagramaxis-border rounded-sm flex flex-col gap-3.5 shadow-md">

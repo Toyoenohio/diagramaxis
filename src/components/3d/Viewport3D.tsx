@@ -83,6 +83,12 @@ export const Viewport3D: React.FC = () => {
     pitch: 0,
   });
 
+  const finalDimensionsRef = useRef<{ w: number; h: number; d: number }>({
+    w: 12,
+    h: 8,
+    d: 12,
+  });
+
   const {
     projectName,
     activeConcepts,
@@ -423,6 +429,8 @@ export const Viewport3D: React.FC = () => {
       relations
     );
 
+    finalDimensionsRef.current = built.finalDimensions || baseDimensions;
+
     built.meshes.forEach((m) => volumeGroup.add(m));
     built.groups.forEach((g) => volumeGroup.add(g));
 
@@ -528,10 +536,11 @@ export const Viewport3D: React.FC = () => {
     if (showHumanFigure) {
       const goldHex = cssVarColorHex('--da-gold', 0xe5a93b);
       const figure = createHumanFigure(1.75, goldHex);
-      figure.position.set(baseDimensions.w / 2 + 1.8, 0, 0);
+      const curW = finalDimensionsRef.current ? finalDimensionsRef.current.w : baseDimensions.w;
+      figure.position.set(curW / 2 + 1.8, 0, 0);
       humanGroup.add(figure);
     }
-  }, [showHumanFigure, baseDimensions, theme]);
+  }, [showHumanFigure, baseDimensions, activeConcepts, nodeParams, theme]);
 
   // Raycaster para selección directa de cajas 3D
   const raycasterRef = useRef(new THREE.Raycaster());

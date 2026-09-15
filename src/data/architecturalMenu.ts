@@ -16,7 +16,7 @@ export const CONCEPTS_DATA: ArchitecturalConcept[] = [
     subcategory: 'Firmitas',
     natures: ['G', 'Co'],
     description: 'El ser humano como centro y medida rectora del hecho proyectual.',
-    has3DOperation: false,
+    has3DOperation: true,
   },
   {
     id: 'Antropométrico',
@@ -25,7 +25,7 @@ export const CONCEPTS_DATA: ArchitecturalConcept[] = [
     subcategory: 'Firmitas',
     natures: ['Co'],
     description: 'Dimensionamiento derivado estrictamente de la escala física del cuerpo.',
-    has3DOperation: false,
+    has3DOperation: true,
   },
   {
     id: 'Recorrido exterior',
@@ -70,7 +70,7 @@ export const CONCEPTS_DATA: ArchitecturalConcept[] = [
     subcategory: 'Firmitas',
     natures: ['G', 'R'],
     description: 'Estructura lógica que gobierna la disposición armónica de las partes.',
-    has3DOperation: false,
+    has3DOperation: true,
   },
   {
     id: 'Verticalidad',
@@ -151,7 +151,7 @@ export const CONCEPTS_DATA: ArchitecturalConcept[] = [
     subcategory: 'Firmitas',
     natures: ['R'],
     description: 'Puesta en línea recta o coincidencia de aristas y planos límites.',
-    has3DOperation: false,
+    has3DOperation: true,
   },
   {
     id: 'Hito',
