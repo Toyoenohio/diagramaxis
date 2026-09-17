@@ -6,7 +6,7 @@ import { DiscourseEditor } from '../discourse/DiscourseEditor';
 import { ReferencesList } from '../discourse/ReferencesList';
 import { CoherenceMeter } from '../evaluation/CoherenceMeter';
 import { FirmitasSliders, FIRMITAS_LIST } from './FirmitasSliders';
-import { Sparkles, X, Plus } from 'lucide-react';
+import { Sparkles, X, Plus, Trash2, Move, Layers, Box, RotateCcw } from 'lucide-react';
 
 export const RightSidebar: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'params' | 'relations' | 'discourse' | 'coherence' | 'active'>('params');
@@ -22,22 +22,33 @@ export const RightSidebar: React.FC = () => {
     relations,
     updateRelation,
     removeRelation,
-    baseDimensions,
-    setBaseDimensions,
     northRotation,
     setNorthRotation,
     toggleConcept,
     toggleArtifact,
     setModalOpen,
+    objects,
+    selectedObjectId,
+    addObject,
+    removeObject,
+    selectObject,
+    updateObject,
+    setObjectPosition,
+    setObjectDimensions,
+    assignConceptToObject,
+    unassignConceptFromObject,
   } = useProjectStore();
 
   const allActive = [...activeConcepts, ...activeArtifacts];
   const currentNodeId = selectedNodeId && allActive.includes(selectedNodeId) ? selectedNodeId : allActive[0] || null;
 
+  const currentObject = objects.find((o) => o.id === selectedObjectId) || objects[0] || null;
   const currentConcept = currentNodeId ? CONCEPTS_DATA.find((c) => c.id === currentNodeId) : null;
   const currentArtifact = currentNodeId ? ARTIFACTS_DATA.find((a) => a.id === currentNodeId) : null;
   const currentOp = currentNodeId ? getVolumetricOperation(currentNodeId) : null;
-  const currentParam = currentNodeId ? nodeParams[currentNodeId] || { weight: 0.6, intensity: 0.5 } : { weight: 0.6, intensity: 0.5 };
+  const currentParam = (currentNodeId && currentObject?.nodeParams?.[currentNodeId])
+    ? currentObject.nodeParams[currentNodeId]
+    : (currentNodeId ? nodeParams[currentNodeId] || { weight: 0.6, intensity: 0.5 } : { weight: 0.6, intensity: 0.5 });
 
   return (
     <aside className="w-[340px] min-w-[340px] h-full bg-diagramaxis-surface border-l border-diagramaxis-border flex flex-col z-20 select-none text-diagramaxis-text">
@@ -99,6 +110,265 @@ export const RightSidebar: React.FC = () => {
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar">
         {activeTab === 'params' && (
           <div className="flex flex-col gap-4">
+            {/* Panel de Objetos Principales Multivolumen */}
+            <div className="p-3.5 bg-diagramaxis-surface2 border border-diagramaxis-border rounded-sm flex flex-col gap-3 shadow-md">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-diagramaxis-gold font-bold">
+                  <Layers className="w-3.5 h-3.5 text-diagramaxis-gold" />
+                  <span>Objetos Principales ({objects.length})</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => addObject()}
+                  className="flex items-center gap-1 font-mono text-[10.5px] uppercase tracking-wider text-diagramaxis-gold hover:underline font-semibold"
+                  title="Añadir nuevo volumen principal al espacio"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ Añadir</span>
+                </button>
+              </div>
+
+              {/* Selector de Objeto Activo (Chips) */}
+              <div className="flex flex-wrap gap-1.5">
+                {objects.map((obj) => (
+                  <button
+                    key={obj.id}
+                    type="button"
+                    onClick={() => selectObject(obj.id)}
+                    className={`px-2.5 py-1 rounded-xs font-mono text-[11px] border transition-all flex items-center gap-1.5 ${
+                      obj.id === (currentObject?.id || selectedObjectId)
+                        ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold shadow-sm'
+                        : 'bg-diagramaxis-bg text-diagramaxis-textMuted border-diagramaxis-border hover:text-diagramaxis-text'
+                    }`}
+                  >
+                    <Box className="w-3 h-3" />
+                    <span className="truncate max-w-[90px]">{obj.name}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Controles del Objeto Seleccionado */}
+              {currentObject && (
+                <div className="flex flex-col gap-3 pt-2 border-t border-diagramaxis-border">
+                  {/* Nombre y Eliminar */}
+                  <div className="flex items-center justify-between gap-2">
+                    <input
+                      type="text"
+                      value={currentObject.name}
+                      onChange={(e) => updateObject(currentObject.id, { name: e.target.value })}
+                      className="flex-1 px-2 py-1 bg-diagramaxis-bg border border-diagramaxis-border rounded-xs font-mono text-[11.5px] text-diagramaxis-textBright focus:border-diagramaxis-gold outline-none"
+                      placeholder="Nombre del volumen..."
+                    />
+                    {objects.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeObject(currentObject.id)}
+                        className="p-1 text-diagramaxis-textMuted hover:text-diagramaxis-danger transition-colors"
+                        title="Eliminar este objeto"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Desplazamiento en Ejes X, Y, Z */}
+                  <div className="flex flex-col gap-2 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[10px] uppercase text-diagramaxis-cyan font-bold flex items-center gap-1">
+                        <Move className="w-3 h-3 text-diagramaxis-cyan" />
+                        <span>Desplazamiento 3D (Metros)</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setObjectPosition(currentObject.id, { x: 0, y: 0, z: 0 })}
+                        className="text-[9.5px] font-mono text-diagramaxis-textDim hover:text-diagramaxis-gold flex items-center gap-0.5"
+                        title="Restablecer posición a (0, 0, 0)"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        <span>Origen</span>
+                      </button>
+                    </div>
+
+                    {/* Eje X */}
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex justify-between font-mono text-[10.5px]">
+                        <span className="text-diagramaxis-textMuted">Eje X (Lateral):</span>
+                        <span className="font-bold text-diagramaxis-cyan">
+                          {currentObject.position.x > 0 ? `+${currentObject.position.x.toFixed(1)}m` : `${currentObject.position.x.toFixed(1)}m`}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="-50"
+                        max="50"
+                        step="0.5"
+                        value={currentObject.position.x}
+                        onChange={(e) => setObjectPosition(currentObject.id, { x: parseFloat(e.target.value) })}
+                        className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
+                      />
+                    </div>
+
+                    {/* Eje Y */}
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex justify-between font-mono text-[10.5px]">
+                        <span className="text-diagramaxis-textMuted">Eje Y (Vertical):</span>
+                        <span className="font-bold text-diagramaxis-cyan">
+                          {currentObject.position.y > 0 ? `+${currentObject.position.y.toFixed(1)}m` : `${currentObject.position.y.toFixed(1)}m`}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="-20"
+                        max="40"
+                        step="0.5"
+                        value={currentObject.position.y}
+                        onChange={(e) => setObjectPosition(currentObject.id, { y: parseFloat(e.target.value) })}
+                        className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
+                      />
+                    </div>
+
+                    {/* Eje Z */}
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex justify-between font-mono text-[10.5px]">
+                        <span className="text-diagramaxis-textMuted">Eje Z (Profundidad):</span>
+                        <span className="font-bold text-diagramaxis-cyan">
+                          {currentObject.position.z > 0 ? `+${currentObject.position.z.toFixed(1)}m` : `${currentObject.position.z.toFixed(1)}m`}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="-50"
+                        max="50"
+                        step="0.5"
+                        value={currentObject.position.z}
+                        onChange={(e) => setObjectPosition(currentObject.id, { z: parseFloat(e.target.value) })}
+                        className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Geometría Base de este Objeto */}
+                  <div className="flex flex-col gap-2">
+                    <span className="font-mono text-[10px] uppercase text-diagramaxis-gold font-bold">
+                      Dimensiones de este Volumen
+                    </span>
+
+                    {/* Ancho */}
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex justify-between font-mono text-[10.5px]">
+                        <span className="text-diagramaxis-textMuted">Ancho (X):</span>
+                        <span className="font-bold text-diagramaxis-text">{currentObject.dimensions.w}m</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="4"
+                        max="40"
+                        step="1"
+                        value={currentObject.dimensions.w}
+                        onChange={(e) => setObjectDimensions(currentObject.id, { w: parseFloat(e.target.value) })}
+                        className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+                      />
+                    </div>
+
+                    {/* Profundidad */}
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex justify-between font-mono text-[10.5px]">
+                        <span className="text-diagramaxis-textMuted">Profundidad (Z):</span>
+                        <span className="font-bold text-diagramaxis-text">{currentObject.dimensions.d}m</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="4"
+                        max="40"
+                        step="1"
+                        value={currentObject.dimensions.d}
+                        onChange={(e) => setObjectDimensions(currentObject.id, { d: parseFloat(e.target.value) })}
+                        className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+                      />
+                    </div>
+
+                    {/* Altura */}
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex justify-between font-mono text-[10.5px]">
+                        <span className="text-diagramaxis-textMuted">Altura (Y):</span>
+                        <span className="font-bold text-diagramaxis-text">{currentObject.dimensions.h}m</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="3"
+                        max="30"
+                        step="0.5"
+                        value={currentObject.dimensions.h}
+                        onChange={(e) => setObjectDimensions(currentObject.id, { h: parseFloat(e.target.value) })}
+                        className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Fichas asignadas a este objeto */}
+                  <div className="flex flex-col gap-1.5 pt-2 border-t border-diagramaxis-border">
+                    <span className="font-mono text-[10px] uppercase text-diagramaxis-textMuted font-bold">
+                      Modificadores Asignados ({currentObject.assignedConcepts.length}):
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {currentObject.assignedConcepts.length === 0 ? (
+                        <span className="font-mono text-[10px] text-diagramaxis-textDim italic">
+                          Sin cartas asignadas (volumen base puro).
+                        </span>
+                      ) : (
+                        currentObject.assignedConcepts.map((cid) => (
+                          <span
+                            key={cid}
+                            onClick={() => setSelectedNodeId(cid)}
+                            className={`inline-flex items-center gap-1 font-mono text-[10px] px-2 py-0.5 rounded-xs border cursor-pointer transition-colors ${
+                              cid === currentNodeId
+                                ? 'border-diagramaxis-gold bg-diagramaxis-gold/15 text-diagramaxis-gold font-bold'
+                                : 'border-diagramaxis-border bg-diagramaxis-bg text-diagramaxis-textMuted hover:text-diagramaxis-text'
+                            }`}
+                          >
+                            <span>{cid}</span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                unassignConceptFromObject(cid, currentObject.id);
+                              }}
+                              className="hover:text-diagramaxis-danger ml-0.5"
+                              title="Desvincular de este objeto"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Dropdown para asignar fichas activas */}
+                    {allActive.filter((c) => !currentObject.assignedConcepts.includes(c)).length > 0 && (
+                      <select
+                        value=""
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            assignConceptToObject(e.target.value, currentObject.id);
+                            setSelectedNodeId(e.target.value);
+                          }
+                        }}
+                        className="w-full mt-1 p-1.5 bg-diagramaxis-bg border border-diagramaxis-border rounded-xs font-mono text-[10.5px] text-diagramaxis-gold outline-none cursor-pointer"
+                      >
+                        <option value="">+ Asignar ficha activa a este objeto...</option>
+                        {allActive
+                          .filter((c) => !currentObject.assignedConcepts.includes(c))
+                          .map((c) => (
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
+                          ))}
+                      </select>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             {allActive.length === 0 ? (
               <div className="p-6 bg-diagramaxis-surface2 border border-diagramaxis-border rounded-sm text-center font-mono text-[12px] text-diagramaxis-textMuted leading-relaxed">
                 Selecciona fichas en la bandeja izquierda para calibrar sus parámetros y dimensiones volumétricas.
@@ -150,6 +420,36 @@ export const RightSidebar: React.FC = () => {
                     <p className="font-mono text-[11.5px] text-diagramaxis-textBright leading-relaxed">
                       {currentConcept?.description || currentArtifact?.description}
                     </p>
+
+                    {/* Asignación de este concepto a un objeto específico */}
+                    {objects.length > 1 && (
+                      <div className="flex items-center justify-between gap-1.5 p-2 bg-diagramaxis-bg rounded-xs border border-diagramaxis-border font-mono text-[10.5px]">
+                        <span className="text-diagramaxis-textMuted">Aplica al objeto:</span>
+                        <select
+                          value={objects.find((o) => o.assignedConcepts.includes(currentNodeId))?.id || ''}
+                          onChange={(e) => {
+                            const targetId = e.target.value;
+                            objects.forEach((o) => {
+                              if (o.assignedConcepts.includes(currentNodeId)) {
+                                unassignConceptFromObject(currentNodeId, o.id);
+                              }
+                            });
+                            if (targetId) {
+                              assignConceptToObject(currentNodeId, targetId);
+                              selectObject(targetId);
+                            }
+                          }}
+                          className="bg-diagramaxis-surface2 border border-diagramaxis-border text-diagramaxis-gold px-2 py-0.5 rounded-xs outline-none cursor-pointer"
+                        >
+                          <option value="">(Sin asignar)</option>
+                          {objects.map((obj) => (
+                            <option key={obj.id} value={obj.id}>
+                              {obj.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
 
                     {/* Badge de Operación Volumétrica */}
                     {currentOp ? (
@@ -475,76 +775,26 @@ export const RightSidebar: React.FC = () => {
               </div>
             )}
 
-                {/* Control del Volumen Base */}
-                <div className="p-3.5 bg-diagramaxis-surface2 border border-diagramaxis-border rounded-sm flex flex-col gap-3.5 shadow-md">
+                {/* Control de Orientación Solar y Entorno */}
+                <div className="p-3.5 bg-diagramaxis-surface2 border border-diagramaxis-border rounded-sm flex flex-col gap-3 shadow-md">
                   <span className="font-mono text-[10px] uppercase tracking-widest text-diagramaxis-gold font-bold">
-                    Geometría Base de la Masa (Metros)
+                    Orientación Solar y Terreno
                   </span>
 
-                  <div className="flex flex-col gap-3">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex justify-between font-mono text-[11.5px]">
-                        <span className="text-diagramaxis-textMuted">Ancho (X):</span>
-                        <span className="font-bold text-diagramaxis-text">{baseDimensions.w}m</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="4"
-                        max="40"
-                        step="1"
-                        value={baseDimensions.w}
-                        onChange={(e) => setBaseDimensions({ w: parseFloat(e.target.value) })}
-                        className="w-full h-2 accent-diagramaxis-gold cursor-pointer"
-                      />
+                  <div className="flex flex-col gap-1">
+                    <div className="flex justify-between font-mono text-[11.5px]">
+                      <span className="text-diagramaxis-textMuted">Orientación Norte:</span>
+                      <span className="font-bold text-diagramaxis-gold">{northRotation}°</span>
                     </div>
-
-                    <div className="flex flex-col gap-1">
-                      <div className="flex justify-between font-mono text-[11.5px]">
-                        <span className="text-diagramaxis-textMuted">Profundidad (Z):</span>
-                        <span className="font-bold text-diagramaxis-text">{baseDimensions.d}m</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="4"
-                        max="40"
-                        step="1"
-                        value={baseDimensions.d}
-                        onChange={(e) => setBaseDimensions({ d: parseFloat(e.target.value) })}
-                        className="w-full h-2 accent-diagramaxis-gold cursor-pointer"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <div className="flex justify-between font-mono text-[11.5px]">
-                        <span className="text-diagramaxis-textMuted">Altura Inicial (Y):</span>
-                        <span className="font-bold text-diagramaxis-text">{baseDimensions.h}m</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="3"
-                        max="30"
-                        step="0.5"
-                        value={baseDimensions.h}
-                        onChange={(e) => setBaseDimensions({ h: parseFloat(e.target.value) })}
-                        className="w-full h-2 accent-diagramaxis-gold cursor-pointer"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-1 pt-2.5 border-t border-diagramaxis-border">
-                      <div className="flex justify-between font-mono text-[11.5px]">
-                        <span className="text-diagramaxis-textMuted">Orientación Norte:</span>
-                        <span className="font-bold text-diagramaxis-gold">{northRotation}°</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="-180"
-                        max="180"
-                        step="5"
-                        value={northRotation}
-                        onChange={(e) => setNorthRotation(parseFloat(e.target.value))}
-                        className="w-full h-2 accent-diagramaxis-gold cursor-pointer"
-                      />
-                    </div>
+                    <input
+                      type="range"
+                      min="-180"
+                      max="180"
+                      step="5"
+                      value={northRotation}
+                      onChange={(e) => setNorthRotation(parseFloat(e.target.value))}
+                      className="w-full h-2 accent-diagramaxis-gold cursor-pointer"
+                    />
                   </div>
                 </div>
               </>

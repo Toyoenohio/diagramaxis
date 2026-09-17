@@ -3,6 +3,7 @@ import { Node, Edge, applyNodeChanges } from '@xyflow/react';
 import {
   ProjectRelation,
   NodeParam,
+  ProjectObject,
   ArchitecturalReference,
   CoherenceReport,
   CameraViewMode,
@@ -51,6 +52,10 @@ interface ProjectState {
   showHumanFigure: boolean;
   showShadows: boolean;
 
+  // Objetos 3D Principales (Multivolumen)
+  objects: ProjectObject[];
+  selectedObjectId: string;
+
   // Configuración de IA
   aiSettings: AISettings;
 
@@ -97,6 +102,18 @@ interface ProjectState {
   toggleHumanFigure: () => void;
   toggleShadows: () => void;
 
+  // Acciones Multi-Objeto 3D
+  addObject: (name?: string) => void;
+  removeObject: (id: string) => void;
+  selectObject: (id: string) => void;
+  updateObject: (id: string, updates: Partial<ProjectObject>) => void;
+  setObjectPosition: (id: string, pos: { x?: number; y?: number; z?: number }) => void;
+  setObjectDimensions: (id: string, dim: { w?: number; h?: number; d?: number }) => void;
+  assignConceptToObject: (conceptId: string, objectId: string) => void;
+  unassignConceptFromObject: (conceptId: string, objectId: string) => void;
+  setObjectNodeParam: (objectId: string, conceptId: string, field: 'weight' | 'intensity', value: number) => void;
+  setObjectNodeCustomParam: (objectId: string, conceptId: string, key: string, value: any) => void;
+
   // Casos de Estudio
   loadStudyCase: (caseId: string) => void;
 
@@ -139,6 +156,19 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   showHumanFigure: true,
   showShadows: true,
 
+  objects: [
+    {
+      id: 'obj-1',
+      name: 'Objeto 1',
+      dimensions: { w: 16, h: 8, d: 14 },
+      position: { x: 0, y: 0, z: 0 },
+      rotationY: 0,
+      assignedConcepts: [],
+      nodeParams: {},
+    },
+  ],
+  selectedObjectId: 'obj-1',
+
   aiSettings: {
     provider: 'cloudflare',
     apiKey: '',
@@ -167,7 +197,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   },
 
   toggleConcept: (id) => {
-    const { activeConcepts, nodeParams, nodes, edges, relations } = get();
+    const { activeConcepts, nodeParams, nodes, edges, relations, objects, selectedObjectId } = get();
     const exists = activeConcepts.includes(id);
 
     if (exists) {
@@ -178,6 +208,13 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       const newNodes = nodes.filter((n) => n.id !== id);
       const newRelations = relations.filter((r) => r.from !== id && r.to !== id);
       const newEdges = edges.filter((e) => e.source !== id && e.target !== id);
+      const updatedObjects = objects.map((obj) => ({
+        ...obj,
+        assignedConcepts: obj.assignedConcepts.filter((c) => c !== id),
+        nodeParams: obj.nodeParams
+          ? Object.fromEntries(Object.entries(obj.nodeParams).filter(([k]) => k !== id))
+          : {},
+      }));
 
       set({
         activeConcepts: newActive,
@@ -185,6 +222,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         nodes: newNodes,
         relations: newRelations,
         edges: newEdges,
+        objects: updatedObjects,
         selectedNodeId: get().selectedNodeId === id ? null : get().selectedNodeId,
       });
       get().showToast(`Concepto "${id}" retirado`);
@@ -219,26 +257,50 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         },
       };
 
+      const targetObjId = selectedObjectId || objects[0]?.id || 'obj-1';
+      const updatedObjects = objects.map((obj) => {
+        if (obj.id === targetObjId && !obj.assignedConcepts.includes(id)) {
+          return {
+            ...obj,
+            assignedConcepts: [...obj.assignedConcepts, id],
+            nodeParams: {
+              ...(obj.nodeParams || {}),
+              [id]: { weight: 0.6, intensity: 0.5 },
+            },
+          };
+        }
+        return obj;
+      });
+
       set({
         activeConcepts: newActive,
         nodeParams: newParams,
         nodes: [...nodes, newNode],
+        objects: updatedObjects,
       });
       get().showToast(`Concepto "${id}" activado`);
     }
   },
 
   toggleArtifact: (id) => {
-    const { activeArtifacts, nodeParams, nodes, edges, relations } = get();
+    const { activeArtifacts, nodeParams, nodes, edges, relations, objects, selectedObjectId } = get();
     const exists = activeArtifacts.includes(id);
 
     if (exists) {
+      // Eliminar
       const newActive = activeArtifacts.filter((a) => a !== id);
       const newParams = { ...nodeParams };
       delete newParams[id];
       const newNodes = nodes.filter((n) => n.id !== id);
       const newRelations = relations.filter((r) => r.from !== id && r.to !== id);
       const newEdges = edges.filter((e) => e.source !== id && e.target !== id);
+      const updatedObjects = objects.map((obj) => ({
+        ...obj,
+        assignedConcepts: obj.assignedConcepts.filter((c) => c !== id),
+        nodeParams: obj.nodeParams
+          ? Object.fromEntries(Object.entries(obj.nodeParams).filter(([k]) => k !== id))
+          : {},
+      }));
 
       set({
         activeArtifacts: newActive,
@@ -246,15 +308,17 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         nodes: newNodes,
         relations: newRelations,
         edges: newEdges,
+        objects: updatedObjects,
         selectedNodeId: get().selectedNodeId === id ? null : get().selectedNodeId,
       });
       get().showToast(`Artefacto "${id}" retirado`);
     } else {
+      // Agregar
       const artData = ARTIFACTS_DATA.find((a) => a.id === id);
       if (!artData) return;
 
       const newActive = [...activeArtifacts, id];
-      const newParams = { ...nodeParams, [id]: { weight: 0.7, intensity: 0.6 } };
+      const newParams = { ...nodeParams, [id]: { weight: 0.7, intensity: 0.5 } };
 
       const count = nodes.length;
       const angle = count * 0.75;
@@ -278,17 +342,33 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         },
       };
 
+      const targetObjId = selectedObjectId || objects[0]?.id || 'obj-1';
+      const updatedObjects = objects.map((obj) => {
+        if (obj.id === targetObjId && !obj.assignedConcepts.includes(id)) {
+          return {
+            ...obj,
+            assignedConcepts: [...obj.assignedConcepts, id],
+            nodeParams: {
+              ...(obj.nodeParams || {}),
+              [id]: { weight: 0.7, intensity: 0.5 },
+            },
+          };
+        }
+        return obj;
+      });
+
       set({
         activeArtifacts: newActive,
         nodeParams: newParams,
         nodes: [...nodes, newNode],
+        objects: updatedObjects,
       });
       get().showToast(`Artefacto "${id}" activado`);
     }
   },
 
   setNodeParam: (id, field, value) => {
-    const { nodeParams, nodes } = get();
+    const { nodeParams, nodes, objects, selectedObjectId } = get();
     const current = nodeParams[id] || { weight: 0.6, intensity: 0.5 };
     const updated = { ...current, [field]: value };
 
@@ -305,14 +385,29 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       return n;
     });
 
+    const updatedObjects = objects.map((obj) => {
+      if (obj.assignedConcepts.includes(id) || obj.id === selectedObjectId) {
+        const cur = obj.nodeParams?.[id] || current;
+        return {
+          ...obj,
+          nodeParams: {
+            ...(obj.nodeParams || {}),
+            [id]: { ...cur, [field]: value },
+          },
+        };
+      }
+      return obj;
+    });
+
     set({
       nodeParams: { ...nodeParams, [id]: updated },
       nodes: updatedNodes,
+      objects: updatedObjects,
     });
   },
 
   setNodeCustomParam: (id, key, value) => {
-    const { nodeParams, nodes } = get();
+    const { nodeParams, nodes, objects, selectedObjectId } = get();
     const current = nodeParams[id] || { weight: 0.6, intensity: 0.5, custom: {} };
     const custom = { ...(current.custom || {}), [key]: value };
     const updated = { ...current, custom };
@@ -330,9 +425,25 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       return n;
     });
 
+    const updatedObjects = objects.map((obj) => {
+      if (obj.assignedConcepts.includes(id) || obj.id === selectedObjectId) {
+        const cur = obj.nodeParams?.[id] || current;
+        const curCustom = { ...(cur.custom || {}), [key]: value };
+        return {
+          ...obj,
+          nodeParams: {
+            ...(obj.nodeParams || {}),
+            [id]: { ...cur, custom: curCustom },
+          },
+        };
+      }
+      return obj;
+    });
+
     set({
       nodeParams: { ...nodeParams, [id]: updated },
       nodes: updatedNodes,
+      objects: updatedObjects,
     });
   },
 
@@ -523,8 +634,14 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   setIsGeneratingReferences: (isGeneratingReferences) => set({ isGeneratingReferences }),
 
   setBaseDimensions: (dim) => {
+    const { selectedObjectId } = get();
     set((state) => ({
       baseDimensions: { ...state.baseDimensions, ...dim },
+      objects: state.objects.map((obj) =>
+        obj.id === selectedObjectId
+          ? { ...obj, dimensions: { ...obj.dimensions, ...dim } }
+          : obj
+      ),
     }));
   },
 
@@ -533,6 +650,150 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   setShadingMode: (shadingMode) => set({ shadingMode }),
   toggleHumanFigure: () => set((state) => ({ showHumanFigure: !state.showHumanFigure })),
   toggleShadows: () => set((state) => ({ showShadows: !state.showShadows })),
+
+  addObject: (name?: string) => {
+    const { objects } = get();
+    const nextIdx = objects.length + 1;
+    const newId = `obj-${Date.now().toString(36)}`;
+    const lastObj = objects[objects.length - 1];
+    const offsetX = lastObj ? lastObj.position.x + lastObj.dimensions.w + 6 : 20;
+    const newObj: ProjectObject = {
+      id: newId,
+      name: name || `Objeto ${nextIdx}`,
+      dimensions: { w: 14, h: 8, d: 14 },
+      position: { x: offsetX, y: 0, z: 0 },
+      rotationY: 0,
+      assignedConcepts: [],
+      nodeParams: {},
+    };
+    set({
+      objects: [...objects, newObj],
+      selectedObjectId: newId,
+    });
+    get().showToast(`Nuevo "${newObj.name}" añadido al espacio`);
+  },
+
+  removeObject: (id: string) => {
+    const { objects, selectedObjectId } = get();
+    if (objects.length <= 1) {
+      get().showToast('Se requiere al menos un objeto principal');
+      return;
+    }
+    const newObjects = objects.filter((o) => o.id !== id);
+    const newSelected = selectedObjectId === id ? newObjects[0].id : selectedObjectId;
+    set({
+      objects: newObjects,
+      selectedObjectId: newSelected,
+    });
+    get().showToast('Objeto eliminado');
+  },
+
+  selectObject: (id: string) => {
+    const { objects } = get();
+    const found = objects.find((o) => o.id === id);
+    if (found) {
+      set({
+        selectedObjectId: id,
+        baseDimensions: { ...found.dimensions },
+      });
+    }
+  },
+
+  updateObject: (id: string, updates: Partial<ProjectObject>) => {
+    set((state) => ({
+      objects: state.objects.map((o) => (o.id === id ? { ...o, ...updates } : o)),
+    }));
+  },
+
+  setObjectPosition: (id: string, pos: { x?: number; y?: number; z?: number }) => {
+    set((state) => ({
+      objects: state.objects.map((o) =>
+        o.id === id ? { ...o, position: { ...o.position, ...pos } } : o
+      ),
+    }));
+  },
+
+  setObjectDimensions: (id: string, dim: { w?: number; h?: number; d?: number }) => {
+    const { selectedObjectId } = get();
+    set((state) => ({
+      baseDimensions: id === selectedObjectId ? { ...state.baseDimensions, ...dim } : state.baseDimensions,
+      objects: state.objects.map((o) =>
+        o.id === id ? { ...o, dimensions: { ...o.dimensions, ...dim } } : o
+      ),
+    }));
+  },
+
+  assignConceptToObject: (conceptId: string, objectId: string) => {
+    const { objects, nodeParams } = get();
+    const updated = objects.map((obj) => {
+      if (obj.id === objectId) {
+        if (!obj.assignedConcepts.includes(conceptId)) {
+          return {
+            ...obj,
+            assignedConcepts: [...obj.assignedConcepts, conceptId],
+            nodeParams: {
+              ...(obj.nodeParams || {}),
+              [conceptId]: obj.nodeParams?.[conceptId] || nodeParams[conceptId] || { weight: 0.6, intensity: 0.5 },
+            },
+          };
+        }
+      }
+      return obj;
+    });
+    set({ objects: updated });
+    get().showToast(`Ficha asignada al objeto`);
+  },
+
+  unassignConceptFromObject: (conceptId: string, objectId: string) => {
+    const { objects } = get();
+    const updated = objects.map((obj) => {
+      if (obj.id === objectId) {
+        return {
+          ...obj,
+          assignedConcepts: obj.assignedConcepts.filter((c) => c !== conceptId),
+        };
+      }
+      return obj;
+    });
+    set({ objects: updated });
+  },
+
+  setObjectNodeParam: (objectId: string, conceptId: string, field: 'weight' | 'intensity', value: number) => {
+    set((state) => ({
+      objects: state.objects.map((obj) => {
+        if (obj.id === objectId) {
+          const cur = obj.nodeParams?.[conceptId] || { weight: 0.6, intensity: 0.5 };
+          return {
+            ...obj,
+            nodeParams: {
+              ...(obj.nodeParams || {}),
+              [conceptId]: { ...cur, [field]: value },
+            },
+          };
+        }
+        return obj;
+      }),
+    }));
+  },
+
+  setObjectNodeCustomParam: (objectId: string, conceptId: string, key: string, value: any) => {
+    set((state) => ({
+      objects: state.objects.map((obj) => {
+        if (obj.id === objectId) {
+          const cur = obj.nodeParams?.[conceptId] || { weight: 0.6, intensity: 0.5 };
+          const custom = { ...(cur.custom || {}), [key]: value };
+          return {
+            ...obj,
+            nodeParams: {
+              ...(obj.nodeParams || {}),
+              [conceptId]: { ...cur, custom },
+            },
+          };
+        }
+        return obj;
+      }),
+    }));
+  },
 
   loadStudyCase: (caseId) => {
     const studyCase = STUDY_CASES.find((c) => c.id === caseId);
@@ -606,6 +867,18 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       detectedArtifacts,
       baseDimensions: { ...studyCase.baseDimensions },
       northRotation: studyCase.northRot,
+      objects: [
+        {
+          id: 'obj-1',
+          name: 'Volumen Principal',
+          dimensions: { ...studyCase.baseDimensions },
+          position: { x: 0, y: 0, z: 0 },
+          rotationY: 0,
+          assignedConcepts: [...studyCase.conceptos, ...studyCase.artefactos],
+          nodeParams: newParams,
+        },
+      ],
+      selectedObjectId: 'obj-1',
       isStudyCasesModalOpen: false,
     });
 

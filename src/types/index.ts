@@ -47,6 +47,17 @@ export interface NodeParam {
   custom?: Record<string, number | string | boolean>;
 }
 
+export interface ProjectObject {
+  id: string;
+  name: string;
+  dimensions: { w: number; h: number; d: number };
+  position: { x: number; y: number; z: number };
+  rotationY?: number;
+  color?: string;
+  assignedConcepts: string[];
+  nodeParams?: Record<string, NodeParam>;
+}
+
 export type OperationType =
   | 'extend'
   | 'compress'

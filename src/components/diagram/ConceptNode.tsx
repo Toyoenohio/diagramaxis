@@ -17,8 +17,19 @@ interface ConceptNodeData {
 
 export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) => {
   const nodeData = data as unknown as ConceptNodeData;
-  const { toggleConcept, toggleArtifact, setNodeParam, nodeParams, setSelectedNodeId } = useProjectStore();
+  const {
+    toggleConcept,
+    toggleArtifact,
+    setNodeParam,
+    nodeParams,
+    setSelectedNodeId,
+    objects,
+    assignConceptToObject,
+    unassignConceptFromObject,
+  } = useProjectStore();
   const [showTaxonomyHelp, setShowTaxonomyHelp] = useState(false);
+
+  const assignedObjs = objects.filter((o) => o.assignedConcepts.includes(id));
 
   const param = nodeParams[id] || { weight: 0.6, intensity: 0.5 };
   const op = getVolumetricOperation(id);
@@ -221,6 +232,36 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
             {(param.weight || 0.6).toFixed(1)}
           </span>
         </div>
+
+        {/* Asignación a Objeto 3D (cuando hay 2 o más objetos) */}
+        {objects.length > 1 && (
+          <div className="flex items-center justify-between gap-1 pt-1 border-t border-diagramaxis-nodeHeadBorder/60 text-[9px] font-mono">
+            <span className="text-diagramaxis-woodMuted">Objeto:</span>
+            <select
+              value={assignedObjs[0]?.id || ''}
+              onChange={(e) => {
+                e.stopPropagation();
+                const newObjId = e.target.value;
+                objects.forEach((o) => {
+                  if (o.id !== newObjId && o.assignedConcepts.includes(id)) {
+                    unassignConceptFromObject(id, o.id);
+                  }
+                });
+                if (newObjId) {
+                  assignConceptToObject(id, newObjId);
+                }
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className="nodrag nopan bg-diagramaxis-chipBg border border-diagramaxis-chipBorder text-diagramaxis-textBright px-1 py-0.5 rounded-xs outline-none cursor-pointer max-w-[125px] truncate font-sans"
+            >
+              {objects.map((obj) => (
+                <option key={obj.id} value={obj.id}>
+                  {obj.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
     </div>
   );

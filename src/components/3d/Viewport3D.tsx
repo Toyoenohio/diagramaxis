@@ -100,6 +100,9 @@ export const Viewport3D: React.FC = () => {
     cameraMode,
     shadingMode,
     showHumanFigure,
+    objects,
+    selectedObjectId,
+    selectObject,
     setCameraMode,
     setShadingMode,
     toggleHumanFigure,
@@ -420,26 +423,103 @@ export const Viewport3D: React.FC = () => {
       obj.geometry?.dispose();
     }
 
-    const built = buildArchitecturalGeometry(
-      activeConcepts,
-      activeArtifacts,
-      nodeParams,
-      baseDimensions,
-      shadingMode,
-      relations
-    );
+    // Limpiar luces secundarias previas
+    const oldLights = scene.children.filter((c) => c.name === 'atrium_light');
+    oldLights.forEach((l) => scene.remove(l));
 
-    finalDimensionsRef.current = built.finalDimensions || baseDimensions;
+    const renderObjects = objects && objects.length > 0 ? objects : [
+      {
+        id: 'obj-1',
+        name: 'Objeto 1',
+        dimensions: baseDimensions,
+        position: { x: 0, y: 0, z: 0 },
+        rotationY: 0,
+        assignedConcepts: activeConcepts,
+        nodeParams: nodeParams,
+      },
+    ];
 
-    built.meshes.forEach((m) => volumeGroup.add(m));
-    built.groups.forEach((g) => volumeGroup.add(g));
+    let combinedHasWind = false;
+    let combinedWindIntensity = 0.5;
+    let combinedHasHumidity = false;
+    let combinedHasVegetation = false;
+    let combinedHasTopography = false;
+
+    renderObjects.forEach((obj) => {
+      const objGroup = new THREE.Group();
+      objGroup.name = `volume_${obj.id}`;
+      objGroup.position.set(obj.position.x, obj.position.y, obj.position.z);
+      if (obj.rotationY) {
+        objGroup.rotation.y = (obj.rotationY * Math.PI) / 180;
+      }
+      objGroup.userData = { objectId: obj.id, objectName: obj.name };
+
+      const objConcepts = obj.assignedConcepts && obj.assignedConcepts.length > 0
+        ? obj.assignedConcepts
+        : (renderObjects.length === 1 ? activeConcepts : []);
+
+      const objParams = {
+        ...nodeParams,
+        ...(obj.nodeParams || {}),
+      };
+
+      const built = buildArchitecturalGeometry(
+        objConcepts,
+        activeArtifacts,
+        objParams,
+        obj.dimensions || baseDimensions,
+        shadingMode,
+        relations
+      );
+
+      built.meshes.forEach((m) => {
+        m.userData = { objectId: obj.id, objectName: obj.name, ...m.userData };
+        objGroup.add(m);
+      });
+      built.groups.forEach((g) => {
+        g.userData = { objectId: obj.id, objectName: obj.name, ...g.userData };
+        objGroup.add(g);
+      });
+
+      built.lights.forEach((l) => {
+        l.name = 'atrium_light';
+        scene.add(l);
+      });
+
+      if (built.hasWindFlow) {
+        combinedHasWind = true;
+        combinedWindIntensity = Math.max(combinedWindIntensity, built.windIntensity || 0.5);
+      }
+      if (built.hasHumidity) combinedHasHumidity = true;
+      if (built.hasVegetation) combinedHasVegetation = true;
+      if (built.hasTopography) combinedHasTopography = true;
+
+      // Resalte visual del volumen activo si hay múltiples objetos
+      if (obj.id === selectedObjectId && renderObjects.length > 1) {
+        const boxHelper = new THREE.BoxHelper(objGroup, 0xe5a93b);
+        boxHelper.name = 'selection_helper';
+        boxHelper.renderOrder = 999;
+        if (boxHelper.material) {
+          (boxHelper.material as THREE.LineBasicMaterial).depthTest = false;
+          (boxHelper.material as THREE.LineBasicMaterial).transparent = true;
+          (boxHelper.material as THREE.LineBasicMaterial).opacity = 0.7;
+        }
+        objGroup.add(boxHelper);
+      }
+
+      volumeGroup.add(objGroup);
+
+      if (obj.id === selectedObjectId) {
+        finalDimensionsRef.current = built.finalDimensions || obj.dimensions || baseDimensions;
+      }
+    });
 
     setEnvInfo({
-      hasWind: !!built.hasWindFlow,
-      windSpeed: built.hasWindFlow ? 2.5 + (built.windIntensity || 0.5) * 4.5 : 0,
-      hasHumidity: !!built.hasHumidity,
-      hasVegetation: !!built.hasVegetation,
-      hasTopography: !!built.hasTopography,
+      hasWind: combinedHasWind,
+      windSpeed: combinedHasWind ? 2.5 + combinedWindIntensity * 4.5 : 0,
+      hasHumidity: combinedHasHumidity,
+      hasVegetation: combinedHasVegetation,
+      hasTopography: combinedHasTopography,
     });
 
     // Reconstruir viento animado
@@ -449,7 +529,7 @@ export const Viewport3D: React.FC = () => {
       }
       windParticlesRef.current = null;
 
-      if (built.hasWindFlow) {
+      if (combinedHasWind) {
         const count = 320;
         const positions = new Float32Array(count * 3);
         const speeds = new Float32Array(count);
@@ -464,7 +544,7 @@ export const Viewport3D: React.FC = () => {
             ? 1.2 + Math.random() * (baseDimensions.h * 0.45)
             : Math.random() * (baseDimensions.h * 1.5) + 0.4;
           positions[idx + 2] = (Math.random() - 0.5) * 80;
-          speeds[i] = 0.35 + (built.windIntensity || 0.5) * 0.5 + Math.random() * 0.2;
+          speeds[i] = 0.35 + (combinedWindIntensity || 0.5) * 0.5 + Math.random() * 0.2;
         }
 
         const pGeom = new THREE.BufferGeometry();
@@ -489,7 +569,7 @@ export const Viewport3D: React.FC = () => {
       }
       mistParticlesRef.current = null;
 
-      if (built.hasHumidity) {
+      if (combinedHasHumidity) {
         const count = 140;
         const positions = new Float32Array(count * 3);
         for (let i = 0; i < count; i++) {
@@ -512,17 +592,8 @@ export const Viewport3D: React.FC = () => {
       }
     }
 
-    // Luces secundarias de atrio
-    const oldLights = scene.children.filter((c) => c.name === 'atrium_light');
-    oldLights.forEach((l) => scene.remove(l));
-
-    built.lights.forEach((l) => {
-      l.name = 'atrium_light';
-      scene.add(l);
-    });
-
     updateCameraPosition();
-  }, [activeConcepts, activeArtifacts, nodeParams, relations, baseDimensions, shadingMode, updateCameraPosition]);
+  }, [activeConcepts, activeArtifacts, nodeParams, relations, baseDimensions, shadingMode, objects, selectedObjectId, updateCameraPosition]);
 
   // Actualizar figura humana
   useEffect(() => {
@@ -602,11 +673,28 @@ export const Viewport3D: React.FC = () => {
 
       const intersects = raycasterRef.current.intersectObjects(volumeGroupRef.current.children, true);
       if (intersects.length > 0) {
-        const hit = intersects[0].object;
-        const conceptId = hit.userData?.conceptId;
-        if (conceptId) {
-          useProjectStore.getState().setSelectedNodeId(conceptId);
-          showToast(`Caja 3D seleccionada: "${conceptId}"`);
+        let curr: THREE.Object3D | null = intersects[0].object;
+        let foundObjId: string | null = null;
+        let foundObjName: string | null = null;
+        let foundConceptId: string | null = null;
+
+        while (curr && curr !== volumeGroupRef.current) {
+          if (curr.userData?.objectId && !foundObjId) {
+            foundObjId = curr.userData.objectId;
+            foundObjName = curr.userData.objectName;
+          }
+          if (curr.userData?.conceptId && !foundConceptId) {
+            foundConceptId = curr.userData.conceptId;
+          }
+          curr = curr.parent;
+        }
+
+        if (foundObjId) {
+          selectObject(foundObjId);
+          showToast(`Volumen seleccionado: "${foundObjName || 'Objeto'}"`);
+        }
+        if (foundConceptId) {
+          useProjectStore.getState().setSelectedNodeId(foundConceptId);
         }
       }
     }
