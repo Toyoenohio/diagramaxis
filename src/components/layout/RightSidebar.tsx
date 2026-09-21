@@ -5,7 +5,7 @@ import { getVolumetricOperation } from '../../data/volumetricOperations';
 import { DiscourseEditor } from '../discourse/DiscourseEditor';
 import { ReferencesList } from '../discourse/ReferencesList';
 import { CoherenceMeter } from '../evaluation/CoherenceMeter';
-import { FirmitasSliders, FIRMITAS_LIST } from './FirmitasSliders';
+import { FirmitasSliders, ARCHITECTURAL_CUSTOM_LIST } from './FirmitasSliders';
 import { Sparkles, X, Plus, Trash2, Move, Layers, Box, RotateCcw } from 'lucide-react';
 
 export const RightSidebar: React.FC = () => {
@@ -516,7 +516,7 @@ export const RightSidebar: React.FC = () => {
                           Modificadores Volumétricos 3D
                         </span>
 
-                        {FIRMITAS_LIST.includes(currentNodeId as any) ? (
+                        {ARCHITECTURAL_CUSTOM_LIST.includes(currentNodeId as any) ? (
                           <FirmitasSliders
                             conceptId={currentNodeId}
                             custom={currentParam.custom || {}}

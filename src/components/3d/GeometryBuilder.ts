@@ -21,11 +21,15 @@ interface GeometricState {
   w: number;
   h: number;
   d: number;
+  rotX?: number;
   rotY: number;
+  rotZ?: number;
   shearX: number;
   shearZ: number;
   taperTop: number;
   taperFront: number;
+  bridgeAngle?: number;
+  bridgeAxis?: 'X' | 'Z';
   additions: Array<{
     ax: number;
     ay: number;
@@ -191,11 +195,15 @@ export function buildArchitecturalGeometry(
     w: Math.max(2, baseDimensions.w),
     h: Math.max(2, baseDimensions.h),
     d: Math.max(2, baseDimensions.d),
+    rotX: 0,
     rotY: 0,
+    rotZ: 0,
     shearX: 0,
     shearZ: 0,
     taperTop: 0,
     taperFront: 0,
+    bridgeAngle: 0,
+    bridgeAxis: 'X',
     additions: [],
     subtractions: [],
     hollowed: false,
@@ -292,7 +300,9 @@ export function buildArchitecturalGeometry(
     });
 
     const param = nodeParams[id] || { weight: 0.6, intensity: 0.5 };
-    const weight = Math.max(0.2, (param.weight || 0.6) * factorMod);
+    const formalIntensity = typeof param.intensity === 'number' ? param.intensity : 0.5;
+    const baseWeight = typeof param.weight === 'number' ? param.weight : 0.6;
+    const weight = Math.max(0.1, baseWeight * (0.3 + formalIntensity * 1.4) * factorMod);
     const custom = param.custom || {};
 
     if (contradiction) {
@@ -382,12 +392,14 @@ export function buildArchitecturalGeometry(
       case 'axial_path': {
         const axW = typeof custom.aperturaEje === 'number' ? (custom.aperturaEje as number) : 0.4;
         const axAng = typeof custom.orientacionEje === 'number' ? (custom.orientacionEje as number) : 0;
+        const axAxis = (custom.ejeCirculacion as string) || 'Z';
+        const axDepth = typeof custom.profundidadEje === 'number' ? (custom.profundidadEje as number) : 1.0;
         state.subtractions.push({
           type: 'hole',
-          dir: 'Z',
-          fracW: Math.max(0.1, axW),
+          dir: axAxis,
+          fracW: axAxis === 'X' ? (axDepth >= 0.95 ? 1.05 : axDepth) : Math.max(0.1, axW),
           fracH: Math.max(0.1, axW * 1.3),
-          fracD: 1.05,
+          fracD: axAxis === 'Z' ? (axDepth >= 0.95 ? 1.05 : axDepth) : Math.max(0.1, axW),
         });
         if (axAng !== 0) state.rotY += (axAng * Math.PI) / 180 * 0.2;
         break;
@@ -409,14 +421,25 @@ export function buildArchitecturalGeometry(
       }
 
       case 'centripetal': {
-        state.hasCourt = true;
-        state.courtSize = typeof custom.radioNucleo === 'number' ? (custom.radioNucleo as number) : 0.35;
+        // Centro: actúa como ancla compositiva y densificación del núcleo sin perforar vacíos
+        const anchor = typeof custom.fuerzaAnclaje === 'number' ? (custom.fuerzaAnclaje as number) : 0.8;
+        state.shearX *= (1 - anchor);
+        state.shearZ *= (1 - anchor);
+        state.additions.push({
+          ax: 0,
+          ay: 0,
+          az: 0,
+          aw: state.w * 0.35,
+          ah: state.h * 1.05,
+          ad: state.d * 0.35,
+          label: 'Núcleo Central Tectónico',
+        });
         break;
       }
 
       case 'grid_lattice': {
         state.hasLattice = true;
-        state.latticeDensity = typeof custom.densidadSubdivisiones === 'number' ? Math.max(1, Math.min(10, Math.round(custom.densidadSubdivisiones as number))) : 4;
+        state.latticeDensity = typeof custom.densidadSubdivisiones === 'number' ? Math.max(2, Math.min(12, Math.round(custom.densidadSubdivisiones as number))) : 4;
         state.latticeThickness = typeof custom.grosorPerfil === 'number' ? (custom.grosorPerfil as number) : 0.04;
         break;
       }
@@ -425,6 +448,8 @@ export function buildArchitecturalGeometry(
         state.hasBridges = true;
         state.bridgeCount = typeof custom.numeroPuentes === 'number' ? Math.max(1, Math.min(5, Math.round(custom.numeroPuentes as number))) : 2;
         state.bridgeThickness = typeof custom.grosorConector === 'number' ? (custom.grosorConector as number) : 0.25;
+        state.bridgeAngle = typeof custom.anguloConector === 'number' ? (custom.anguloConector as number) : 0;
+        state.bridgeAxis = (custom.ejeConexion as 'X' | 'Z') || 'X';
         break;
       }
 
@@ -438,7 +463,7 @@ export function buildArchitecturalGeometry(
       case 'cantilever_flare': {
         state.hasCantilever = true;
         state.cantileverLength = typeof custom.longitudProyeccion === 'number' ? (custom.longitudProyeccion as number) : 0.6;
-        state.cantileverAngle = typeof custom.anguloFlare === 'number' ? (custom.anguloFlare as number) : 12;
+        state.cantileverAngle = typeof custom.anguloFlare === 'number' ? (custom.anguloFlare as number) : 0;
         break;
       }
 
@@ -450,45 +475,55 @@ export function buildArchitecturalGeometry(
       case 'perforate': {
         if (id === 'Iluminación') {
           state.hasLightFissure = true;
-          state.lightFissureWidth = typeof custom.aperturaFisura === 'number' ? (custom.aperturaFisura as number) / 100 : 0.25;
+          const fisType = (custom.tipoApertura as string) || 'ambas';
+          const fisWidth = typeof custom.aperturaFisura === 'number' ? (custom.aperturaFisura as number) / 100 : 0.25;
           state.solarIntensity = typeof custom.penetracionSolar === 'number' ? (custom.penetracionSolar as number) : 1.2;
-          state.subtractions.push({
-            type: 'hole',
-            dir: 'Y',
-            fracW: Math.max(0.08, state.lightFissureWidth),
-            fracH: 1.05,
-            fracD: 0.8,
-          });
+
+          if (fisType === 'cenital' || fisType === 'ambas') {
+            state.subtractions.push({
+              type: 'hole',
+              dir: 'Y',
+              fracW: Math.max(0.08, fisWidth),
+              fracH: 1.05,
+              fracD: 0.85,
+            });
+          }
+          if (fisType === 'vertical' || fisType === 'ambas') {
+            state.subtractions.push({
+              type: 'hole',
+              dir: 'Z',
+              fracW: Math.max(0.1, fisWidth * 0.8),
+              fracH: 0.75,
+              fracD: 1.05,
+            });
+          }
         } else if (id === 'Perforación') {
           const rad = typeof custom.radioHoradacion === 'number' ? (custom.radioHoradacion as number) / 100 : 0.4;
           const prof = typeof custom.profundidadCorte === 'number' ? (custom.profundidadCorte as number) : 1.0;
+          const pAxis = (custom.ejePerforacion as string) || 'Z';
+          const pAngle = typeof custom.anguloCorte === 'number' ? (custom.anguloCorte as number) : 0;
+          if (pAngle !== 0) {
+            state.rotY += (pAngle * Math.PI) / 180 * 0.15;
+          }
           state.subtractions.push({
             type: 'hole',
-            dir: 'Z',
-            fracW: Math.max(0.1, rad),
+            dir: pAxis,
+            fracW: pAxis === 'X' ? (prof >= 0.95 ? 1.05 : prof) : Math.max(0.1, rad),
             fracH: Math.max(0.1, rad),
-            fracD: prof >= 0.95 ? 1.05 : prof,
+            fracD: pAxis === 'Z' ? (prof >= 0.95 ? 1.05 : prof) : Math.max(0.1, rad),
           });
         } else {
-          // Túnel / Vano / lucernarios: corte REAL pasante en el eje dir con modificadores configurables
           const pSize = Math.max(0.12, Math.min(0.85, (op.size || 0.3) * weight * 1.2));
           const cDir = (custom.voidAxis as string) || op.dir || 'Z';
           const fracW = typeof custom.voidW === 'number' ? (custom.voidW as number) : pSize;
           const fracH = typeof custom.voidH === 'number' ? (custom.voidH as number) : (cDir === 'Z' ? pSize * 1.2 : pSize);
           const fracD = typeof custom.voidD === 'number' ? (custom.voidD as number) : (cDir === 'X' ? pSize : 1.0);
-          const cxFrac = typeof custom.voidX === 'number' ? (custom.voidX as number) : 0;
-          const cyFrac = typeof custom.voidY === 'number' ? (custom.voidY as number) : 0;
-          const czFrac = typeof custom.voidZ === 'number' ? (custom.voidZ as number) : 0;
-
           state.subtractions.push({
             type: 'hole',
             dir: cDir,
             fracW,
             fracH,
             fracD,
-            cxFrac,
-            cyFrac,
-            czFrac,
           });
         }
         break;
@@ -503,19 +538,21 @@ export function buildArchitecturalGeometry(
         break;
       }
 
-      case 'carve': {
-        // Sustracción / Umbral: nicho con modificadores configurables
-        const cSize = (op.size || 0.4) * weight;
-        const fracW = typeof custom.voidW === 'number' ? (custom.voidW as number) : cSize;
-        const fracH = typeof custom.voidH === 'number' ? (custom.voidH as number) : cSize * 0.85;
-        const fracD = typeof custom.voidD === 'number' ? (custom.voidD as number) : 0.55;
-        const cxFrac = typeof custom.voidX === 'number' ? (custom.voidX as number) : 0;
-        const cyFrac = typeof custom.voidY === 'number' ? (custom.voidY as number) : -0.1;
-        const czFrac = typeof custom.voidZ === 'number' ? (custom.voidZ as number) : -0.25;
+      case 'subtraction_custom': {
+        const face = (custom.caraSustraccion as string) || 'front';
+        const fracW = typeof custom.anchoTalla === 'number' ? (custom.anchoTalla as number) : 0.4;
+        const fracH = typeof custom.altoTalla === 'number' ? (custom.altoTalla as number) : 0.4;
+        const fracD = typeof custom.profundidadTalla === 'number' ? (custom.profundidadTalla as number) : 0.45;
+        let cxFrac = 0, cyFrac = 0, czFrac = 0;
+        if (face === 'front') czFrac = -(0.5 - fracD / 2);
+        else if (face === 'back') czFrac = +(0.5 - fracD / 2);
+        else if (face === 'left') cxFrac = -(0.5 - fracW / 2);
+        else if (face === 'right') cxFrac = +(0.5 - fracW / 2);
+        else if (face === 'top') cyFrac = +(0.5 - fracH / 2);
 
         state.subtractions.push({
           type: 'carve',
-          face: op.face || 'front',
+          face,
           fracW,
           fracH,
           fracD,
@@ -526,8 +563,60 @@ export function buildArchitecturalGeometry(
         break;
       }
 
+      case 'open_faces': {
+        const faces = Array.isArray(custom.carasAbiertas)
+          ? (custom.carasAbiertas as string[])
+          : ['front'];
+        const ratio = typeof custom.proporcionApertura === 'number' ? (custom.proporcionApertura as number) : 0.75;
+        faces.forEach((f) => {
+          if (f === 'front' || f === 'back') {
+            state.subtractions.push({
+              type: 'hole',
+              dir: 'Z',
+              fracW: ratio,
+              fracH: ratio,
+              czFrac: f === 'front' ? -0.25 : 0.25,
+            });
+          } else if (f === 'left' || f === 'right') {
+            state.subtractions.push({
+              type: 'hole',
+              dir: 'X',
+              fracH: ratio,
+              fracD: ratio,
+              cxFrac: f === 'left' ? -0.25 : 0.25,
+            });
+          } else if (f === 'top') {
+            state.subtractions.push({
+              type: 'hole',
+              dir: 'Y',
+              fracW: ratio,
+              fracD: ratio,
+              cyFrac: 0.25,
+            });
+          }
+        });
+        break;
+      }
+
+      case 'carve': {
+        const cSize = (op.size || 0.4) * weight;
+        const fracW = typeof custom.voidW === 'number' ? (custom.voidW as number) : cSize;
+        const fracH = typeof custom.voidH === 'number' ? (custom.voidH as number) : cSize * 0.85;
+        const fracD = typeof custom.voidD === 'number' ? (custom.voidD as number) : 0.55;
+        state.subtractions.push({
+          type: 'carve',
+          face: op.face || 'front',
+          fracW,
+          fracH,
+          fracD,
+          cxFrac: 0,
+          cyFrac: -0.1,
+          czFrac: -0.25,
+        });
+        break;
+      }
+
       case 'open':
-        // Abierto: liberación frontal total (corte pasante profundo)
         state.subtractions.push({
           type: 'hole',
           dir: 'Z',
@@ -535,6 +624,272 @@ export function buildArchitecturalGeometry(
           fracH: (op.size || 0.75) * weight,
         });
         break;
+
+      case 'intersection': {
+        const overlap = typeof custom.solapamiento === 'number' ? (custom.solapamiento as number) : 0.5;
+        const ang = typeof custom.anguloInterseccion === 'number' ? (custom.anguloInterseccion as number) : 30;
+        const iw = state.w * 0.85;
+        const ih = state.h * 0.85;
+        const idim = state.d * 0.85;
+        const ix = state.w * (1 - overlap) * 0.7;
+        const iz = state.d * (1 - overlap) * 0.7;
+        state.additions.push({
+          ax: ix,
+          ay: 0,
+          az: iz,
+          aw: iw,
+          ah: ih,
+          ad: idim,
+          label: 'Masa Intersecada',
+        });
+        state.rotY += (ang * Math.PI) / 180 * 0.15;
+        break;
+      }
+
+      case 'symmetry': {
+        const axis = (custom.ejeSimetria as string) || 'X';
+        const offset = typeof custom.desplazamientoEspejo === 'number' ? (custom.desplazamientoEspejo as number) : 0.2;
+        const scale = typeof custom.escalaReflejo === 'number' ? (custom.escalaReflejo as number) : 1.0;
+        if (axis === 'X') {
+          state.additions.push({
+            ax: -(state.w / 2 + state.w * offset),
+            ay: 0,
+            az: 0,
+            aw: state.w * 0.45 * scale,
+            ah: state.h * 0.85 * scale,
+            ad: state.d * 0.85 * scale,
+            label: 'Ala Simétrica Izq',
+          });
+          state.additions.push({
+            ax: +(state.w / 2 + state.w * offset),
+            ay: 0,
+            az: 0,
+            aw: state.w * 0.45 * scale,
+            ah: state.h * 0.85 * scale,
+            ad: state.d * 0.85 * scale,
+            label: 'Ala Simétrica Der',
+          });
+        } else if (axis === 'Z') {
+          state.additions.push({
+            ax: 0,
+            ay: 0,
+            az: -(state.d / 2 + state.d * offset),
+            aw: state.w * 0.85 * scale,
+            ah: state.h * 0.85 * scale,
+            ad: state.d * 0.45 * scale,
+            label: 'Pabellón Frontal',
+          });
+          state.additions.push({
+            ax: 0,
+            ay: 0,
+            az: +(state.d / 2 + state.d * offset),
+            aw: state.w * 0.85 * scale,
+            ah: state.h * 0.85 * scale,
+            ad: state.d * 0.45 * scale,
+            label: 'Pabellón Posterior',
+          });
+        } else if (axis === 'Y') {
+          state.additions.push({
+            ax: 0,
+            ay: +(state.h / 2 + state.h * offset * 0.5),
+            az: 0,
+            aw: state.w * 0.7 * scale,
+            ah: state.h * 0.45 * scale,
+            ad: state.d * 0.7 * scale,
+            label: 'Remate Simétrico',
+          });
+        }
+        break;
+      }
+
+      case 'asymmetry': {
+        const axis = (custom.ejeAsimetria as string) || 'X';
+        const shift = typeof custom.desplazamientoMasa === 'number' ? (custom.desplazamientoMasa as number) : 0.3;
+        if (axis === 'X') {
+          state.shearX += shift * 0.3;
+          state.additions.push({
+            ax: +(state.w * 0.4),
+            ay: 0,
+            az: 0,
+            aw: state.w * 0.35,
+            ah: state.h * 1.15,
+            ad: state.d * 0.6,
+            label: 'Tensión Asimétrica X',
+          });
+        } else if (axis === 'Z') {
+          state.shearZ += shift * 0.3;
+          state.additions.push({
+            ax: 0,
+            ay: 0,
+            az: +(state.d * 0.4),
+            aw: state.w * 0.6,
+            ah: state.h * 1.15,
+            ad: state.d * 0.35,
+            label: 'Tensión Asimétrica Z',
+          });
+        } else if (axis === 'Y') {
+          state.taperTop = shift * 0.3;
+        }
+        break;
+      }
+
+      case 'addition_custom': {
+        const aw = typeof custom.anchoAdicion === 'number' ? (custom.anchoAdicion as number) : state.w * 0.4;
+        const ah = typeof custom.altoAdicion === 'number' ? (custom.altoAdicion as number) : state.h * 0.65;
+        const ad = typeof custom.profundidadAdicion === 'number' ? (custom.profundidadAdicion as number) : state.d * 0.4;
+        const posX = typeof custom.posicionX === 'number' ? (custom.posicionX as number) : state.w / 2 + aw / 2;
+        const posY2 = typeof custom.posicionY === 'number' ? (custom.posicionY as number) : 0;
+        const posZ = typeof custom.posicionZ === 'number' ? (custom.posicionZ as number) : 0;
+        state.additions.push({
+          ax: posX,
+          ay: posY2,
+          az: posZ,
+          aw,
+          ah,
+          ad,
+          label: 'Adición Configurable',
+        });
+        break;
+      }
+
+      case 'rotation_custom': {
+        const axis = (custom.ejeRotacion as string) || 'Y';
+        const angleDeg = typeof custom.anguloRotacion === 'number' ? (custom.anguloRotacion as number) : 45;
+        const rad = (angleDeg * Math.PI) / 180;
+        if (axis === 'Y') state.rotY += rad;
+        else if (axis === 'X') state.rotX = (state.rotX || 0) + rad * 0.5;
+        else if (axis === 'Z') state.rotZ = (state.rotZ || 0) + rad * 0.5;
+        break;
+      }
+
+      case 'repetition': {
+        const count = typeof custom.numeroRepeticiones === 'number' ? Math.max(2, Math.min(8, Math.round(custom.numeroRepeticiones as number))) : 3;
+        const gap = typeof custom.separacionRepeticion === 'number' ? (custom.separacionRepeticion as number) : 0.4;
+        const axis = (custom.ejeRepeticion as string) || 'X';
+        for (let r = 1; r < count; r++) {
+          const sign = r;
+          if (axis === 'X') {
+            state.additions.push({
+              ax: sign * (state.w + state.w * gap),
+              ay: 0,
+              az: 0,
+              aw: state.w * 0.95,
+              ah: state.h * 0.95,
+              ad: state.d * 0.95,
+              label: `Módulo ${r + 1}`,
+            });
+          } else if (axis === 'Z') {
+            state.additions.push({
+              ax: 0,
+              ay: 0,
+              az: sign * (state.d + state.d * gap),
+              aw: state.w * 0.95,
+              ah: state.h * 0.95,
+              ad: state.d * 0.95,
+              label: `Módulo ${r + 1}`,
+            });
+          } else if (axis === 'Y') {
+            state.additions.push({
+              ax: 0,
+              ay: sign * (state.h + state.h * gap * 0.2),
+              az: 0,
+              aw: state.w * 0.95,
+              ah: state.h * 0.95,
+              ad: state.d * 0.95,
+              label: `Módulo ${r + 1}`,
+            });
+          }
+        }
+        break;
+      }
+
+      case 'horizontality': {
+        const extFactor = typeof custom.factorHorizontal === 'number' ? (custom.factorHorizontal as number) : 1.8;
+        const compFactor = typeof custom.factorCompresion === 'number' ? (custom.factorCompresion as number) : 0.55;
+        state.w *= extFactor * (0.8 + weight * 0.4);
+        state.d *= extFactor * (0.8 + weight * 0.4);
+        state.h = Math.max(2.8, state.h * compFactor);
+        break;
+      }
+
+      case 'container_contained': {
+        if (id === 'Contenedor') {
+          state.hasLattice = true;
+          state.w *= 1.35;
+          state.h *= 1.25;
+          state.d *= 1.35;
+          state.subtractions.push({
+            type: 'hole',
+            dir: 'Z',
+            fracW: 0.8,
+            fracH: 0.8,
+          });
+        } else {
+          state.w *= 0.65;
+          state.h *= 0.7;
+          state.d *= 0.65;
+        }
+        break;
+      }
+
+      case 'served_servant': {
+        if (id === 'Servidor') {
+          const sw = state.w * 0.25;
+          const sd = state.d * 0.25;
+          state.additions.push({
+            ax: -(state.w / 2 + sw / 2),
+            ay: 0,
+            az: -(state.d / 2 + sd / 2),
+            aw: sw,
+            ah: state.h * 1.1,
+            ad: sd,
+            label: 'Núcleo Servidor 1',
+          });
+          state.additions.push({
+            ax: state.w / 2 + sw / 2,
+            ay: 0,
+            az: -(state.d / 2 + sd / 2),
+            aw: sw,
+            ah: state.h * 1.1,
+            ad: sd,
+            label: 'Núcleo Servidor 2',
+          });
+        } else {
+          state.w *= 1.25;
+          state.d *= 1.25;
+        }
+        break;
+      }
+
+      case 'linked_unlinked': {
+        const dist = typeof custom.distanciaSeparacion === 'number' ? (custom.distanciaSeparacion as number) : 4.0;
+        const isLinked = id === 'Vinculado' || custom.vincularConPuente !== false;
+        const satW = state.w * 0.7;
+        const satH = state.h * 0.85;
+        const satD = state.d * 0.7;
+        const satX = state.w / 2 + dist + satW / 2;
+        state.additions.push({
+          ax: satX,
+          ay: 0,
+          az: 0,
+          aw: satW,
+          ah: satH,
+          ad: satD,
+          label: id === 'Vinculado' ? 'Cuerpo Vinculado' : 'Cuerpo Desvinculado',
+        });
+        if (isLinked) {
+          state.additions.push({
+            ax: state.w / 2 + dist / 2,
+            ay: state.h * 0.1,
+            az: 0,
+            aw: dist * 1.05,
+            ah: Math.max(1.8, state.h * 0.35),
+            ad: Math.max(1.5, state.d * 0.3),
+            label: 'Puente de Vinculación',
+          });
+        }
+        break;
+      }
 
       case 'fracture': {
         state.fractured = true;
@@ -845,6 +1200,26 @@ export function buildArchitecturalGeometry(
 
   const posY = state.h / 2 + (state.hasPilotis ? state.pilotisHeight : 0);
 
+  // Aristas negras técnicas arquitectónicas (EdgesGeometry)
+  const edgeLineMat = new THREE.LineBasicMaterial({
+    color: 0x18181b,
+    linewidth: 1.5,
+    transparent: true,
+    opacity: isGhost ? 0.35 : 0.88,
+  });
+
+  function attachEdges(mesh: THREE.Mesh) {
+    if (mesh && mesh.geometry) {
+      try {
+        const edgeGeo = new THREE.EdgesGeometry(mesh.geometry, 28);
+        const edgeLines = new THREE.LineSegments(edgeGeo, edgeLineMat);
+        mesh.add(edgeLines);
+      } catch {
+        /* noop */
+      }
+    }
+  }
+
   // Helper para generar geometría facetada o pura (sólido simple, sin CSG)
   function makeBoxGeo(w: number, h: number, d: number, deform: number = 0): THREE.BoxGeometry {
     const segs = deform > 0 || state.taperTop > 0 || state.taperFront > 0 ? 8 : 1;
@@ -917,10 +1292,20 @@ export function buildArchitecturalGeometry(
           cd = (sub.fracD ?? 0) * state.d;
         }
       } else if (sub.type === 'carve') {
-        // Nicho frontal: atraviesa la cara (2% de holgura) pero NO es pasante
         cw = (sub.fracW ?? 0) * state.w;
         ch = (sub.fracH ?? 0) * state.h;
         cd = (sub.fracD ?? 0) * state.d;
+        if (sub.face === 'back') {
+          cz = +(state.d / 2 - cd / 2 + 0.02);
+        } else if (sub.face === 'left') {
+          cx = -(state.w / 2 - cw / 2 + 0.02);
+        } else if (sub.face === 'right') {
+          cx = +(state.w / 2 - cw / 2 + 0.02);
+        } else if (sub.face === 'top') {
+          cy = +(state.h / 2 - ch / 2 + 0.02);
+        } else if (sub.face === 'front') {
+          cz = -(state.d / 2 - cd / 2 + 0.02);
+        }
       }
       if (cw < minDim * 0.01 || ch < minDim * 0.01 || cd < minDim * 0.01) return;
       cuts.push({ geo: new THREE.BoxGeometry(cw, ch, cd), x: cx, y: cy, z: cz });
@@ -938,17 +1323,13 @@ export function buildArchitecturalGeometry(
       });
     }
 
-    // Atrio: DECISIÓN — el antiguo vacío cerrado (h*0.75 sin llegar a la cara
-    // superior) era invisible dentro del sólido opaco. Ahora es pasante
-    // superior: pozo de luz que conserva su piso original a -0.225h y abre la
-    // cubierta (+0.51h), de modo que se percibe desde arriba/axonométrica y
-    // recibe la luz puntual del atrio.
+    // Atrio: pozo de luz pasante superior
     if (state.hasAtrium) {
       const as2 = Math.max(0.05, state.atriumSize || 0.38);
       cuts.push({
         geo: new THREE.BoxGeometry(
           state.w * as2,
-          state.h * 0.735, // piso -0.225h → cubierta +0.51h
+          state.h * 0.735,
           state.d * as2
         ),
         x: 0,
@@ -957,17 +1338,20 @@ export function buildArchitecturalGeometry(
       });
     }
 
-    // Espacio interior (hueco total): DECISIÓN — la cavidad cerrada previa
-    // (h*0.92, no llegaba a ninguna cara) era invisible. Ahora es pasante
-    // superior: luz cenital con muros perimetrales (espesor 1-hollowFactor) y
-    // piso cercano a cota baja (-0.46h).
+    // Espacio interior habitable: vaciado interior con losa de piso, techo y portal de entrada
     if (state.hollowed) {
-      const hf = Math.max(0.15, Math.min(0.9, state.hollowFactor || 0.65));
+      const hf = Math.max(0.15, Math.min(0.88, state.hollowFactor || 0.65));
       cuts.push({
-        geo: new THREE.BoxGeometry(state.w * hf, state.h * 0.97, state.d * hf),
+        geo: new THREE.BoxGeometry(state.w * hf, state.h * 0.88, state.d * hf),
         x: 0,
-        y: state.h * 0.025, // -0.46h → +0.51h
+        y: 0,
         z: 0,
+      });
+      cuts.push({
+        geo: new THREE.BoxGeometry(state.w * 0.22, state.h * 0.55, state.d * 0.35),
+        x: 0,
+        y: -(state.h * 0.18),
+        z: -(state.d / 2),
       });
     }
     return cuts;
@@ -1116,9 +1500,10 @@ export function buildArchitecturalGeometry(
       }
       const mMain = new THREE.Mesh(csgGeo, mainMat);
       mMain.position.set(0, posY, 0);
-      mMain.rotation.y = state.rotY;
+      mMain.rotation.set(state.rotX || 0, state.rotY, state.rotZ || 0);
       mMain.castShadow = true;
       mMain.receiveShadow = true;
+      attachEdges(mMain);
       resultMeshes.push(mMain);
 
       // Luz interior del atrio (pozo de luz ya real)
@@ -1132,7 +1517,7 @@ export function buildArchitecturalGeometry(
       const baseGeo = makeBoxGeo(state.w, state.h, state.d, state.deformMag);
       const mMain = new THREE.Mesh(baseGeo, matMain);
       mMain.position.set(0, posY, 0);
-      mMain.rotation.y = state.rotY;
+      mMain.rotation.set(state.rotX || 0, state.rotY, state.rotZ || 0);
 
       if (state.shearX !== 0) {
         shearGeometry(mMain.geometry as THREE.BufferGeometry, state.shearX);
@@ -1141,6 +1526,7 @@ export function buildArchitecturalGeometry(
 
       mMain.castShadow = true;
       mMain.receiveShadow = true;
+      attachEdges(mMain);
       resultMeshes.push(mMain);
     }
   }
@@ -1178,6 +1564,7 @@ export function buildArchitecturalGeometry(
     am.castShadow = true;
     am.receiveShadow = true;
     am.userData = { conceptId: add.label };
+    attachEdges(am);
     resultMeshes.push(am);
   });
 
@@ -1191,6 +1578,7 @@ export function buildArchitecturalGeometry(
     bm.castShadow = true;
     bm.receiveShadow = true;
     bm.userData = { conceptId: 'Espacio exterior' };
+    attachEdges(bm);
     resultMeshes.push(bm);
   }
 
@@ -1201,6 +1589,7 @@ export function buildArchitecturalGeometry(
     tm.position.set(0, posY * 2 - 0.1, 0);
     tm.castShadow = true;
     tm.userData = { conceptId: 'Terraza' };
+    attachEdges(tm);
     resultMeshes.push(tm);
   }
 
@@ -1212,6 +1601,7 @@ export function buildArchitecturalGeometry(
     cm.position.set(0, posY * 0.7, -(state.d / 2 + (state.d * cd) / 2));
     cm.castShadow = true;
     cm.userData = { conceptId: 'Marquesina' };
+    attachEdges(cm);
     resultMeshes.push(cm);
   }
 
@@ -1223,19 +1613,43 @@ export function buildArchitecturalGeometry(
     const thick = Math.max(0.02, state.latticeThickness || 0.04) * (state.w / 4);
     const frameMat = new THREE.MeshLambertMaterial({ color: 0xca8a04 });
 
-    for (let i = 0; i <= dens; i++) {
-      const vx = -state.w / 2 + (i / dens) * state.w;
-      const vGeo = new THREE.BoxGeometry(thick, state.h, thick);
-      const vMesh = new THREE.Mesh(vGeo, frameMat);
-      vMesh.position.set(vx, posY, state.d / 2 + thick / 2);
-      latticeGroup.add(vMesh);
+    // Caras frontal y posterior (Z)
+    [-1, 1].forEach((signZ) => {
+      for (let i = 0; i <= dens; i++) {
+        const vx = -state.w / 2 + (i / dens) * state.w;
+        const vGeo = new THREE.BoxGeometry(thick, state.h, thick);
+        const vMesh = new THREE.Mesh(vGeo, frameMat);
+        vMesh.position.set(vx, posY, signZ * (state.d / 2 + thick / 2));
+        latticeGroup.add(vMesh);
 
-      const hy = posY - state.h / 2 + (i / dens) * state.h;
-      const hGeo = new THREE.BoxGeometry(state.w, thick, thick);
-      const hMesh = new THREE.Mesh(hGeo, frameMat);
-      hMesh.position.set(0, hy, state.d / 2 + thick / 2);
-      latticeGroup.add(hMesh);
+        const hy = posY - state.h / 2 + (i / dens) * state.h;
+        const hGeo = new THREE.BoxGeometry(state.w, thick, thick);
+        const hMesh = new THREE.Mesh(hGeo, frameMat);
+        hMesh.position.set(0, hy, signZ * (state.d / 2 + thick / 2));
+        latticeGroup.add(hMesh);
+      }
+    });
+
+    // Caras laterales (X)
+    [-1, 1].forEach((signX) => {
+      for (let i = 0; i <= dens; i++) {
+        const vz = -state.d / 2 + (i / dens) * state.d;
+        const vGeo = new THREE.BoxGeometry(thick, state.h, thick);
+        const vMesh = new THREE.Mesh(vGeo, frameMat);
+        vMesh.position.set(signX * (state.w / 2 + thick / 2), posY, vz);
+        latticeGroup.add(vMesh);
+      }
+    });
+
+    // Cubierta superior (Y)
+    for (let i = 0; i <= dens; i++) {
+      const tx = -state.w / 2 + (i / dens) * state.w;
+      const tGeo = new THREE.BoxGeometry(thick, thick, state.d);
+      const tMesh = new THREE.Mesh(tGeo, frameMat);
+      tMesh.position.set(tx, posY + state.h / 2 + thick / 2, 0);
+      latticeGroup.add(tMesh);
     }
+
     resultGroups.push(latticeGroup);
   }
 
@@ -1284,22 +1698,31 @@ export function buildArchitecturalGeometry(
     resultGroups.push(threshGroup);
   }
 
-  // 10. CONECTIVIDAD (Puentes y ductos de enlace)
+  // 10. CONECTIVIDAD (Puentes y ductos de enlace articulados)
   if (state.hasBridges) {
     const bridgeGroup = new THREE.Group();
     bridgeGroup.name = 'bridges_group';
     const bCount = state.bridgeCount || 2;
     const bThick = Math.max(0.3, (state.bridgeThickness || 0.25) * state.w * 0.4);
     const bMat = new THREE.MeshLambertMaterial({ color: 0x0284c7 });
+    const bAngleRad = ((state.bridgeAngle || 0) * Math.PI) / 180;
+    const bAxis = state.bridgeAxis || 'X';
 
     for (let b = 0; b < bCount; b++) {
-      const bLen = state.w * 0.75;
-      const bGeo = new THREE.BoxGeometry(bLen, bThick, bThick);
+      const bLen = state.w * 0.85;
+      const bGeo = new THREE.BoxGeometry(bAxis === 'X' ? bLen : bThick, bThick, bAxis === 'Z' ? bLen : bThick);
       const bMesh = new THREE.Mesh(bGeo, bMat);
       const bY = posY - state.h * 0.2 + (b / Math.max(1, bCount - 1)) * (state.h * 0.4);
       const sign = b % 2 === 0 ? 1 : -1;
-      bMesh.position.set(sign * (state.w / 2 + bLen / 2), bY, 0);
+      if (bAxis === 'X') {
+        bMesh.position.set(sign * (state.w / 2 + bLen / 2), bY, 0);
+        bMesh.rotation.y = bAngleRad * sign;
+      } else {
+        bMesh.position.set(0, bY, sign * (state.d / 2 + bLen / 2));
+        bMesh.rotation.y = bAngleRad * sign;
+      }
       bMesh.castShadow = true;
+      attachEdges(bMesh);
       bridgeGroup.add(bMesh);
     }
     resultGroups.push(bridgeGroup);
@@ -1328,25 +1751,29 @@ export function buildArchitecturalGeometry(
     resultGroups.push(rampGroup);
   }
 
-  // 12. EXPANSIÓN (Proyección telescópica y voladizos en flare)
+  // 12. EXPANSIÓN (Voladizos sólidos extruidos)
   if (state.hasCantilever) {
     const cGroup = new THREE.Group();
     cGroup.name = 'cantilever_group';
-    const cLen = Math.max(0.5, (state.cantileverLength || 0.6) * state.w);
-    const cAngleRad = ((state.cantileverAngle || 12) * Math.PI) / 180;
+    const cLen = Math.max(0.8, (state.cantileverLength || 0.6) * state.w * 0.8);
+    const cHeight = Math.max(1.2, state.h * 0.55);
+    const cDepth = state.d * 0.75;
+    const cAngleRad = ((state.cantileverAngle || 0) * Math.PI) / 180;
     const cMat = new THREE.MeshLambertMaterial({ color: 0xe5a93b });
 
-    const trayGeo = new THREE.BoxGeometry(cLen, 0.22, state.d * 0.85);
+    const trayGeo = new THREE.BoxGeometry(cLen, cHeight, cDepth);
     const trayL = new THREE.Mesh(trayGeo, cMat);
-    trayL.position.set(-(state.w / 2 + cLen / 2), posY + state.h * 0.1, 0);
+    trayL.position.set(-(state.w / 2 + cLen / 2), posY + state.h * 0.05, 0);
     trayL.rotation.z = cAngleRad;
     trayL.castShadow = true;
+    attachEdges(trayL);
     cGroup.add(trayL);
 
     const trayR = new THREE.Mesh(trayGeo, cMat);
-    trayR.position.set(state.w / 2 + cLen / 2, posY + state.h * 0.2, 0);
+    trayR.position.set(state.w / 2 + cLen / 2, posY + state.h * 0.1, 0);
     trayR.rotation.z = -cAngleRad;
     trayR.castShadow = true;
+    attachEdges(trayR);
     cGroup.add(trayR);
 
     resultGroups.push(cGroup);

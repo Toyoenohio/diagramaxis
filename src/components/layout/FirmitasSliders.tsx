@@ -3,7 +3,7 @@ import React from 'react';
 interface FirmitasSlidersProps {
   conceptId: string;
   custom: Record<string, any>;
-  onChange: (key: string, value: number | string | boolean) => void;
+  onChange: (key: string, value: any) => void;
 }
 
 export const FIRMITAS_LIST = [
@@ -29,6 +29,33 @@ export const FIRMITAS_LIST = [
   'Conectividad',
   'Recorrido',
   'Expansión',
+] as const;
+
+export const VENUSTAS_LIST = [
+  'Sustracción',
+  'Abierto',
+  'Intersección',
+  'Simetría',
+  'Asimetría',
+  'Adición',
+  'Rotación',
+  'Repetición',
+  'Horizontalidad',
+] as const;
+
+export const UTILITAS_LIST = [
+  'Contenedor',
+  'Contenido',
+  'Servido',
+  'Servidor',
+  'Vinculado',
+  'Desvinculado',
+] as const;
+
+export const ARCHITECTURAL_CUSTOM_LIST = [
+  ...FIRMITAS_LIST,
+  ...VENUSTAS_LIST,
+  ...UTILITAS_LIST,
 ] as const;
 
 export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, custom, onChange }) => {
@@ -382,10 +409,30 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
     }
 
     case 'Iluminación': {
+      const tipo = (custom.tipoApertura as string) || 'ambas';
       const fis = typeof custom.aperturaFisura === 'number' ? custom.aperturaFisura : 25;
       const sol = typeof custom.penetracionSolar === 'number' ? custom.penetracionSolar : 1.2;
       return (
         <div className="flex flex-col gap-2.5 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
+          <div className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] text-diagramaxis-textMuted uppercase">Tipo de Apertura Lumínica:</span>
+            <div className="grid grid-cols-3 gap-1 font-mono text-[10.5px]">
+              {(['cenital', 'vertical', 'ambas'] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => onChange('tipoApertura', t)}
+                  className={`py-1 rounded-xs border capitalize transition-colors ${
+                    tipo === t
+                      ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                      : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="flex flex-col gap-1">
             <div className="flex justify-between font-mono text-[10.5px]">
               <span className="text-diagramaxis-textMuted">Apertura de fisura lumínica:</span>
@@ -417,26 +464,47 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
             />
           </div>
           <span className="font-mono text-[9px] text-diagramaxis-textDim">
-            Genera fisuras de luz cenital con iluminación cálida volumétrica interna.
+            Genera fisuras de luz cenital / vertical con iluminación volumétrica interna.
           </span>
         </div>
       );
     }
 
     case 'Recorrido axial': {
+      const eje = (custom.ejeCirculacion as string) || 'Z';
       const ape = typeof custom.aperturaEje === 'number' ? custom.aperturaEje : 0.4;
+      const prof = typeof custom.profundidadEje === 'number' ? custom.profundidadEje : 1.0;
       const ori = typeof custom.orientacionEje === 'number' ? custom.orientacionEje : 0;
       return (
         <div className="flex flex-col gap-2.5 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
           <div className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] text-diagramaxis-textMuted uppercase">Eje de Circulación:</span>
+            <div className="grid grid-cols-2 gap-1 font-mono text-[11px]">
+              {(['Z', 'X'] as const).map((ax) => (
+                <button
+                  key={ax}
+                  type="button"
+                  onClick={() => onChange('ejeCirculacion', ax)}
+                  className={`py-1 rounded-xs border transition-colors ${
+                    eje === ax
+                      ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                      : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
+                  }`}
+                >
+                  Eje {ax} ({ax === 'Z' ? 'Longitudinal' : 'Transversal'})
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
             <div className="flex justify-between font-mono text-[10.5px]">
-              <span className="text-diagramaxis-textMuted">Apertura del eje longitudinal:</span>
+              <span className="text-diagramaxis-textMuted">Apertura del túnel axial:</span>
               <span className="font-bold text-diagramaxis-gold">{Math.round(ape * 100)}%</span>
             </div>
             <input
               type="range"
-              min="0"
-              max="1"
+              min="0.1"
+              max="0.8"
               step="0.05"
               value={ape}
               onChange={(e) => onChange('aperturaEje', parseFloat(e.target.value))}
@@ -445,7 +513,22 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
           </div>
           <div className="flex flex-col gap-1">
             <div className="flex justify-between font-mono text-[10.5px]">
-              <span className="text-diagramaxis-textMuted">Orientación del eje rector:</span>
+              <span className="text-diagramaxis-textMuted">Profundidad del recorrido:</span>
+              <span className="font-bold text-diagramaxis-cyan">{prof >= 0.95 ? 'Pasante total (1.0)' : prof.toFixed(2)}</span>
+            </div>
+            <input
+              type="range"
+              min="0.1"
+              max="1.0"
+              step="0.05"
+              value={prof}
+              onChange={(e) => onChange('profundidadEje', parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Orientación / Ángulo de desvío:</span>
               <span className="font-bold text-diagramaxis-cyan">{ori}°</span>
             </div>
             <input
@@ -459,7 +542,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
             />
           </div>
           <span className="font-mono text-[9px] text-diagramaxis-textDim">
-            Traza un túnel pasante directo excavado con CSG a lo largo del eje rector.
+            Traza un túnel pasante o receso excavado con CSG a lo largo del eje rector seleccionado.
           </span>
         </div>
       );
@@ -532,10 +615,31 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
     }
 
     case 'Perforación': {
+      const eje = (custom.ejePerforacion as string) || 'Z';
       const rad = typeof custom.radioHoradacion === 'number' ? custom.radioHoradacion : 40;
       const prof = typeof custom.profundidadCorte === 'number' ? custom.profundidadCorte : 1.0;
+      const ang = typeof custom.anguloCorte === 'number' ? custom.anguloCorte : 0;
       return (
         <div className="flex flex-col gap-2.5 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
+          <div className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] text-diagramaxis-textMuted uppercase">Eje de Perforación:</span>
+            <div className="grid grid-cols-3 gap-1 font-mono text-[11px]">
+              {(['X', 'Y', 'Z'] as const).map((ax) => (
+                <button
+                  key={ax}
+                  type="button"
+                  onClick={() => onChange('ejePerforacion', ax)}
+                  className={`py-1 rounded-xs border transition-colors ${
+                    eje === ax
+                      ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                      : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
+                  }`}
+                >
+                  Eje {ax}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="flex flex-col gap-1">
             <div className="flex justify-between font-mono text-[10.5px]">
               <span className="text-diagramaxis-textMuted">Radio de horadación:</span>
@@ -558,7 +662,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
             </div>
             <input
               type="range"
-              min="0"
+              min="0.1"
               max="1"
               step="0.05"
               value={prof}
@@ -566,8 +670,23 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
               className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
             />
           </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Ángulo de corte oblicuo:</span>
+              <span className="font-bold text-diagramaxis-cyan">{ang}°</span>
+            </div>
+            <input
+              type="range"
+              min="-45"
+              max="45"
+              step="5"
+              value={ang}
+              onChange={(e) => onChange('anguloCorte', parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
+            />
+          </div>
           <span className="font-mono text-[9px] text-diagramaxis-textDim">
-            Horadación o vaciado transversal de cara con profundidad de receso a pasante.
+            Horadación o vaciado transversal de cara con profundidad de receso a pasante y eje configurable.
           </span>
         </div>
       );
@@ -640,10 +759,26 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
     }
 
     case 'Centro': {
+      const anc = typeof custom.fuerzaAnclaje === 'number' ? custom.fuerzaAnclaje : 0.8;
       const cent = typeof custom.atraccionCentripeta === 'number' ? custom.atraccionCentripeta : 0.6;
       const nuc = typeof custom.radioNucleo === 'number' ? custom.radioNucleo : 0.35;
       return (
         <div className="flex flex-col gap-2.5 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Fuerza de anclaje del núcleo:</span>
+              <span className="font-bold text-diagramaxis-gold">{Math.round(anc * 100)}%</span>
+            </div>
+            <input
+              type="range"
+              min="0.2"
+              max="1.0"
+              step="0.05"
+              value={anc}
+              onChange={(e) => onChange('fuerzaAnclaje', parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+            />
+          </div>
           <div className="flex flex-col gap-1">
             <div className="flex justify-between font-mono text-[10.5px]">
               <span className="text-diagramaxis-textMuted">Atracción centrípeta:</span>
@@ -675,7 +810,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
             />
           </div>
           <span className="font-mono text-[9px] text-diagramaxis-textDim">
-            Organiza la masa atrayéndola centrípetamente hacia un núcleo o patio claustral.
+            Organiza la masa atrayéndola centrípetamente y fijando un núcleo tectónico claustral.
           </span>
         </div>
       );
@@ -688,13 +823,13 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
         <div className="flex flex-col gap-2.5 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
           <div className="flex flex-col gap-1">
             <div className="flex justify-between font-mono text-[10.5px]">
-              <span className="text-diagramaxis-textMuted">Densidad de subdivisiones:</span>
+              <span className="text-diagramaxis-textMuted">Densidad de subdivisiones (2 a 12):</span>
               <span className="font-bold text-diagramaxis-gold">{sub}x{sub}</span>
             </div>
             <input
               type="range"
-              min="1"
-              max="10"
+              min="2"
+              max="12"
               step="1"
               value={sub}
               onChange={(e) => onChange('densidadSubdivisiones', parseInt(e.target.value, 10))}
@@ -717,7 +852,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
             />
           </div>
           <span className="font-mono text-[9px] text-diagramaxis-textDim">
-            Proyecta una trama de modulación modular tridimensional sobre las caras del prisma.
+            Proyecta una trama de modulación modular tridimensional sobre todas las caras del prisma.
           </span>
         </div>
       );
@@ -726,11 +861,32 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
     case 'Conectividad': {
       const con = typeof custom.numeroPuentes === 'number' ? custom.numeroPuentes : 2;
       const gro = typeof custom.grosorConector === 'number' ? custom.grosorConector : 0.25;
+      const ang = typeof custom.anguloConector === 'number' ? custom.anguloConector : 0;
+      const eje = (custom.ejeConexion as 'X' | 'Z') || 'X';
       return (
         <div className="flex flex-col gap-2.5 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
           <div className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] text-diagramaxis-textMuted uppercase">Eje de Conexión:</span>
+            <div className="grid grid-cols-2 gap-1 font-mono text-[11px]">
+              {(['X', 'Z'] as const).map((ax) => (
+                <button
+                  key={ax}
+                  type="button"
+                  onClick={() => onChange('ejeConexion', ax)}
+                  className={`py-1 rounded-xs border transition-colors ${
+                    eje === ax
+                      ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                      : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
+                  }`}
+                >
+                  Eje {ax}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
             <div className="flex justify-between font-mono text-[10.5px]">
-              <span className="text-diagramaxis-textMuted">Número de enlaces / puentes:</span>
+              <span className="text-diagramaxis-textMuted">Número de enlaces / puentes (1 a 5):</span>
               <span className="font-bold text-diagramaxis-gold">{con} puentes</span>
             </div>
             <input
@@ -758,8 +914,23 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
               className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
             />
           </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Ángulo de inclinación del puente:</span>
+              <span className="font-bold text-diagramaxis-cyan">{ang}°</span>
+            </div>
+            <input
+              type="range"
+              min="-60"
+              max="60"
+              step="5"
+              value={ang}
+              onChange={(e) => onChange('anguloConector', parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
+            />
+          </div>
           <span className="font-mono text-[9px] text-diagramaxis-textDim">
-            Genera pasarelas, puentes o ductos de articulación física entre caras y sub-bloques.
+            Genera pasarelas, puentes o ductos de articulación física con orientación e inclinación configurable.
           </span>
         </div>
       );
@@ -844,6 +1015,648 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
           </div>
           <span className="font-mono text-[9px] text-diagramaxis-textDim">
             Proyección telescópica o terrazas voladizas hacia los laterales abriendo el cubo al entorno.
+          </span>
+        </div>
+      );
+    }
+
+    /* ------------------------------------------------------------- *
+     * VENUSTAS
+     * ------------------------------------------------------------- */
+    case 'Sustracción': {
+      const cara = (custom.caraSustraccion as string) || 'front';
+      const w = typeof custom.anchoTalla === 'number' ? custom.anchoTalla : 0.4;
+      const h = typeof custom.altoTalla === 'number' ? custom.altoTalla : 0.4;
+      const d = typeof custom.profundidadTalla === 'number' ? custom.profundidadTalla : 0.45;
+      return (
+        <div className="flex flex-col gap-2.5 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
+          <div className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] text-diagramaxis-textMuted uppercase">Cara de Sustracción:</span>
+            <div className="grid grid-cols-5 gap-1 font-mono text-[10px]">
+              {[
+                { id: 'front', label: 'Front' },
+                { id: 'back', label: 'Post' },
+                { id: 'left', label: 'Izq' },
+                { id: 'right', label: 'Der' },
+                { id: 'top', label: 'Cenit' },
+              ].map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => onChange('caraSustraccion', c.id)}
+                  className={`py-1 rounded-xs border transition-colors ${
+                    cara === c.id
+                      ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                      : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Ancho de talla (X/Z):</span>
+              <span className="font-bold text-diagramaxis-gold">{Math.round(w * 100)}%</span>
+            </div>
+            <input
+              type="range"
+              min="0.1"
+              max="0.8"
+              step="0.05"
+              value={w}
+              onChange={(e) => onChange('anchoTalla', parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Alto de talla (Y):</span>
+              <span className="font-bold text-diagramaxis-gold">{Math.round(h * 100)}%</span>
+            </div>
+            <input
+              type="range"
+              min="0.1"
+              max="0.8"
+              step="0.05"
+              value={h}
+              onChange={(e) => onChange('altoTalla', parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Profundidad de corte:</span>
+              <span className="font-bold text-diagramaxis-cyan">{Math.round(d * 100)}%</span>
+            </div>
+            <input
+              type="range"
+              min="0.1"
+              max="0.9"
+              step="0.05"
+              value={d}
+              onChange={(e) => onChange('profundidadTalla', parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
+            />
+          </div>
+          <span className="font-mono text-[9px] text-diagramaxis-textDim">
+            Talla CSG real sustrayendo un prisma volumétrico de la cara seleccionada.
+          </span>
+        </div>
+      );
+    }
+
+    case 'Abierto': {
+      const prop = typeof custom.proporcionApertura === 'number' ? custom.proporcionApertura : 0.75;
+      const activeCaras: string[] = Array.isArray(custom.carasAbiertas) ? custom.carasAbiertas : ['front'];
+      const toggleCara = (caraId: string) => {
+        const next = activeCaras.includes(caraId)
+          ? activeCaras.filter((c) => c !== caraId)
+          : [...activeCaras, caraId];
+        onChange('carasAbiertas', next.length > 0 ? next : ['front']);
+      };
+      return (
+        <div className="flex flex-col gap-2.5 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
+          <div className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] text-diagramaxis-textMuted uppercase">Caras Abiertas:</span>
+            <div className="grid grid-cols-5 gap-1 font-mono text-[10px]">
+              {[
+                { id: 'front', label: 'Front' },
+                { id: 'back', label: 'Post' },
+                { id: 'left', label: 'Izq' },
+                { id: 'right', label: 'Der' },
+                { id: 'top', label: 'Cenit' },
+              ].map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => toggleCara(c.id)}
+                  className={`py-1 rounded-xs border transition-colors ${
+                    activeCaras.includes(c.id)
+                      ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                      : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Proporción de apertura / vano:</span>
+              <span className="font-bold text-diagramaxis-gold">{Math.round(prop * 100)}%</span>
+            </div>
+            <input
+              type="range"
+              min="0.2"
+              max="0.9"
+              step="0.05"
+              value={prop}
+              onChange={(e) => onChange('proporcionApertura', parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+            />
+          </div>
+          <span className="font-mono text-[9px] text-diagramaxis-textDim">
+            Abre completamente las caras seleccionadas para disolver la frontera interior-exterior.
+          </span>
+        </div>
+      );
+    }
+
+    case 'Intersección': {
+      const overlap = typeof custom.solapamiento === 'number' ? custom.solapamiento : 0.5;
+      const ang = typeof custom.anguloInterseccion === 'number' ? custom.anguloInterseccion : 30;
+      return (
+        <div className="flex flex-col gap-2.5 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Grado de penetración / Solapamiento:</span>
+              <span className="font-bold text-diagramaxis-gold">{Math.round(overlap * 100)}%</span>
+            </div>
+            <input
+              type="range"
+              min="0.1"
+              max="0.9"
+              step="0.05"
+              value={overlap}
+              onChange={(e) => onChange('solapamiento', parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Ángulo de giro de la masa intersecada:</span>
+              <span className="font-bold text-diagramaxis-cyan">{ang}°</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="90"
+              step="5"
+              value={ang}
+              onChange={(e) => onChange('anguloInterseccion', parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
+            />
+          </div>
+          <span className="font-mono text-[9px] text-diagramaxis-textDim">
+            Genera un segundo volumen que penetra y se solapa angularmente con el cuerpo principal.
+          </span>
+        </div>
+      );
+    }
+
+    case 'Simetría': {
+      const eje = (custom.ejeSimetria as string) || 'X';
+      const desp = typeof custom.desplazamientoEspejo === 'number' ? custom.desplazamientoEspejo : 0.2;
+      const esc = typeof custom.escalaReflejo === 'number' ? custom.escalaReflejo : 1.0;
+      return (
+        <div className="flex flex-col gap-2.5 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
+          <div className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] text-diagramaxis-textMuted uppercase">Eje de Reflexión Especular:</span>
+            <div className="grid grid-cols-3 gap-1 font-mono text-[11px]">
+              {(['X', 'Y', 'Z'] as const).map((ax) => (
+                <button
+                  key={ax}
+                  type="button"
+                  onClick={() => onChange('ejeSimetria', ax)}
+                  className={`py-1 rounded-xs border transition-colors ${
+                    eje === ax
+                      ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                      : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
+                  }`}
+                >
+                  Eje {ax}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Separación de alas simétricas:</span>
+              <span className="font-bold text-diagramaxis-gold">{desp.toFixed(2)}x</span>
+            </div>
+            <input
+              type="range"
+              min="0.0"
+              max="1.0"
+              step="0.05"
+              value={desp}
+              onChange={(e) => onChange('desplazamientoEspejo', parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Escala del volumen reflejado:</span>
+              <span className="font-bold text-diagramaxis-cyan">{esc.toFixed(2)}x</span>
+            </div>
+            <input
+              type="range"
+              min="0.5"
+              max="1.2"
+              step="0.05"
+              value={esc}
+              onChange={(e) => onChange('escalaReflejo', parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
+            />
+          </div>
+          <span className="font-mono text-[9px] text-diagramaxis-textDim">
+            Proyecta pabellones o alas especulares respecto al plano compositivo rector.
+          </span>
+        </div>
+      );
+    }
+
+    case 'Asimetría': {
+      const eje = (custom.ejeAsimetria as string) || 'X';
+      const shift = typeof custom.desplazamientoMasa === 'number' ? custom.desplazamientoMasa : 0.3;
+      return (
+        <div className="flex flex-col gap-2.5 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
+          <div className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] text-diagramaxis-textMuted uppercase">Eje de Asimetría Dinámica:</span>
+            <div className="grid grid-cols-3 gap-1 font-mono text-[11px]">
+              {(['X', 'Y', 'Z'] as const).map((ax) => (
+                <button
+                  key={ax}
+                  type="button"
+                  onClick={() => onChange('ejeAsimetria', ax)}
+                  className={`py-1 rounded-xs border transition-colors ${
+                    eje === ax
+                      ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                      : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
+                  }`}
+                >
+                  Eje {ax}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Desfase / Dislocación compositiva:</span>
+              <span className="font-bold text-diagramaxis-gold">{Math.round(shift * 100)}%</span>
+            </div>
+            <input
+              type="range"
+              min="0.1"
+              max="1.0"
+              step="0.05"
+              value={shift}
+              onChange={(e) => onChange('desplazamientoMasa', parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+            />
+          </div>
+          <span className="font-mono text-[9px] text-diagramaxis-textDim">
+            Rompe el equilibrio estático desplazando y tensionando cuerpos secundarios en el eje seleccionado.
+          </span>
+        </div>
+      );
+    }
+
+    case 'Adición': {
+      const aw = typeof custom.anchoAdicion === 'number' ? custom.anchoAdicion : 3.0;
+      const ah = typeof custom.altoAdicion === 'number' ? custom.altoAdicion : 4.0;
+      const ad = typeof custom.profundidadAdicion === 'number' ? custom.profundidadAdicion : 3.0;
+      const posX = typeof custom.posicionX === 'number' ? custom.posicionX : 4.0;
+      const posY = typeof custom.posicionY === 'number' ? custom.posicionY : 0.0;
+      const posZ = typeof custom.posicionZ === 'number' ? custom.posicionZ : 0.0;
+      return (
+        <div className="flex flex-col gap-2.5 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
+          <div className="grid grid-cols-3 gap-2">
+            <div className="flex flex-col gap-1">
+              <span className="font-mono text-[9.5px] text-diagramaxis-textMuted">Ancho (X): {aw.toFixed(1)}m</span>
+              <input
+                type="range"
+                min="1"
+                max="10"
+                step="0.5"
+                value={aw}
+                onChange={(e) => onChange('anchoAdicion', parseFloat(e.target.value))}
+                className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="font-mono text-[9.5px] text-diagramaxis-textMuted">Alto (Y): {ah.toFixed(1)}m</span>
+              <input
+                type="range"
+                min="1"
+                max="10"
+                step="0.5"
+                value={ah}
+                onChange={(e) => onChange('altoAdicion', parseFloat(e.target.value))}
+                className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="font-mono text-[9.5px] text-diagramaxis-textMuted">Prof (Z): {ad.toFixed(1)}m</span>
+              <input
+                type="range"
+                min="1"
+                max="10"
+                step="0.5"
+                value={ad}
+                onChange={(e) => onChange('profundidadAdicion', parseFloat(e.target.value))}
+                className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Posición X / Anclaje horizontal:</span>
+              <span className="font-bold text-diagramaxis-cyan">{posX.toFixed(1)}m</span>
+            </div>
+            <input
+              type="range"
+              min="-10"
+              max="10"
+              step="0.5"
+              value={posX}
+              onChange={(e) => onChange('posicionX', parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Posición Y / Elevación de unión:</span>
+              <span className="font-bold text-diagramaxis-cyan">{posY.toFixed(1)}m</span>
+            </div>
+            <input
+              type="range"
+              min="-5"
+              max="10"
+              step="0.5"
+              value={posY}
+              onChange={(e) => onChange('posicionY', parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Posición Z / Profundidad:</span>
+              <span className="font-bold text-diagramaxis-cyan">{posZ.toFixed(1)}m</span>
+            </div>
+            <input
+              type="range"
+              min="-10"
+              max="10"
+              step="0.5"
+              value={posZ}
+              onChange={(e) => onChange('posicionZ', parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
+            />
+          </div>
+          <span className="font-mono text-[9px] text-diagramaxis-textDim">
+            Acopla un volumen secundario con dimensiones y posición tridimensional paramétrica.
+          </span>
+        </div>
+      );
+    }
+
+    case 'Rotación': {
+      const eje = (custom.ejeRotacion as string) || 'Y';
+      const ang = typeof custom.anguloRotacion === 'number' ? custom.anguloRotacion : 45;
+      return (
+        <div className="flex flex-col gap-2.5 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
+          <div className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] text-diagramaxis-textMuted uppercase">Eje de Rotación:</span>
+            <div className="grid grid-cols-3 gap-1 font-mono text-[11px]">
+              {(['X', 'Y', 'Z'] as const).map((ax) => (
+                <button
+                  key={ax}
+                  type="button"
+                  onClick={() => onChange('ejeRotacion', ax)}
+                  className={`py-1 rounded-xs border transition-colors ${
+                    eje === ax
+                      ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                      : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
+                  }`}
+                >
+                  Eje {ax}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Ángulo de giro:</span>
+              <span className="font-bold text-diagramaxis-gold">{ang}°</span>
+            </div>
+            <input
+              type="range"
+              min="-180"
+              max="180"
+              step="5"
+              value={ang}
+              onChange={(e) => onChange('anguloRotacion', parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+            />
+          </div>
+          <span className="font-mono text-[9px] text-diagramaxis-textDim">
+            Gira la orientación compositiva respecto a cualquiera de los 3 ejes espaciales.
+          </span>
+        </div>
+      );
+    }
+
+    case 'Repetición': {
+      const count = typeof custom.numeroRepeticiones === 'number' ? custom.numeroRepeticiones : 3;
+      const sep = typeof custom.separacionRepeticion === 'number' ? custom.separacionRepeticion : 0.4;
+      const eje = (custom.ejeRepeticion as string) || 'X';
+      return (
+        <div className="flex flex-col gap-2.5 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
+          <div className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] text-diagramaxis-textMuted uppercase">Eje de Repetición Modular:</span>
+            <div className="grid grid-cols-3 gap-1 font-mono text-[11px]">
+              {(['X', 'Y', 'Z'] as const).map((ax) => (
+                <button
+                  key={ax}
+                  type="button"
+                  onClick={() => onChange('ejeRepeticion', ax)}
+                  className={`py-1 rounded-xs border transition-colors ${
+                    eje === ax
+                      ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                      : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
+                  }`}
+                >
+                  Eje {ax}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Número de módulos repetidos (2 a 8):</span>
+              <span className="font-bold text-diagramaxis-gold">{count} módulos</span>
+            </div>
+            <input
+              type="range"
+              min="2"
+              max="8"
+              step="1"
+              value={count}
+              onChange={(e) => onChange('numeroRepeticiones', parseInt(e.target.value, 10))}
+              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Separación intermodular:</span>
+              <span className="font-bold text-diagramaxis-cyan">{sep.toFixed(2)}x</span>
+            </div>
+            <input
+              type="range"
+              min="0.1"
+              max="1.5"
+              step="0.05"
+              value={sep}
+              onChange={(e) => onChange('separacionRepeticion', parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
+            />
+          </div>
+          <span className="font-mono text-[9px] text-diagramaxis-textDim">
+            Multiplica rítmicamente el volumen a lo largo del vector direccional.
+          </span>
+        </div>
+      );
+    }
+
+    case 'Horizontalidad': {
+      const horiz = typeof custom.factorHorizontal === 'number' ? custom.factorHorizontal : 1.8;
+      const comp = typeof custom.factorCompresion === 'number' ? custom.factorCompresion : 0.55;
+      return (
+        <div className="flex flex-col gap-2.5 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Factor de expansión horizontal (XZ):</span>
+              <span className="font-bold text-diagramaxis-gold">{horiz.toFixed(1)}x</span>
+            </div>
+            <input
+              type="range"
+              min="1.2"
+              max="4.0"
+              step="0.1"
+              value={horiz}
+              onChange={(e) => onChange('factorHorizontal', parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Factor de compresión vertical (Y):</span>
+              <span className="font-bold text-diagramaxis-cyan">{comp.toFixed(2)}x</span>
+            </div>
+            <input
+              type="range"
+              min="0.2"
+              max="0.8"
+              step="0.05"
+              value={comp}
+              onChange={(e) => onChange('factorCompresion', parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
+            />
+          </div>
+          <span className="font-mono text-[9px] text-diagramaxis-textDim">
+            Aplana el volumen expandiendo los planos hacia la línea del horizonte.
+          </span>
+        </div>
+      );
+    }
+
+    /* ------------------------------------------------------------- *
+     * UTILITAS
+     * ------------------------------------------------------------- */
+    case 'Contenedor': {
+      return (
+        <div className="flex flex-col gap-2 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border font-mono text-[10.5px]">
+          <div className="flex items-center justify-between">
+            <span className="text-diagramaxis-textMuted">Rol Utilitario:</span>
+            <span className="text-diagramaxis-gold font-bold">Envolvente Exterior</span>
+          </div>
+          <span className="text-diagramaxis-textDim text-[9.5px]">
+            Crea una cáscara tectónica expandida de retícula porosa que aloja el contenido interior.
+          </span>
+        </div>
+      );
+    }
+
+    case 'Contenido': {
+      return (
+        <div className="flex flex-col gap-2 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border font-mono text-[10.5px]">
+          <div className="flex items-center justify-between">
+            <span className="text-diagramaxis-textMuted">Rol Utilitario:</span>
+            <span className="text-diagramaxis-gold font-bold">Cuerpo Interior</span>
+          </div>
+          <span className="text-diagramaxis-textDim text-[9.5px]">
+            Escala el volumen a dimensiones compactas alojadas dentro del espacio protegido.
+          </span>
+        </div>
+      );
+    }
+
+    case 'Servido': {
+      return (
+        <div className="flex flex-col gap-2 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border font-mono text-[10.5px]">
+          <div className="flex items-center justify-between">
+            <span className="text-diagramaxis-textMuted">Rol Utilitario:</span>
+            <span className="text-diagramaxis-gold font-bold">Espacio Servido (Principal)</span>
+          </div>
+          <span className="text-diagramaxis-textDim text-[9.5px]">
+            Espacio amplio y diáfano jerarquizado, liberado de núcleos duros.
+          </span>
+        </div>
+      );
+    }
+
+    case 'Servidor': {
+      return (
+        <div className="flex flex-col gap-2 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border font-mono text-[10.5px]">
+          <div className="flex items-center justify-between">
+            <span className="text-diagramaxis-textMuted">Rol Utilitario:</span>
+            <span className="text-diagramaxis-gold font-bold">Núcleos Servidores (Servicios)</span>
+          </div>
+          <span className="text-diagramaxis-textDim text-[9.5px]">
+            Acopla torres y núcleos técnicos perimetrales para liberar la planta noble.
+          </span>
+        </div>
+      );
+    }
+
+    case 'Vinculado':
+    case 'Desvinculado': {
+      const dist = typeof custom.distanciaSeparacion === 'number' ? custom.distanciaSeparacion : 4.0;
+      const isLinked = conceptId === 'Vinculado' ? custom.vincularConPuente !== false : custom.vincularConPuente === true;
+      return (
+        <div className="flex flex-col gap-2.5 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between font-mono text-[10.5px]">
+              <span className="text-diagramaxis-textMuted">Distancia de separación física:</span>
+              <span className="font-bold text-diagramaxis-gold">{dist.toFixed(1)} m</span>
+            </div>
+            <input
+              type="range"
+              min="1.0"
+              max="8.0"
+              step="0.5"
+              value={dist}
+              onChange={(e) => onChange('distanciaSeparacion', parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+            />
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer font-mono text-[10.5px] text-diagramaxis-textMuted hover:text-diagramaxis-text">
+            <input
+              type="checkbox"
+              checked={isLinked}
+              onChange={(e) => onChange('vincularConPuente', e.target.checked)}
+              className="accent-diagramaxis-gold cursor-pointer"
+            />
+            <span>Articular mediante puente / pasarela de enlace</span>
+          </label>
+          <span className="font-mono text-[9px] text-diagramaxis-textDim">
+            {conceptId === 'Vinculado'
+              ? 'Dos cuerpos satélites conectados físicamente mediante un elemento de transición.'
+              : 'Dos cuerpos autónomos en proximidad sin nexo físico directo.'}
           </span>
         </div>
       );

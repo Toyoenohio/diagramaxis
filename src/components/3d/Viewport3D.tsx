@@ -130,7 +130,8 @@ export const Viewport3D: React.FC = () => {
         orb.radius * Math.cos(orb.phi),
         orb.radius * Math.sin(orb.phi) * Math.cos(orb.theta)
       );
-      camera.lookAt(0, baseDimensions.h * 0.45, 0);
+      const curDim = finalDimensionsRef.current || baseDimensions;
+      camera.lookAt(0, curDim.h * 0.45, 0);
     }
   }, [baseDimensions]);
 
@@ -511,6 +512,11 @@ export const Viewport3D: React.FC = () => {
 
       if (obj.id === selectedObjectId) {
         finalDimensionsRef.current = built.finalDimensions || obj.dimensions || baseDimensions;
+        const curMax = Math.max(finalDimensionsRef.current.w, finalDimensionsRef.current.h, finalDimensionsRef.current.d);
+        if (orbitRef.current.radius < curMax * 2.2 && !orbitRef.current.isInterior) {
+          orbitRef.current.radius = curMax * 2.6;
+          updateCameraPosition();
+        }
       }
     });
 
@@ -712,7 +718,9 @@ export const Viewport3D: React.FC = () => {
       orb.eyePos.x += Math.sin(orb.yaw) * speed * dir;
       orb.eyePos.z += Math.cos(orb.yaw) * speed * dir;
     } else {
-      orb.radius = Math.max(4, Math.min(180, orb.radius + e.deltaY * 0.04));
+      // Zoom exponencial suave continuo de 1.8m a 800m
+      const zoomFactor = Math.exp(e.deltaY * 0.0015);
+      orb.radius = Math.max(1.8, Math.min(800, orb.radius * zoomFactor));
     }
 
     updateCameraPosition();

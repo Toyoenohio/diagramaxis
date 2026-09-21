@@ -138,7 +138,20 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   nodeParams: {},
   relations: [],
 
-  nodes: [],
+  nodes: [
+    {
+      id: 'vol-obj-1',
+      type: 'volumeNode',
+      position: { x: 300, y: 220 },
+      data: {
+        id: 'vol-obj-1',
+        objectId: 'obj-1',
+        name: 'Volumen Base 1',
+        dimensions: { w: 16, h: 8, d: 14 },
+        position: { x: 0, y: 0, z: 0 },
+      },
+    },
+  ],
   edges: [],
   selectedNodeId: null,
 
@@ -464,6 +477,20 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       },
     };
 
+    // Si la conexión involucra un VolumeNode (e.g. vol-obj-1), vincular el concepto a ese objeto
+    let objIdToAssign: string | null = null;
+    let conceptIdToAssign: string | null = null;
+    if (relData.from.startsWith('vol-')) {
+      objIdToAssign = relData.from.replace('vol-', '');
+      conceptIdToAssign = relData.to;
+    } else if (relData.to.startsWith('vol-')) {
+      objIdToAssign = relData.to.replace('vol-', '');
+      conceptIdToAssign = relData.from;
+    }
+    if (objIdToAssign && conceptIdToAssign && !conceptIdToAssign.startsWith('vol-')) {
+      get().assignConceptToObject(conceptIdToAssign, objIdToAssign);
+    }
+
     set({
       relations: [...relations, newRel],
       edges: [...edges, newEdge],
@@ -568,14 +595,28 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     const mainRadius = Math.max(160, groupKeys.length * 40);
 
     const updatedNodes = nodes.map((node) => {
+      if (node.type === 'volumeNode') {
+        const volNodes = nodes.filter((n) => n.type === 'volumeNode');
+        const volIdx = volNodes.findIndex((n) => n.id === node.id);
+        const totalVols = volNodes.length;
+        const offsetX = (volIdx - (totalVols - 1) / 2) * 260;
+        return {
+          ...node,
+          position: {
+            x: centerX + offsetX - 110,
+            y: centerY - 70,
+          },
+        };
+      }
+
       const sub = (node.data?.subcategory as string) || 'General';
       const groupIdx = groupKeys.indexOf(sub);
       const groupItems = groups[sub];
       const itemIdx = groupItems.findIndex((n) => n.id === node.id);
 
-      const groupAngle = (groupIdx / groupKeys.length) * Math.PI * 2 - Math.PI / 2;
-      const gx = centerX + Math.cos(groupAngle) * mainRadius;
-      const gy = centerY + Math.sin(groupAngle) * mainRadius;
+      const groupAngle = (groupIdx / Math.max(1, groupKeys.length)) * Math.PI * 2 - Math.PI / 2;
+      const gx = centerX + Math.cos(groupAngle) * (mainRadius + 80);
+      const gy = centerY + Math.sin(groupAngle) * (mainRadius + 80);
 
       const subRadius = 40 + groupItems.length * 15;
       const subAngle = (itemIdx / Math.max(1, groupItems.length)) * Math.PI * 2;
@@ -634,15 +675,29 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   setIsGeneratingReferences: (isGeneratingReferences) => set({ isGeneratingReferences }),
 
   setBaseDimensions: (dim) => {
-    const { selectedObjectId } = get();
-    set((state) => ({
-      baseDimensions: { ...state.baseDimensions, ...dim },
-      objects: state.objects.map((obj) =>
+    const { selectedObjectId, baseDimensions, nodes, objects } = get();
+    const updatedDims = { ...baseDimensions, ...dim };
+    const updatedNodes = nodes.map((n) => {
+      if (n.type === 'volumeNode' && n.data?.objectId === selectedObjectId) {
+        return {
+          ...n,
+          data: {
+            ...n.data,
+            dimensions: updatedDims,
+          },
+        };
+      }
+      return n;
+    });
+    set({
+      baseDimensions: updatedDims,
+      objects: objects.map((obj) =>
         obj.id === selectedObjectId
-          ? { ...obj, dimensions: { ...obj.dimensions, ...dim } }
+          ? { ...obj, dimensions: updatedDims }
           : obj
       ),
-    }));
+      nodes: updatedNodes,
+    });
   },
 
   setNorthRotation: (northRotation) => set({ northRotation }),
@@ -652,7 +707,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   toggleShadows: () => set((state) => ({ showShadows: !state.showShadows })),
 
   addObject: (name?: string) => {
-    const { objects } = get();
+    const { objects, nodes } = get();
     const nextIdx = objects.length + 1;
     const newId = `obj-${Date.now().toString(36)}`;
     const lastObj = objects[objects.length - 1];
@@ -666,24 +721,40 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       assignedConcepts: [],
       nodeParams: {},
     };
+    const newVolNode: Node = {
+      id: `vol-${newId}`,
+      type: 'volumeNode',
+      position: { x: 300 + objects.length * 280, y: 220 },
+      data: {
+        id: `vol-${newId}`,
+        objectId: newId,
+        name: newObj.name,
+        dimensions: newObj.dimensions,
+        position: newObj.position,
+      },
+    };
     set({
       objects: [...objects, newObj],
       selectedObjectId: newId,
+      nodes: [...nodes, newVolNode],
     });
-    get().showToast(`Nuevo "${newObj.name}" añadido al espacio`);
+    get().showToast(`Nuevo "${newObj.name}" añadido al espacio y tablero`);
   },
 
   removeObject: (id: string) => {
-    const { objects, selectedObjectId } = get();
+    const { objects, selectedObjectId, nodes, edges } = get();
     if (objects.length <= 1) {
       get().showToast('Se requiere al menos un objeto principal');
       return;
     }
     const newObjects = objects.filter((o) => o.id !== id);
     const newSelected = selectedObjectId === id ? newObjects[0].id : selectedObjectId;
+    const volNodeId = `vol-${id}`;
     set({
       objects: newObjects,
       selectedObjectId: newSelected,
+      nodes: nodes.filter((n) => n.id !== volNodeId),
+      edges: edges.filter((e) => e.source !== volNodeId && e.target !== volNodeId),
     });
     get().showToast('Objeto eliminado');
   },
@@ -700,8 +771,24 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   },
 
   updateObject: (id: string, updates: Partial<ProjectObject>) => {
+    const { nodes } = get();
+    const updatedNodes = nodes.map((n) => {
+      if (n.type === 'volumeNode' && n.data?.objectId === id) {
+        return {
+          ...n,
+          data: {
+            ...n.data,
+            name: updates.name || n.data.name,
+            dimensions: updates.dimensions || n.data.dimensions,
+            position: updates.position || n.data.position,
+          },
+        };
+      }
+      return n;
+    });
     set((state) => ({
       objects: state.objects.map((o) => (o.id === id ? { ...o, ...updates } : o)),
+      nodes: updatedNodes,
     }));
   },
 
@@ -714,12 +801,25 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   },
 
   setObjectDimensions: (id: string, dim: { w?: number; h?: number; d?: number }) => {
-    const { selectedObjectId } = get();
+    const { selectedObjectId, nodes } = get();
+    const updatedNodes = nodes.map((n) => {
+      if (n.type === 'volumeNode' && n.data?.objectId === id) {
+        return {
+          ...n,
+          data: {
+            ...n.data,
+            dimensions: { ...(n.data.dimensions as any), ...dim },
+          },
+        };
+      }
+      return n;
+    });
     set((state) => ({
       baseDimensions: id === selectedObjectId ? { ...state.baseDimensions, ...dim } : state.baseDimensions,
       objects: state.objects.map((o) =>
         o.id === id ? { ...o, dimensions: { ...o.dimensions, ...dim } } : o
       ),
+      nodes: updatedNodes,
     }));
   },
 

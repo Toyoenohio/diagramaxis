@@ -175,11 +175,10 @@ export const VOLUMETRIC_OPERATIONS: Record<string, VolumetricOperation> = {
     pedagogicalTip: 'Comprime la base e incrementa drásticamente la altura.',
   },
   'Horizontalidad': {
-    op: 'extend',
-    axis: 'XZ',
-    factor: 1.4,
-    label: 'Predominio horizontal',
-    pedagogicalTip: 'Aplana el prisma enfatizando la línea rasante del horizonte.',
+    op: 'horizontality',
+    factor: 1.8,
+    label: 'Predominio horizontal rasante',
+    pedagogicalTip: 'Aplana el prisma y expande su crujía horizontal respecto a la figura humana de 1.75m.',
   },
   'Lineal (Euclidianas)': {
     op: 'extend',
@@ -212,20 +211,20 @@ export const VOLUMETRIC_OPERATIONS: Record<string, VolumetricOperation> = {
     pedagogicalTip: 'Aumenta el grosor visual asentando firmemente el volumen.',
   },
 
-  // --- SUSTRACCIONES & PERFORACIONES ---
+  // --- SUSTRACCIONES & PERFORACIONES (VENUSTAS & CSG) ---
   'Sustracción': {
-    op: 'carve',
+    op: 'subtraction_custom',
     face: 'front',
     size: 0.4,
-    label: 'Sustracción volumétrica',
-    pedagogicalTip: 'Talla una porción del volumen exterior modelando terrazas o entrantes.',
+    label: 'Sustracción volumétrica CSG',
+    pedagogicalTip: 'Talla precisa de cavidades o sustracciones booleanas en caras específicas con ancho, alto y profundidad calibrables.',
   },
   'Abierto': {
-    op: 'open',
+    op: 'open_faces',
     face: 'front',
     size: 0.75,
-    label: 'Liberación de fachada',
-    pedagogicalTip: 'Abre completamente la cara frontal desvaneciendo el límite interior-exterior.',
+    label: 'Liberación de fachadas múltiples',
+    pedagogicalTip: 'Abre selectivamente una o más fachadas del prisma desvaneciendo el límite interior-exterior.',
   },
 
   // --- LUZ & PERFORACIONES CENITALES ---
@@ -246,11 +245,11 @@ export const VOLUMETRIC_OPERATIONS: Record<string, VolumetricOperation> = {
 
   // --- ADICIONES & CONEXIONES ---
   'Adición': {
-    op: 'add',
+    op: 'addition_custom',
     face: 'side',
     size: 0.4,
-    label: 'Volumen adosado',
-    pedagogicalTip: 'Acopla un nuevo cuerpo volumétrico articulado a la masa principal.',
+    label: 'Adición de cuerpo configurable',
+    pedagogicalTip: 'Acopla un nuevo volumen articulado (prisma, cuña o cilindro) con posición y escala calibrables.',
   },
 
   // --- SESGO, ROTACIÓN & ASIMETRÍA ---
@@ -262,18 +261,32 @@ export const VOLUMETRIC_OPERATIONS: Record<string, VolumetricOperation> = {
     pedagogicalTip: 'Inclina las aristas en diagonal rompiendo la ortogonalidad estricta.',
   },
   'Rotación': {
-    op: 'rotate',
+    op: 'rotation_custom',
     axis: 'Y',
-    angle: 0.4,
-    label: 'Giro angular',
-    pedagogicalTip: 'Rota el prisma respecto a la orientación solar o la trama del sitio.',
+    angle: 45,
+    label: 'Giro angular preciso',
+    pedagogicalTip: 'Rota el prisma respecto a un eje rector calibrable (X, Y o Z).',
   },
   'Asimetría': {
-    op: 'shear',
+    op: 'asymmetry',
     axis: 'X',
-    angle: 0.2,
-    label: 'Deformación asimétrica',
-    pedagogicalTip: 'Desplaza el eje de gravedad rompiendo la simetría estática.',
+    angle: 0.25,
+    label: 'Desplazamiento asimétrico de masa',
+    pedagogicalTip: 'Desplaza el centro de masa y genera tensiones asimétricas en la envolvente.',
+  },
+  'Intersección': {
+    op: 'intersection',
+    factor: 0.5,
+    label: 'Intersección volumétrica',
+    pedagogicalTip: 'Entrecruzamiento de dos masas generando un intersticio espacial compartido.',
+  },
+  'Repetición': {
+    op: 'repetition',
+    steps: 3,
+    gap: 0.4,
+    axis: 'X',
+    label: 'Repetición modular múltiple',
+    pedagogicalTip: 'Replicación seriada del volumen a lo largo del eje rector con separación constante.',
   },
   'Angulado': {
     op: 'shear',
@@ -315,10 +328,48 @@ export const VOLUMETRIC_OPERATIONS: Record<string, VolumetricOperation> = {
 
   // --- SIMETRÍA ---
   'Simetría': {
-    op: 'mirror',
+    op: 'symmetry',
     axis: 'X',
-    label: 'Composición simétrica',
-    pedagogicalTip: 'Duplica las adiciones simétricamente a ambos lados del eje central.',
+    label: 'Simetría especular (Ejes X/Y/Z)',
+    pedagogicalTip: 'Duplica y refleja la composición simétricamente en el eje seleccionado.',
+  },
+
+  // --- TEMAS ARQUITECTÓNICOS: UTILITAS ---
+  'Contenedor': {
+    op: 'container_contained',
+    factor: 1.25,
+    label: 'Contenedor estructural macro',
+    pedagogicalTip: 'Estructura macro perimetral permeable que alberga el núcleo funcional en su interior.',
+  },
+  'Contenido': {
+    op: 'container_contained',
+    factor: 0.7,
+    label: 'Masa habitable contenida',
+    pedagogicalTip: 'Volumen funcional interior envuelto por una caja perimetral protectora.',
+  },
+  'Servido': {
+    op: 'served_servant',
+    factor: 1.0,
+    label: 'Espacio principal servido',
+    pedagogicalTip: 'Gran nave jerárquica principal exenta de obstrucciones técnicas.',
+  },
+  'Servidor': {
+    op: 'served_servant',
+    factor: 0.35,
+    label: 'Núcleos de servicio servidores',
+    pedagogicalTip: 'Células satélite compactas (núcleos húmedos y circulatorios) adosadas a la masa servida.',
+  },
+  'Vinculado': {
+    op: 'linked_unlinked',
+    factor: 1.0,
+    label: 'Articulación vinculada',
+    pedagogicalTip: 'Conexión franca entre dos cuerpos mediante una rótula o puente espacial.',
+  },
+  'Desvinculado': {
+    op: 'linked_unlinked',
+    factor: 0.0,
+    label: 'Desacoplamiento e independencia',
+    pedagogicalTip: 'Separación franca entre masas creando una cesura o espacio intersticial libre.',
   },
 
   // --- ARTEFACTOS DE LA BIBLIOTECA ---

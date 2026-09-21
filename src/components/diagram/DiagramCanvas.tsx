@@ -11,6 +11,7 @@ import '@xyflow/react/dist/style.css';
 
 import { useProjectStore } from '../../store/useProjectStore';
 import { ConceptNode } from './ConceptNode';
+import { VolumeNode } from './VolumeNode';
 import { CustomEdge } from './CustomEdge';
 import { LayoutGrid, Plus, Compass, HelpCircle, X } from 'lucide-react';
 
@@ -28,7 +29,7 @@ const DiagramCanvasInner: React.FC = () => {
     activeArtifacts,
   } = useProjectStore();
 
-  const nodeTypes = useMemo(() => ({ conceptNode: ConceptNode }), []);
+  const nodeTypes = useMemo(() => ({ conceptNode: ConceptNode, volumeNode: VolumeNode }), []);
   const edgeTypes = useMemo(() => ({ customEdge: CustomEdge }), []);
 
   const onConnect = useCallback(

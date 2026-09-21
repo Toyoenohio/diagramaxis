@@ -103,7 +103,19 @@ export type OperationType =
   | 'grid_lattice'
   | 'connector_bridge'
   | 'spiral_ramp'
-  | 'cantilever_flare';
+  | 'cantilever_flare'
+  | 'symmetry'
+  | 'asymmetry'
+  | 'repetition'
+  | 'intersection'
+  | 'addition_custom'
+  | 'rotation_custom'
+  | 'open_faces'
+  | 'subtraction_custom'
+  | 'container_contained'
+  | 'served_servant'
+  | 'linked_unlinked'
+  | 'horizontality';
 
 export interface VolumetricOperation {
   op: OperationType;

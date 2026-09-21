@@ -7,7 +7,7 @@ import { Search, ChevronDown, ChevronRight, Disc, Layers, Sparkles } from 'lucid
 const SUB_PILL_INFO: Record<string, { label: string; desc: string; color: string }> = {
   'Todos': {
     label: 'Todos',
-    desc: 'Los 54 conceptos ordenadores del proyecto',
+    desc: 'Todos los conceptos de esta categoría ordenadora',
     color: 'rgb(var(--da-gold))',
   },
   'Firmitas': {
@@ -25,9 +25,30 @@ const SUB_PILL_INFO: Record<string, { label: string; desc: string; color: string
     desc: 'Función, uso, programa y habitabilidad',
     color: 'rgb(var(--da-orange))',
   },
+  'Topológicas': {
+    label: 'Topológicas',
+    desc: 'Relaciones de proximidad, inclusión, contigüidad y vecindad espacial',
+    color: 'rgb(var(--da-cyan))',
+  },
+  'Cronológicas': {
+    label: 'Cronológicas',
+    desc: 'Secuencias temporales, ritmos progresivos y permanencia',
+    color: 'rgb(var(--da-orange))',
+  },
+  'Proyectivas': {
+    label: 'Proyectivas',
+    desc: 'Perspectivas, líneas de fuga y orientaciones relativas',
+    color: 'rgb(var(--da-gold))',
+  },
+  'Euclidianas/No euclidianas': {
+    label: 'Euclidianas / No Euclidianas',
+    desc: 'Geometrías ortogonales, curvas, fracturas y deformaciones',
+    color: 'rgb(var(--da-cyan))',
+  },
 };
 
 export const LeftSidebar: React.FC = () => {
+  const [activeCategory, setActiveCategory] = useState<'Temas Arquitectónicos' | 'Relaciones Paralógicas'>('Temas Arquitectónicos');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('Todos');
   const [searchQuery, setSearchQuery] = useState('');
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
@@ -38,10 +59,25 @@ export const LeftSidebar: React.FC = () => {
     setCollapsedCategories((prev) => ({ ...prev, [cat]: !prev[cat] }));
   };
 
-  // Filtrado exclusivo de Temas Arquitectónicos
+  // Subcategorías según la categoría activa
+  const availableSubcategories = useMemo(() => {
+    if (activeCategory === 'Temas Arquitectónicos') {
+      return ['Todos', 'Firmitas', 'Venustas', 'Utilitas'] as const;
+    } else {
+      return ['Todos', 'Topológicas', 'Cronológicas', 'Proyectivas', 'Euclidianas/No euclidianas'] as const;
+    }
+  }, [activeCategory]);
+
+  // Cambiar categoría resetea subcategoría a 'Todos' si no aplica
+  const handleSelectCategory = (cat: 'Temas Arquitectónicos' | 'Relaciones Paralógicas') => {
+    setActiveCategory(cat);
+    setSelectedSubcategory('Todos');
+  };
+
+  // Filtrado
   const filteredConcepts = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    let concepts = CONCEPTS_DATA.filter((c) => c.category === 'Temas Arquitectónicos');
+    let concepts = CONCEPTS_DATA.filter((c) => c.category === activeCategory);
 
     if (selectedSubcategory !== 'Todos') {
       concepts = concepts.filter((c) => c.subcategory === selectedSubcategory);
@@ -55,9 +91,9 @@ export const LeftSidebar: React.FC = () => {
         c.subcategory.toLowerCase().includes(q) ||
         c.description.toLowerCase().includes(q)
     );
-  }, [selectedSubcategory, searchQuery]);
+  }, [activeCategory, selectedSubcategory, searchQuery]);
 
-  // Agrupado por subcategorías (Firmitas, Venustas, Utilitas)
+  // Agrupado por subcategorías
   const subcategoryGroups = useMemo(() => {
     const map: Record<string, typeof CONCEPTS_DATA> = {};
     filteredConcepts.forEach((c) => {
@@ -67,7 +103,7 @@ export const LeftSidebar: React.FC = () => {
     return map;
   }, [filteredConcepts]);
 
-  const totalTemas = CONCEPTS_DATA.filter((c) => c.category === 'Temas Arquitectónicos').length;
+  const totalInCurrentCategory = CONCEPTS_DATA.filter((c) => c.category === activeCategory).length;
 
   return (
     <aside className="w-[340px] min-w-[340px] h-full bg-diagramaxis-surface border-r border-diagramaxis-border flex flex-col z-20 select-none text-diagramaxis-text">
@@ -77,40 +113,68 @@ export const LeftSidebar: React.FC = () => {
           <div className="flex items-center gap-2">
             <Layers className="w-4 h-4 text-diagramaxis-gold" />
             <span className="font-mono text-[11px] uppercase tracking-widest text-diagramaxis-gold font-bold">
-              Bandeja de Fichas: Temas
+              Bandeja de Fichas
             </span>
           </div>
           <span className="font-mono text-[10.5px] px-2 py-0.5 bg-diagramaxis-surface2 text-diagramaxis-gold border border-diagramaxis-gold/30 rounded-xs font-semibold">
-            {totalTemas} fichas
+            {totalInCurrentCategory} fichas
           </span>
         </div>
 
+        {/* Pestañas Principales: Temas Arquitectónicos vs Relaciones Paralógicas */}
+        <div className="grid grid-cols-2 gap-1 pt-1">
+          <button
+            onClick={() => handleSelectCategory('Temas Arquitectónicos')}
+            className={`py-1.5 px-2 rounded-xs border text-center font-mono text-[10.5px] uppercase tracking-wider transition-all ${
+              activeCategory === 'Temas Arquitectónicos'
+                ? 'bg-diagramaxis-surface2 border-diagramaxis-gold text-diagramaxis-gold font-bold shadow-xs'
+                : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
+            }`}
+          >
+            Temas (Tríada)
+          </button>
+          <button
+            onClick={() => handleSelectCategory('Relaciones Paralógicas')}
+            className={`py-1.5 px-2 rounded-xs border text-center font-mono text-[10.5px] uppercase tracking-wider transition-all ${
+              activeCategory === 'Relaciones Paralógicas'
+                ? 'bg-diagramaxis-surface2 border-diagramaxis-cyan text-diagramaxis-cyan font-bold shadow-xs'
+                : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
+            }`}
+          >
+            Paralógicas
+          </button>
+        </div>
+
         <p className="font-mono text-[10px] text-diagramaxis-textMuted px-1 leading-snug">
-          Cuestiones clave y operaciones rectoras del proyecto (Tríada Vitruviana).
+          {activeCategory === 'Temas Arquitectónicos'
+            ? 'Cuestiones clave y operaciones rectoras del proyecto (Firmitas, Venustas, Utilitas).'
+            : 'Relaciones espaciales, temporales y proyectivas entre elementos (Topológicas, Cronológicas, Proyectivas, Euclidianas).'}
         </p>
 
-        {/* Pestañas de Filtro Tríada Vitruviana */}
-        <div className="grid grid-cols-4 gap-1 pt-1">
-          {(['Todos', 'Firmitas', 'Venustas', 'Utilitas'] as const).map((tab) => {
+        {/* Pestañas de Subcategoría */}
+        <div className={`grid ${availableSubcategories.length > 4 ? 'grid-cols-3' : 'grid-cols-4'} gap-1 pt-0.5`}>
+          {availableSubcategories.map((tab) => {
             const isSelected = selectedSubcategory === tab;
             const count =
               tab === 'Todos'
-                ? totalTemas
+                ? totalInCurrentCategory
                 : CONCEPTS_DATA.filter(
-                    (c) => c.category === 'Temas Arquitectónicos' && c.subcategory === tab
+                    (c) => c.category === activeCategory && c.subcategory === tab
                   ).length;
             return (
               <button
                 key={tab}
                 onClick={() => setSelectedSubcategory(tab)}
                 title={SUB_PILL_INFO[tab]?.desc}
-                className={`py-1.5 px-1 rounded-xs border text-center font-mono text-[10px] uppercase tracking-wider transition-all relative ${
+                className={`py-1 px-1 rounded-xs border text-center font-mono text-[9.5px] uppercase tracking-wider transition-all truncate ${
                   isSelected
-                    ? 'bg-diagramaxis-surface2 border-diagramaxis-gold text-diagramaxis-gold font-bold shadow-xs'
+                    ? activeCategory === 'Temas Arquitectónicos'
+                      ? 'bg-diagramaxis-surface2 border-diagramaxis-gold text-diagramaxis-gold font-bold shadow-xs'
+                      : 'bg-diagramaxis-surface2 border-diagramaxis-cyan text-diagramaxis-cyan font-bold shadow-xs'
                     : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
                 }`}
               >
-                <span>{tab}</span>
+                <span>{tab === 'Euclidianas/No euclidianas' ? 'Euclidianas' : tab}</span>
                 <span className="text-[8.5px] opacity-70 ml-1">({count})</span>
               </button>
             );
@@ -119,8 +183,10 @@ export const LeftSidebar: React.FC = () => {
 
         {/* Resumen pedagógico del filtro activo */}
         <div className="text-[9.5px] font-mono px-1.5 py-1 text-diagramaxis-textMuted bg-diagramaxis-surface2/60 rounded-xs border border-diagramaxis-border/60">
-          <span className="font-bold text-diagramaxis-gold">{SUB_PILL_INFO[selectedSubcategory]?.label}: </span>
-          <span>{SUB_PILL_INFO[selectedSubcategory]?.desc}</span>
+          <span className={`font-bold ${activeCategory === 'Temas Arquitectónicos' ? 'text-diagramaxis-gold' : 'text-diagramaxis-cyan'}`}>
+            {SUB_PILL_INFO[selectedSubcategory]?.label || selectedSubcategory}:{' '}
+          </span>
+          <span>{SUB_PILL_INFO[selectedSubcategory]?.desc || 'Filtro por subcategoría conceptual.'}</span>
         </div>
       </div>
 
@@ -132,7 +198,7 @@ export const LeftSidebar: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar ficha por nombre o concepto..."
+            placeholder={`Buscar en ${activeCategory}...`}
             className="w-full pl-9 pr-3 py-2 bg-diagramaxis-surface2 border border-diagramaxis-border focus:border-diagramaxis-gold rounded-xs font-mono text-[12px] text-diagramaxis-text outline-none placeholder:text-diagramaxis-textDim transition-colors"
           />
         </div>
@@ -153,13 +219,15 @@ export const LeftSidebar: React.FC = () => {
                   onClick={() => toggleCategoryCollapse(subcategory)}
                   className="flex items-center justify-between py-2 px-2.5 bg-diagramaxis-surface2 hover:bg-diagramaxis-surface3 rounded-xs cursor-pointer border border-diagramaxis-border transition-colors"
                 >
-                  <span className="font-mono text-[11px] uppercase tracking-widest text-diagramaxis-gold font-bold">
+                  <span className={`font-mono text-[11px] uppercase tracking-widest font-bold ${
+                    activeCategory === 'Temas Arquitectónicos' ? 'text-diagramaxis-gold' : 'text-diagramaxis-cyan'
+                  }`}>
                     {subcategory} ({concepts.length})
                   </span>
                   {isCollapsed ? (
                     <ChevronRight className="w-4 h-4 text-diagramaxis-textDim" />
                   ) : (
-                    <ChevronDown className="w-4 h-4 text-diagramaxis-gold" />
+                    <ChevronDown className={`w-4 h-4 ${activeCategory === 'Temas Arquitectónicos' ? 'text-diagramaxis-gold' : 'text-diagramaxis-cyan'}`} />
                   )}
                 </div>
 
@@ -174,7 +242,9 @@ export const LeftSidebar: React.FC = () => {
                           onClick={() => toggleConcept(c.id)}
                           className={`p-3 rounded-sm border cursor-pointer transition-all flex flex-col gap-1.5 select-none ${
                             isActive
-                              ? 'bg-diagramaxis-surface2 border-diagramaxis-gold shadow-[0_0_14px_rgb(var(--da-gold)/0.25)] ring-1 ring-diagramaxis-gold'
+                              ? activeCategory === 'Temas Arquitectónicos'
+                                ? 'bg-diagramaxis-surface2 border-diagramaxis-gold shadow-[0_0_14px_rgb(var(--da-gold)/0.25)] ring-1 ring-diagramaxis-gold'
+                                : 'bg-diagramaxis-surface2 border-diagramaxis-cyan shadow-[0_0_14px_rgb(var(--da-cyan)/0.25)] ring-1 ring-diagramaxis-cyan'
                               : 'bg-diagramaxis-surface2/60 border-diagramaxis-border hover:border-diagramaxis-gold/70 hover:bg-diagramaxis-surface3'
                           }`}
                         >
@@ -183,7 +253,9 @@ export const LeftSidebar: React.FC = () => {
                             <div className="flex items-center gap-1.5 min-w-0">
                               <Disc
                                 className={`w-3.5 h-3.5 shrink-0 ${
-                                  isActive ? 'text-diagramaxis-gold' : 'text-diagramaxis-textDim'
+                                  isActive
+                                    ? activeCategory === 'Temas Arquitectónicos' ? 'text-diagramaxis-gold' : 'text-diagramaxis-cyan'
+                                    : 'text-diagramaxis-textDim'
                                 }`}
                               />
                               <span className="font-serif italic font-bold text-[15px] text-diagramaxis-text truncate">
@@ -196,7 +268,9 @@ export const LeftSidebar: React.FC = () => {
                                   ? 'border-diagramaxis-gold/50 text-diagramaxis-gold bg-diagramaxis-gold/10'
                                   : c.subcategory === 'Venustas'
                                   ? 'border-diagramaxis-cyan/50 text-diagramaxis-cyan bg-diagramaxis-cyan/10'
-                                  : 'border-diagramaxis-orange/50 text-diagramaxis-orange bg-diagramaxis-orange/10'
+                                  : c.subcategory === 'Utilitas'
+                                  ? 'border-diagramaxis-orange/50 text-diagramaxis-orange bg-diagramaxis-orange/10'
+                                  : 'border-diagramaxis-cyan/40 text-diagramaxis-cyan bg-diagramaxis-cyan/10'
                               }`}
                             >
                               {c.subcategory}
@@ -262,7 +336,7 @@ export const LeftSidebar: React.FC = () => {
       <div className="p-3.5 border-t border-diagramaxis-border bg-diagramaxis-bg flex items-center justify-between text-[11px] font-mono text-diagramaxis-textMuted">
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-diagramaxis-gold" />
-          <span>Fichas Temáticas</span>
+          <span>Fichas activas</span>
         </div>
         <span className="text-diagramaxis-gold font-bold text-[12px]">
           {activeConcepts.length} en el tablero
