@@ -5,8 +5,14 @@ import { CameraViewMode } from '../../types';
 import { buildArchitecturalGeometry } from './GeometryBuilder';
 import { createHumanFigure } from './HumanFigure';
 import { captureCanvasPNG, exportMeshesToOBJ } from '../../utils/exportUtils';
-import { Camera, Box, RotateCcw, PersonStanding } from 'lucide-react';
+import { Camera, Box, RotateCcw, PersonStanding, Video } from 'lucide-react';
 import { useTheme } from '../../theme';
+import { VideoExportModal } from '../modals/VideoExportModal';
+import {
+  VideoExportConfig,
+  VideoExportProgress,
+  exportTransitionVideo,
+} from '../../utils/videoExporter';
 
 /**
  * Resuelve un token de tema CSS (canales "r g b") a color number de THREE.
@@ -68,6 +74,12 @@ export const Viewport3D: React.FC = () => {
   // Fallo de WebGL (B3 auditoría): si no se puede crear el contexto, mostramos
   // un aviso y el tablero 2D sigue operativo en lugar de tumbar la app entera.
   const [webglFailed, setWebglFailed] = useState(false);
+
+  // Estado de exportación de video
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState<VideoExportProgress | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Estado de órbita / cámara
   const orbitRef = useRef({
@@ -749,6 +761,78 @@ export const Viewport3D: React.FC = () => {
     showToast('Cámara restablecida');
   };
 
+  const handleStartVideoExport = async (config: VideoExportConfig) => {
+    setShowVideoModal(false);
+
+    if (!rendererRef.current || !sceneRef.current || !cameraRef.current || !volumeGroupRef.current) {
+      showToast('Error: Visor 3D no disponible');
+      return;
+    }
+
+    const store = useProjectStore.getState();
+
+    // Determinar conceptos del objeto seleccionado
+    const selectedObj = store.objects?.find((o) => o.id === store.selectedObjectId);
+    const conceptsToAnimate = selectedObj?.assignedConcepts && selectedObj.assignedConcepts.length > 0
+      ? selectedObj.assignedConcepts
+      : store.activeConcepts;
+
+    if (conceptsToAnimate.length === 0) {
+      showToast('No hay conceptos activos para animar');
+      return;
+    }
+
+    const ac = new AbortController();
+    abortControllerRef.current = ac;
+    setIsExporting(true);
+    setExportProgress(null);
+
+    try {
+      await exportTransitionVideo(
+        config,
+        {
+          renderer: rendererRef.current,
+          scene: sceneRef.current,
+          camera: cameraRef.current,
+          volumeGroup: volumeGroupRef.current,
+        },
+        conceptsToAnimate,
+        store.activeArtifacts,
+        selectedObj?.nodeParams
+          ? { ...store.nodeParams, ...selectedObj.nodeParams }
+          : store.nodeParams,
+        selectedObj?.dimensions || store.baseDimensions,
+        store.shadingMode,
+        store.relations,
+        store.projectName,
+        (progress) => setExportProgress(progress),
+        ac.signal
+      );
+      showToast('🎬 Video de transición exportado correctamente');
+    } catch (err: any) {
+      if (err?.name === 'AbortError') {
+        showToast('Exportación de video cancelada');
+      } else {
+        console.error('Error exportando video:', err);
+        showToast('Error al exportar video');
+      }
+    } finally {
+      setIsExporting(false);
+      setExportProgress(null);
+      abortControllerRef.current = null;
+
+      // Restaurar geometría: forzar re-render con los datos actuales del store
+      // disparando un cambio de estado insignificante en la cámara
+      const currentMode = useProjectStore.getState().cameraMode;
+      setCameraMode(currentMode === 'ext' ? 'iso' : 'ext');
+      requestAnimationFrame(() => setCameraMode(currentMode));
+    }
+  };
+
+  const handleCancelExport = () => {
+    abortControllerRef.current?.abort();
+  };
+
   return (
     <div
       ref={containerRef}
@@ -932,6 +1016,18 @@ export const Viewport3D: React.FC = () => {
         >
           <Box className="w-4 h-4" />
         </button>
+        <button
+          onClick={() => setShowVideoModal(true)}
+          disabled={isExporting}
+          title="Exportar Video de Transición (.WebM)"
+          className={`p-1.5 rounded-xs transition-colors ${
+            isExporting
+              ? 'text-diagramaxis-gold animate-pulse cursor-wait'
+              : 'text-diagramaxis-textMuted hover:text-diagramaxis-gold hover:bg-diagramaxis-surface2'
+          }`}
+        >
+          <Video className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Indicador de Dimensiones en Vivo */}
@@ -942,6 +1038,64 @@ export const Viewport3D: React.FC = () => {
           <strong className="text-diagramaxis-gold">{baseDimensions.h.toFixed(1)}m</strong> (Y)
         </span>
       </div>
+
+      {/* Overlay de progreso de exportación de video */}
+      {isExporting && exportProgress && (
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center z-50">
+          <div className="bg-diagramaxis-surface border border-diagramaxis-border rounded-sm shadow-2xl px-8 py-6 max-w-sm w-full mx-4 space-y-4">
+            <div className="flex items-center gap-2.5">
+              <Video className="w-5 h-5 text-diagramaxis-gold animate-pulse" />
+              <span className="font-mono text-[11px] font-bold text-diagramaxis-text uppercase tracking-wider">
+                Exportando Video
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="font-mono text-[10.5px] text-diagramaxis-textMuted">
+                  {exportProgress.phase === 'intro' && '📦 Volumen Base'}
+                  {exportProgress.phase === 'transition' && `🔧 ${exportProgress.conceptName}`}
+                  {exportProgress.phase === 'outro' && '🎯 Turntable Final'}
+                  {exportProgress.phase === 'encoding' && '💾 Codificando…'}
+                </span>
+                <span className="font-mono text-[10.5px] text-diagramaxis-gold font-bold">
+                  {exportProgress.percent}%
+                </span>
+              </div>
+
+              {/* Barra de progreso */}
+              <div className="w-full bg-diagramaxis-bg rounded-full h-2 overflow-hidden border border-diagramaxis-border">
+                <div
+                  className="h-full bg-diagramaxis-gold rounded-full transition-all duration-150"
+                  style={{ width: `${exportProgress.percent}%` }}
+                />
+              </div>
+
+              <div className="font-mono text-[9.5px] text-diagramaxis-textMuted text-center">
+                Frame {exportProgress.currentFrame} / {exportProgress.totalFrames}
+              </div>
+            </div>
+
+            <button
+              onClick={handleCancelExport}
+              className="w-full px-4 py-2 font-mono text-[10.5px] text-red-400 border border-red-400/30 rounded-xs hover:bg-red-400/10 transition-colors"
+            >
+              ✕ Cancelar Exportación
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de configuración de video */}
+      <VideoExportModal
+        isOpen={showVideoModal}
+        conceptCount={
+          (objects?.find((o) => o.id === selectedObjectId)?.assignedConcepts?.length) ||
+          activeConcepts.length
+        }
+        onClose={() => setShowVideoModal(false)}
+        onExport={handleStartVideoExport}
+      />
     </div>
   );
 };
