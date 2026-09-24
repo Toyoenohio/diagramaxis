@@ -205,8 +205,8 @@ export async function exportTransitionVideo(
   ];
   const mimeType = mimeTypes.find((m) => MediaRecorder.isTypeSupported(m)) || 'video/webm';
 
-  const stream = canvas.captureStream(0);
-  const videoTrack = stream.getVideoTracks()[0];
+  // Configurar MediaRecorder con stream continuo según el FPS configurado
+  const stream = canvas.captureStream(config.fps);
 
   const recorder = new MediaRecorder(stream, {
     mimeType,
@@ -265,26 +265,22 @@ export async function exportTransitionVideo(
 
     renderer.render(scene, camera);
 
-    // Solicitar frame al stream
-    if (videoTrack && 'requestFrame' in videoTrack) {
-      (videoTrack as any).requestFrame();
-    }
-
     theta += thetaIncrement;
     globalFrame++;
   };
 
   /**
-   * Pequeña pausa para liberar el hilo principal y que MediaRecorder
-   * procese los frames. También verifica cancelación.
+   * Pausa calculada para dar a MediaRecorder el tiempo exacto de reloj
+   * necesario para grabar a la tasa de fotogramas esperada.
    */
+  const frameDelayMs = Math.max(16, Math.floor(1000 / config.fps));
   const yieldFrame = (): Promise<void> =>
     new Promise((resolve, reject) => {
       if (abortSignal.aborted) {
         reject(new DOMException('Export cancelled', 'AbortError'));
         return;
       }
-      requestAnimationFrame(() => resolve());
+      setTimeout(() => resolve(), frameDelayMs);
     });
 
   // --------------- INICIO DE GRABACIÓN ---------------
@@ -318,14 +314,45 @@ export async function exportTransitionVideo(
 
         const t = easeInOutCubic(f / Math.max(1, config.framesPerConcept - 1));
 
-        // Construir parámetros interpolados: conceptos previos con valores
-        // finales, concepto actual interpolado
+        // Construir parámetros interpolados: conceptos previos con valores finales,
+        // concepto actual interpolado tanto en peso e intensidad como en sliders personalizados (custom)
         const interpolatedParams: Record<string, NodeParam> = { ...nodeParams };
 
+        const interpolatedCustom: Record<string, any> = {};
+        if (targetParam.custom) {
+          for (const [key, val] of Object.entries(targetParam.custom)) {
+            if (typeof val === 'number') {
+              const k = key.toLowerCase();
+              if (
+                k.includes('escala') ||
+                k.includes('esbeltez') ||
+                k.includes('factor') ||
+                k.includes('proporcion')
+              ) {
+                // Multiplicadores escalares: interpolan desde 1.0 hasta el valor final
+                interpolatedCustom[key] = 1.0 + (val - 1.0) * t;
+              } else if (
+                k.includes('subdivision') ||
+                k.includes('modulos') ||
+                k.includes('count') ||
+                k.includes('pisos')
+              ) {
+                // Conteos discretos
+                interpolatedCustom[key] = Math.max(1, Math.round(val * t));
+              } else {
+                // Dimensiones, profundidades, radios, desplazamientos: interpolan desde 0
+                interpolatedCustom[key] = val * t;
+              }
+            } else {
+              interpolatedCustom[key] = val;
+            }
+          }
+        }
+
         interpolatedParams[conceptId] = {
-          weight: t * (targetParam.weight ?? 0.6),
-          intensity: t * (targetParam.intensity ?? 0.5),
-          custom: targetParam.custom,
+          weight: Math.max(0.01, t * (targetParam.weight ?? 0.6)),
+          intensity: Math.max(0.01, t * (targetParam.intensity ?? 0.5)),
+          custom: interpolatedCustom,
         };
 
         // Subset: todos los conceptos hasta el actual (inclusive)

@@ -70,14 +70,21 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
           : '1px solid rgb(var(--da-gold)/0.32)',
       }}
     >
-      {/* Conectores con estilo Pin de Tablero / Chincheta con Clarificación Semántica */}
+      {/* Conectores con estilo Pin de Tablero / Chincheta (Bidireccionales) */}
       {/* 1. Puerto Superior: Entrada Jerárquica / Causa (Dorado) */}
       <Handle
         type="target"
         position={Position.Top}
         id="port-top"
         title="Pin Superior (Dorado): Entrada Jerárquica / Causa. Recibe condicionantes de orden superior o entidades determinantes."
-        className="!w-3.5 !h-3.5 !bg-diagramaxis-gold !border-2 !border-diagramaxis-bg !shadow-[0_0_8px_rgb(var(--da-gold)/0.9)] cursor-crosshair hover:scale-125 transition-transform"
+        className="!w-3.5 !h-3.5 !bg-diagramaxis-gold !border-2 !border-diagramaxis-bg !shadow-[0_0_8px_rgb(var(--da-gold)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
+      />
+      <Handle
+        type="source"
+        position={Position.Top}
+        id="port-top-src"
+        title="Pin Superior (Dorado): Entrada Jerárquica."
+        className="!w-3.5 !h-3.5 !opacity-0 cursor-crosshair !z-20"
       />
 
       {/* 2. Puerto Inferior: Salida Generativa / Efecto (Naranja) */}
@@ -86,7 +93,14 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
         position={Position.Bottom}
         id="port-bottom"
         title="Pin Inferior (Naranja): Salida Generativa / Efecto. Emite operaciones morfológicas derivadas y transformaciones."
-        className="!w-3.5 !h-3.5 !bg-diagramaxis-orange !border-2 !border-diagramaxis-bg !shadow-[0_0_8px_rgb(var(--da-orange)/0.9)] cursor-crosshair hover:scale-125 transition-transform"
+        className="!w-3.5 !h-3.5 !bg-diagramaxis-orange !border-2 !border-diagramaxis-bg !shadow-[0_0_8px_rgb(var(--da-orange)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
+      />
+      <Handle
+        type="target"
+        position={Position.Bottom}
+        id="port-bottom-tgt"
+        title="Pin Inferior (Naranja): Salida Generativa."
+        className="!w-3.5 !h-3.5 !opacity-0 cursor-crosshair !z-20"
       />
 
       {/* 3. Puerto Izquierdo: Entrada Condicionante / Contexto (Cyan) */}
@@ -95,7 +109,14 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
         position={Position.Left}
         id="port-left"
         title="Pin Izquierdo (Cyan): Entrada Condicionante / Contexto. Recibe factores ambientales, climáticos o del entorno."
-        className="!w-3.5 !h-3.5 !bg-diagramaxis-cyan !border-2 !border-diagramaxis-bg !shadow-[0_0_8px_rgb(var(--da-cyan)/0.9)] cursor-crosshair hover:scale-125 transition-transform"
+        className="!w-3.5 !h-3.5 !bg-diagramaxis-cyan !border-2 !border-diagramaxis-bg !shadow-[0_0_8px_rgb(var(--da-cyan)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
+      />
+      <Handle
+        type="source"
+        position={Position.Left}
+        id="port-left-src"
+        title="Pin Izquierdo (Cyan): Entrada Condicionante."
+        className="!w-3.5 !h-3.5 !opacity-0 cursor-crosshair !z-20"
       />
 
       {/* 4. Puerto Derecho: Salida Articuladora / Vínculo (Verde) */}
@@ -104,7 +125,14 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
         position={Position.Right}
         id="port-right"
         title="Pin Derecho (Verde): Salida Articuladora / Vínculo. Conecta ensambles espaciales y relaciones compositivas."
-        className="!w-3.5 !h-3.5 !bg-diagramaxis-success !border-2 !border-diagramaxis-bg !shadow-[0_0_8px_rgb(var(--da-success)/0.9)] cursor-crosshair hover:scale-125 transition-transform"
+        className="!w-3.5 !h-3.5 !bg-diagramaxis-success !border-2 !border-diagramaxis-bg !shadow-[0_0_8px_rgb(var(--da-success)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
+      />
+      <Handle
+        type="target"
+        position={Position.Right}
+        id="port-right-tgt"
+        title="Pin Derecho (Verde): Salida Articuladora."
+        className="!w-3.5 !h-3.5 !opacity-0 cursor-crosshair !z-20"
       />
 
       {/* Cabecera de la Ficha Grabada */}

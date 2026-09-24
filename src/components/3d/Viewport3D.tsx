@@ -80,6 +80,8 @@ export const Viewport3D: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState<VideoExportProgress | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const isExportingRef = useRef(false);
+  isExportingRef.current = isExporting;
 
   // Estado de órbita / cámara
   const orbitRef = useRef({
@@ -121,12 +123,18 @@ export const Viewport3D: React.FC = () => {
     showToast,
   } = useProjectStore();
 
-  // Actualizar posición de la cámara según el modo
+  // Actualizar posición de la cámara según el modo y el objeto seleccionado
   const updateCameraPosition = useCallback(() => {
     const camera = cameraRef.current;
     if (!camera) return;
 
     const orb = orbitRef.current;
+    const store = useProjectStore.getState();
+    const selObj = store.objects?.find((o) => o.id === store.selectedObjectId) || store.objects?.[0];
+    const targetX = selObj ? selObj.position.x : 0;
+    const targetZ = selObj ? selObj.position.z : 0;
+    const curDim = finalDimensionsRef.current || selObj?.dimensions || store.baseDimensions;
+    const targetY = (selObj ? selObj.position.y : 0) + curDim.h * 0.45;
 
     if (orb.isInterior) {
       camera.position.copy(orb.eyePos);
@@ -138,16 +146,15 @@ export const Viewport3D: React.FC = () => {
       camera.lookAt(target);
     } else {
       camera.position.set(
-        orb.radius * Math.sin(orb.phi) * Math.sin(orb.theta),
-        orb.radius * Math.cos(orb.phi),
-        orb.radius * Math.sin(orb.phi) * Math.cos(orb.theta)
+        targetX + orb.radius * Math.sin(orb.phi) * Math.sin(orb.theta),
+        targetY + orb.radius * Math.cos(orb.phi),
+        targetZ + orb.radius * Math.sin(orb.phi) * Math.cos(orb.theta)
       );
-      const curDim = finalDimensionsRef.current || baseDimensions;
-      camera.lookAt(0, curDim.h * 0.45, 0);
+      camera.lookAt(targetX, targetY, targetZ);
     }
-  }, [baseDimensions]);
+  }, []);
 
-  // Aplicar modo de cámara seleccionado
+  // Aplicar modo de cámara seleccionado (solo al cambiar cameraMode explícitamente)
   useEffect(() => {
     const camera = cameraRef.current;
     if (!camera) return;
@@ -190,7 +197,7 @@ export const Viewport3D: React.FC = () => {
 
     camera.updateProjectionMatrix();
     updateCameraPosition();
-  }, [cameraMode, baseDimensions, updateCameraPosition]);
+  }, [cameraMode, updateCameraPosition]);
 
   // Inicialización Three.js
   useEffect(() => {
@@ -340,7 +347,7 @@ export const Viewport3D: React.FC = () => {
         geom.attributes.position.needsUpdate = true;
       }
 
-      if (rendererRef.current && sceneRef.current && cameraRef.current) {
+      if (!isExportingRef.current && rendererRef.current && sceneRef.current && cameraRef.current) {
         rendererRef.current.render(sceneRef.current, cameraRef.current);
       }
     };
@@ -467,9 +474,7 @@ export const Viewport3D: React.FC = () => {
       }
       objGroup.userData = { objectId: obj.id, objectName: obj.name };
 
-      const objConcepts = obj.assignedConcepts && obj.assignedConcepts.length > 0
-        ? obj.assignedConcepts
-        : (renderObjects.length === 1 ? activeConcepts : []);
+      const objConcepts = obj.assignedConcepts || [];
 
       const objParams = {
         ...nodeParams,
@@ -524,13 +529,104 @@ export const Viewport3D: React.FC = () => {
 
       if (obj.id === selectedObjectId) {
         finalDimensionsRef.current = built.finalDimensions || obj.dimensions || baseDimensions;
-        const curMax = Math.max(finalDimensionsRef.current.w, finalDimensionsRef.current.h, finalDimensionsRef.current.d);
-        if (orbitRef.current.radius < curMax * 2.2 && !orbitRef.current.isInterior) {
-          orbitRef.current.radius = curMax * 2.6;
-          updateCameraPosition();
-        }
       }
     });
+
+    // =====================================================================
+    // RELACIONES INTER-VOLUMEN (Ensambles, Puentes, Recorridos Exteriores)
+    // =====================================================================
+    if (renderObjects.length > 1) {
+      // Buscar relaciones directas entre volúmenes o a través de conceptos como Recorrido exterior
+      relations.forEach((rel) => {
+        let idA: string | null = null;
+        let idB: string | null = null;
+
+        if (rel.from.startsWith('vol-') && rel.to.startsWith('vol-')) {
+          idA = rel.from.replace('vol-', '');
+          idB = rel.to.replace('vol-', '');
+        }
+
+        // También detectar si el concepto 'Recorrido exterior' vincula ambos volúmenes
+        const hasRecorridoBetween =
+          (rel.from === 'Recorrido exterior' && rel.to.startsWith('vol-')) ||
+          (rel.to === 'Recorrido exterior' && rel.from.startsWith('vol-'));
+
+        if (!idA && hasRecorridoBetween && renderObjects.length >= 2) {
+          idA = renderObjects[0].id;
+          idB = renderObjects[1].id;
+        }
+
+        if (idA && idB && idA !== idB) {
+          const objA = renderObjects.find((o) => o.id === idA);
+          const objB = renderObjects.find((o) => o.id === idB);
+          if (!objA || !objB) return;
+
+          const interGroup = new THREE.Group();
+          interGroup.name = `inter_rel_${idA}_${idB}`;
+
+          const pA = new THREE.Vector3(objA.position.x, objA.position.y, objA.position.z);
+          const pB = new THREE.Vector3(objB.position.x, objB.position.y, objB.position.z);
+          const dist = pA.distanceTo(pB);
+          const midPoint = new THREE.Vector3().addVectors(pA, pB).multiplyScalar(0.5);
+          const angle = Math.atan2(pB.x - pA.x, pB.z - pA.z);
+
+          // Si la relación es 'restringe' o 'Recorrido exterior':
+          // Se modela el foso/circuito perimetral continuo y la pasarela de separación
+          if (rel.type === 'restringe' || hasRecorridoBetween || rel.type === 'tensiona') {
+            const pathWidth = Math.max(3.5, 4.0 * (rel.intensity || 0.8));
+            const pathMat = new THREE.MeshLambertMaterial({
+              color: 0x475569, // Pavimento de piedra de circuito
+            });
+
+            // Paseo peatonal / explanada entre los dos volúmenes
+            const promenadeGeo = new THREE.BoxGeometry(pathWidth, 0.08, dist);
+            const promenade = new THREE.Mesh(promenadeGeo, pathMat);
+            promenade.position.set(midPoint.x, 0.04, midPoint.z);
+            promenade.rotation.y = angle;
+            promenade.receiveShadow = true;
+            interGroup.add(promenade);
+
+            // Borde técnico arquitectónico del recorrido
+            const curbMat = new THREE.LineBasicMaterial({ color: 0x18181b, linewidth: 2 });
+            const curbGeo = new THREE.EdgesGeometry(promenadeGeo);
+            promenade.add(new THREE.LineSegments(curbGeo, curbMat));
+
+            // Foso o cantero vegetal central si es de restricción
+            if (rel.type === 'restringe' || hasRecorridoBetween) {
+              const gardenMat = new THREE.MeshLambertMaterial({ color: 0x22543d });
+              const gardenGeo = new THREE.BoxGeometry(pathWidth * 0.45, 0.12, dist * 0.8);
+              const garden = new THREE.Mesh(gardenGeo, gardenMat);
+              garden.position.set(midPoint.x, 0.06, midPoint.z);
+              garden.rotation.y = angle;
+              interGroup.add(garden);
+            }
+          } else {
+            // Relación 'define', 'amplifica' o 'vincula': puente aéreo conector
+            const bridgeWidth = Math.max(2.5, 3.0 * (rel.intensity || 0.8));
+            const bridgeHeight = Math.max(2.8, (objA.dimensions.h + objB.dimensions.h) * 0.25);
+            const bridgeElev = Math.min(objA.dimensions.h, objB.dimensions.h) * 0.45;
+            const bridgeMat = new THREE.MeshLambertMaterial({
+              color: 0x0284c7, // Azul tectónico
+              transparent: true,
+              opacity: 0.9,
+            });
+
+            const bridgeGeo = new THREE.BoxGeometry(bridgeWidth, bridgeHeight, dist * 0.95);
+            const bridgeMesh = new THREE.Mesh(bridgeGeo, bridgeMat);
+            bridgeMesh.position.set(midPoint.x, bridgeElev, midPoint.z);
+            bridgeMesh.rotation.y = angle;
+            bridgeMesh.castShadow = true;
+            bridgeMesh.receiveShadow = true;
+
+            const edgeMat = new THREE.LineBasicMaterial({ color: 0x18181b, linewidth: 2 });
+            bridgeMesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(bridgeGeo), edgeMat));
+            interGroup.add(bridgeMesh);
+          }
+
+          volumeGroup.add(interGroup);
+        }
+      });
+    }
 
     setEnvInfo({
       hasWind: combinedHasWind,

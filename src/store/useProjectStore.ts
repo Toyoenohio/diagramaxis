@@ -210,7 +210,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   },
 
   toggleConcept: (id) => {
-    const { activeConcepts, nodeParams, nodes, edges, relations, objects, selectedObjectId } = get();
+    const { activeConcepts, nodeParams, nodes, edges, relations, objects } = get();
     const exists = activeConcepts.includes(id);
 
     if (exists) {
@@ -270,33 +270,17 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         },
       };
 
-      const targetObjId = selectedObjectId || objects[0]?.id || 'obj-1';
-      const updatedObjects = objects.map((obj) => {
-        if (obj.id === targetObjId && !obj.assignedConcepts.includes(id)) {
-          return {
-            ...obj,
-            assignedConcepts: [...obj.assignedConcepts, id],
-            nodeParams: {
-              ...(obj.nodeParams || {}),
-              [id]: { weight: 0.6, intensity: 0.5 },
-            },
-          };
-        }
-        return obj;
-      });
-
       set({
         activeConcepts: newActive,
         nodeParams: newParams,
         nodes: [...nodes, newNode],
-        objects: updatedObjects,
       });
-      get().showToast(`Concepto "${id}" activado`);
+      get().showToast(`Ficha "${id}" en el tablero. Conecta un hilo al volumen para aplicarla.`);
     }
   },
 
   toggleArtifact: (id) => {
-    const { activeArtifacts, nodeParams, nodes, edges, relations, objects, selectedObjectId } = get();
+    const { activeArtifacts, nodeParams, nodes, edges, relations, objects } = get();
     const exists = activeArtifacts.includes(id);
 
     if (exists) {
@@ -355,28 +339,12 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         },
       };
 
-      const targetObjId = selectedObjectId || objects[0]?.id || 'obj-1';
-      const updatedObjects = objects.map((obj) => {
-        if (obj.id === targetObjId && !obj.assignedConcepts.includes(id)) {
-          return {
-            ...obj,
-            assignedConcepts: [...obj.assignedConcepts, id],
-            nodeParams: {
-              ...(obj.nodeParams || {}),
-              [id]: { weight: 0.7, intensity: 0.5 },
-            },
-          };
-        }
-        return obj;
-      });
-
       set({
         activeArtifacts: newActive,
         nodeParams: newParams,
         nodes: [...nodes, newNode],
-        objects: updatedObjects,
       });
-      get().showToast(`Artefacto "${id}" activado`);
+      get().showToast(`Artefacto "${id}" en el tablero. Conecta un hilo al volumen para aplicarlo.`);
     }
   },
 
@@ -469,6 +437,8 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       id,
       source: relData.from,
       target: relData.to,
+      sourceHandle: relData.sourceHandle || undefined,
+      targetHandle: relData.targetHandle || undefined,
       type: 'customEdge',
       data: {
         relationType: relData.type,
@@ -480,15 +450,35 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     // Si la conexión involucra un VolumeNode (e.g. vol-obj-1), vincular el concepto a ese objeto
     let objIdToAssign: string | null = null;
     let conceptIdToAssign: string | null = null;
+    let connectedHandle: string | null = null;
+
     if (relData.from.startsWith('vol-')) {
       objIdToAssign = relData.from.replace('vol-', '');
       conceptIdToAssign = relData.to;
+      connectedHandle = relData.sourceHandle ? relData.sourceHandle.replace('-src', '').replace('-tgt', '') : null;
     } else if (relData.to.startsWith('vol-')) {
       objIdToAssign = relData.to.replace('vol-', '');
       conceptIdToAssign = relData.from;
+      connectedHandle = relData.targetHandle ? relData.targetHandle.replace('-src', '').replace('-tgt', '') : null;
     }
+
     if (objIdToAssign && conceptIdToAssign && !conceptIdToAssign.startsWith('vol-')) {
       get().assignConceptToObject(conceptIdToAssign, objIdToAssign);
+
+      // Calibrar peso e intensidad según el pin de conexión en el volumen
+      if (connectedHandle === 'port-top') {
+        get().setObjectNodeParam(objIdToAssign, conceptIdToAssign, 'weight', 0.9);
+        get().setObjectNodeParam(objIdToAssign, conceptIdToAssign, 'intensity', 0.75);
+      } else if (connectedHandle === 'port-bottom') {
+        get().setObjectNodeParam(objIdToAssign, conceptIdToAssign, 'weight', 0.7);
+        get().setObjectNodeParam(objIdToAssign, conceptIdToAssign, 'intensity', 0.9);
+      } else if (connectedHandle === 'port-left') {
+        get().setObjectNodeParam(objIdToAssign, conceptIdToAssign, 'weight', 0.5);
+        get().setObjectNodeParam(objIdToAssign, conceptIdToAssign, 'intensity', 0.65);
+      } else if (connectedHandle === 'port-right') {
+        get().setObjectNodeParam(objIdToAssign, conceptIdToAssign, 'weight', 0.65);
+        get().setObjectNodeParam(objIdToAssign, conceptIdToAssign, 'intensity', 0.7);
+      }
     }
 
     set({
@@ -535,9 +525,37 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
   removeRelation: (id) => {
     const { relations, edges } = get();
+    const relToRemove = relations.find((r) => r.id === id);
+    const newRelations = relations.filter((r) => r.id !== id);
+    const newEdges = edges.filter((e) => e.id !== id);
+
+    // Si la relación involucraba un volumen y un concepto, revisar si quedan otras relaciones entre ellos
+    if (relToRemove) {
+      let objId: string | null = null;
+      let conceptId: string | null = null;
+      if (relToRemove.from.startsWith('vol-')) {
+        objId = relToRemove.from.replace('vol-', '');
+        conceptId = relToRemove.to;
+      } else if (relToRemove.to.startsWith('vol-')) {
+        objId = relToRemove.to.replace('vol-', '');
+        conceptId = relToRemove.from;
+      }
+
+      if (objId && conceptId && !conceptId.startsWith('vol-')) {
+        const stillConnected = newRelations.some(
+          (r) =>
+            (r.from === `vol-${objId}` && r.to === conceptId) ||
+            (r.to === `vol-${objId}` && r.from === conceptId)
+        );
+        if (!stillConnected) {
+          get().unassignConceptFromObject(conceptId, objId);
+        }
+      }
+    }
+
     set({
-      relations: relations.filter((r) => r.id !== id),
-      edges: edges.filter((e) => e.id !== id),
+      relations: newRelations,
+      edges: newEdges,
     });
     get().showToast('Relación eliminada');
   },
@@ -575,7 +593,13 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     });
   },
 
-  onEdgesChange: () => {},
+  onEdgesChange: (changes) => {
+    changes.forEach((change: any) => {
+      if (change.type === 'remove') {
+        get().removeRelation(change.id);
+      }
+    });
+  },
 
   autoLayoutNodes: () => {
     const { nodes } = get();
@@ -765,7 +789,6 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     if (found) {
       set({
         selectedObjectId: id,
-        baseDimensions: { ...found.dimensions },
       });
     }
   },
@@ -793,15 +816,29 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   },
 
   setObjectPosition: (id: string, pos: { x?: number; y?: number; z?: number }) => {
+    const { nodes } = get();
+    const updatedNodes = nodes.map((n) => {
+      if (n.type === 'volumeNode' && n.data?.objectId === id) {
+        return {
+          ...n,
+          data: {
+            ...n.data,
+            position: { ...(n.data.position as any), ...pos },
+          },
+        };
+      }
+      return n;
+    });
     set((state) => ({
       objects: state.objects.map((o) =>
         o.id === id ? { ...o, position: { ...o.position, ...pos } } : o
       ),
+      nodes: updatedNodes,
     }));
   },
 
   setObjectDimensions: (id: string, dim: { w?: number; h?: number; d?: number }) => {
-    const { selectedObjectId, nodes } = get();
+    const { nodes } = get();
     const updatedNodes = nodes.map((n) => {
       if (n.type === 'volumeNode' && n.data?.objectId === id) {
         return {
@@ -815,7 +852,6 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       return n;
     });
     set((state) => ({
-      baseDimensions: id === selectedObjectId ? { ...state.baseDimensions, ...dim } : state.baseDimensions,
       objects: state.objects.map((o) =>
         o.id === id ? { ...o, dimensions: { ...o.dimensions, ...dim } } : o
       ),

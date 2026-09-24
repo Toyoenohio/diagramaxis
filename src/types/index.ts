@@ -39,6 +39,8 @@ export interface ProjectRelation {
   dir: 'A→B' | 'B→A' | 'A↔B';
   intensity: number; // 0.0 - 1.0
   notes?: string;
+  sourceHandle?: string | null;
+  targetHandle?: string | null;
 }
 
 export interface NodeParam {

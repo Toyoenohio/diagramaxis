@@ -43,41 +43,69 @@ export const VolumeNode: React.FC<NodeProps> = memo(({ id, data, selected }) => 
           : '1px solid rgba(229, 169, 59, 0.45)',
       }}
     >
-      {/* 4 Pines de Conexión del Volumen Base */}
-      {/* 1. Pin Superior: Entrada Jerárquica / Causa */}
+      {/* 4 Pines de Conexión del Volumen Base (Bidireccionales: admiten entrada y salida) */}
+      {/* 1. Pin Superior: Entrada Jerárquica / Causa (Dorado) */}
       <Handle
         type="target"
         position={Position.Top}
         id="port-top"
-        title="Pin Superior (Dorado): Entrada Jerárquica. Recibe conceptos rectores de orden superior que moldean el volumen."
-        className="!w-4 !h-4 !bg-diagramaxis-gold !border-2 !border-diagramaxis-bg !shadow-[0_0_10px_rgb(var(--da-gold)/0.9)] cursor-crosshair hover:scale-125 transition-transform"
+        title="Pin Superior (Dorado): Entrada Jerárquica. Conecta conceptos rectores que moldean la jerarquía del volumen."
+        className="!w-4 !h-4 !bg-diagramaxis-gold !border-2 !border-diagramaxis-bg !shadow-[0_0_10px_rgb(var(--da-gold)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
+      />
+      <Handle
+        type="source"
+        position={Position.Top}
+        id="port-top-src"
+        title="Pin Superior (Dorado): Entrada Jerárquica."
+        className="!w-4 !h-4 !opacity-0 cursor-crosshair !z-20"
       />
 
-      {/* 2. Pin Inferior: Salida Generativa / Efecto */}
+      {/* 2. Pin Inferior: Salida Generativa / Efecto (Naranja) */}
       <Handle
         type="source"
         position={Position.Bottom}
         id="port-bottom"
-        title="Pin Inferior (Naranja): Salida Generativa. Conecta transformaciones directas (e.g. Volumen Base → Horizontalidad → Desfragmentación)."
-        className="!w-4 !h-4 !bg-diagramaxis-orange !border-2 !border-diagramaxis-bg !shadow-[0_0_10px_rgb(var(--da-orange)/0.9)] cursor-crosshair hover:scale-125 transition-transform"
+        title="Pin Inferior (Naranja): Salida Generativa. Conecta transformaciones directas y operaciones morfológicas."
+        className="!w-4 !h-4 !bg-diagramaxis-orange !border-2 !border-diagramaxis-bg !shadow-[0_0_10px_rgb(var(--da-orange)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
+      />
+      <Handle
+        type="target"
+        position={Position.Bottom}
+        id="port-bottom-tgt"
+        title="Pin Inferior (Naranja): Salida Generativa."
+        className="!w-4 !h-4 !opacity-0 cursor-crosshair !z-20"
       />
 
-      {/* 3. Pin Izquierdo: Entrada Condicionante / Contexto */}
+      {/* 3. Pin Izquierdo: Entrada Condicionante / Contexto (Cyan) */}
       <Handle
         type="target"
         position={Position.Left}
         id="port-left"
-        title="Pin Izquierdo (Cyan): Entrada Condicionante. Recibe factores ambientales o topográficos que deforman el volumen."
-        className="!w-4 !h-4 !bg-diagramaxis-cyan !border-2 !border-diagramaxis-bg !shadow-[0_0_10px_rgb(var(--da-cyan)/0.9)] cursor-crosshair hover:scale-125 transition-transform"
+        title="Pin Izquierdo (Cyan): Entrada Condicionante. Conecta factores ambientales o restricciones espaciales."
+        className="!w-4 !h-4 !bg-diagramaxis-cyan !border-2 !border-diagramaxis-bg !shadow-[0_0_10px_rgb(var(--da-cyan)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
+      />
+      <Handle
+        type="source"
+        position={Position.Left}
+        id="port-left-src"
+        title="Pin Izquierdo (Cyan): Entrada Condicionante."
+        className="!w-4 !h-4 !opacity-0 cursor-crosshair !z-20"
       />
 
-      {/* 4. Pin Derecho: Salida Articuladora / Vínculo */}
+      {/* 4. Pin Derecho: Salida Articuladora / Vínculo (Verde) */}
       <Handle
         type="source"
         position={Position.Right}
         id="port-right"
-        title="Pin Derecho (Verde): Salida Articuladora. Conecta con otros volúmenes o artefactos del tablero."
-        className="!w-4 !h-4 !bg-diagramaxis-success !border-2 !border-diagramaxis-bg !shadow-[0_0_10px_rgb(var(--da-success)/0.9)] cursor-crosshair hover:scale-125 transition-transform"
+        title="Pin Derecho (Verde): Salida Articuladora. Conecta vínculos entre volúmenes o recorridos de articulación."
+        className="!w-4 !h-4 !bg-diagramaxis-success !border-2 !border-diagramaxis-bg !shadow-[0_0_10px_rgb(var(--da-success)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
+      />
+      <Handle
+        type="target"
+        position={Position.Right}
+        id="port-right-tgt"
+        title="Pin Derecho (Verde): Salida Articuladora."
+        className="!w-4 !h-4 !opacity-0 cursor-crosshair !z-20"
       />
 
       {/* Cabecera del Volumen Base */}

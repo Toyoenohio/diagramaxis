@@ -35,12 +35,40 @@ const DiagramCanvasInner: React.FC = () => {
   const onConnect = useCallback(
     (params: Connection) => {
       if (params.source && params.target && params.source !== params.target) {
+        const cleanHandle = (h?: string | null) =>
+          h ? h.replace('-src', '').replace('-tgt', '') : null;
+        const sHandle = cleanHandle(params.sourceHandle);
+        const tHandle = cleanHandle(params.targetHandle);
+
+        // Deducción semántica del tipo de relación según los puertos conectados:
+        // - Pin Superior (Dorado): Entrada Jerárquica -> 'define'
+        // - Pin Inferior (Naranja): Salida Generativa -> 'amplifica'
+        // - Pin Izquierdo (Cyan): Entrada Condicionante -> 'restringe'
+        // - Pin Derecho (Verde): Salida Articuladora -> 'tensiona'
+        let relType = 'define';
+        let intensity = 0.8;
+        if (sHandle === 'port-left' || tHandle === 'port-left') {
+          relType = 'restringe';
+          intensity = 0.7;
+        } else if (sHandle === 'port-right' || tHandle === 'port-right') {
+          relType = 'tensiona';
+          intensity = 0.75;
+        } else if (sHandle === 'port-bottom' || tHandle === 'port-bottom') {
+          relType = 'amplifica';
+          intensity = 0.85;
+        } else if (sHandle === 'port-top' || tHandle === 'port-top') {
+          relType = 'define';
+          intensity = 0.9;
+        }
+
         addRelation({
           from: params.source,
           to: params.target,
-          type: 'define',
+          type: relType,
           dir: 'A→B',
-          intensity: 0.8,
+          intensity,
+          sourceHandle: params.sourceHandle,
+          targetHandle: params.targetHandle,
         });
       }
     },
