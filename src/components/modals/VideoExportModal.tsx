@@ -59,7 +59,7 @@ export const VideoExportModal: React.FC<VideoExportModalProps> = ({
       fps,
       framesPerConcept,
       framesIntro: Math.round(30 * (fps / 30)),
-      framesOutro: Math.round(60 * (fps / 30)),
+      framesOutro: Math.round(90 * (fps / 30)),
       resolution: { width: res.width, height: res.height },
       cameraMode,
       includeOutroTurntable: includeOutro,
@@ -214,7 +214,7 @@ export const VideoExportModal: React.FC<VideoExportModalProps> = ({
               <span className="text-diagramaxis-textMuted">Duración estimada: </span>
               <span className="text-diagramaxis-gold font-bold">{duration.toFixed(1)}s</span>
               <span className="text-diagramaxis-textMuted">
-                {' '}({conceptCount} concepto{conceptCount !== 1 ? 's' : ''})
+                {' '}({conceptCount} {conceptCount === 1 ? 'modificador' : 'modificadores'})
               </span>
             </div>
           </div>
@@ -230,7 +230,7 @@ export const VideoExportModal: React.FC<VideoExportModalProps> = ({
           </button>
           <button
             onClick={handleExport}
-            disabled={!browserSupport.supported || conceptCount === 0}
+            disabled={!browserSupport.supported || (!includeOutro && conceptCount === 0)}
             className="px-5 py-2 font-mono text-[11px] font-bold uppercase tracking-wider bg-diagramaxis-gold text-diagramaxis-bg rounded-xs hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_0_12px_rgb(var(--da-gold)/0.25)]"
           >
             🎬 Exportar Video

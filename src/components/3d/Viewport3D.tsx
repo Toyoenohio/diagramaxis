@@ -12,6 +12,7 @@ import {
   VideoExportConfig,
   VideoExportProgress,
   exportTransitionVideo,
+  buildCompositionSteps,
 } from '../../utils/videoExporter';
 
 /**
@@ -122,6 +123,21 @@ export const Viewport3D: React.FC = () => {
     toggleHumanFigure,
     showToast,
   } = useProjectStore();
+
+  // Pasos de transformación de la composición completa para la exportación de video
+  const compositionSteps = React.useMemo(() => {
+    const renderObjs = objects && objects.length > 0 ? objects : [
+      {
+        id: 'obj-1',
+        name: 'Objeto 1',
+        dimensions: baseDimensions,
+        position: { x: 0, y: 0, z: 0 },
+        rotationY: 0,
+        assignedConcepts: activeConcepts,
+      },
+    ];
+    return buildCompositionSteps(renderObjs, activeConcepts);
+  }, [objects, activeConcepts, baseDimensions]);
 
   // Actualizar posición de la cámara según el modo y el objeto seleccionado
   const updateCameraPosition = useCallback(() => {
@@ -936,17 +952,17 @@ export const Viewport3D: React.FC = () => {
     }
 
     const store = useProjectStore.getState();
-
-    // Determinar conceptos del objeto seleccionado
-    const selectedObj = store.objects?.find((o) => o.id === store.selectedObjectId);
-    const conceptsToAnimate = selectedObj?.assignedConcepts && selectedObj.assignedConcepts.length > 0
-      ? selectedObj.assignedConcepts
-      : store.activeConcepts;
-
-    if (conceptsToAnimate.length === 0) {
-      showToast('No hay conceptos activos para animar');
-      return;
-    }
+    const renderObjs = store.objects && store.objects.length > 0 ? store.objects : [
+      {
+        id: 'obj-1',
+        name: 'Objeto 1',
+        dimensions: store.baseDimensions,
+        position: { x: 0, y: 0, z: 0 },
+        rotationY: 0,
+        assignedConcepts: store.activeConcepts,
+        nodeParams: store.nodeParams,
+      },
+    ];
 
     const ac = new AbortController();
     abortControllerRef.current = ac;
@@ -954,26 +970,26 @@ export const Viewport3D: React.FC = () => {
     setExportProgress(null);
 
     try {
-      await exportTransitionVideo(
+      await exportTransitionVideo({
         config,
-        {
+        refs: {
           renderer: rendererRef.current,
           scene: sceneRef.current,
           camera: cameraRef.current,
           volumeGroup: volumeGroupRef.current,
         },
-        conceptsToAnimate,
-        store.activeArtifacts,
-        selectedObj?.nodeParams
-          ? { ...store.nodeParams, ...selectedObj.nodeParams }
-          : store.nodeParams,
-        selectedObj?.dimensions || store.baseDimensions,
-        store.shadingMode,
-        store.relations,
-        store.projectName,
-        (progress) => setExportProgress(progress),
-        ac.signal
-      );
+        objects: renderObjs,
+        baseDimensions: store.baseDimensions,
+        activeConcepts: store.activeConcepts,
+        activeArtifacts: store.activeArtifacts,
+        globalNodeParams: store.nodeParams,
+        shadingMode: store.shadingMode,
+        relations: store.relations,
+        projectName: store.projectName,
+        showHumanFigure: store.showHumanFigure,
+        onProgress: (progress) => setExportProgress(progress),
+        abortSignal: ac.signal,
+      });
       showToast('🎬 Video de transición exportado correctamente');
     } catch (err: any) {
       if (err?.name === 'AbortError') {
@@ -1255,10 +1271,7 @@ export const Viewport3D: React.FC = () => {
       {/* Modal de configuración de video */}
       <VideoExportModal
         isOpen={showVideoModal}
-        conceptCount={
-          (objects?.find((o) => o.id === selectedObjectId)?.assignedConcepts?.length) ||
-          activeConcepts.length
-        }
+        conceptCount={compositionSteps.length}
         onClose={() => setShowVideoModal(false)}
         onExport={handleStartVideoExport}
       />
