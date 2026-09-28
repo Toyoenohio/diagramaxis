@@ -35,38 +35,12 @@ const DiagramCanvasInner: React.FC = () => {
   const onConnect = useCallback(
     (params: Connection) => {
       if (params.source && params.target && params.source !== params.target) {
-        const cleanHandle = (h?: string | null) =>
-          h ? h.replace('-src', '').replace('-tgt', '') : null;
-        const sHandle = cleanHandle(params.sourceHandle);
-        const tHandle = cleanHandle(params.targetHandle);
-
-        // Deducción semántica del tipo de relación según los puertos conectados:
-        // - Pin Superior (Dorado): Entrada Jerárquica -> 'define'
-        // - Pin Inferior (Naranja): Salida Generativa -> 'amplifica'
-        // - Pin Izquierdo (Cyan): Entrada Condicionante -> 'restringe'
-        // - Pin Derecho (Verde): Salida Articuladora -> 'tensiona'
-        let relType = 'define';
-        let intensity = 0.8;
-        if (sHandle === 'port-left' || tHandle === 'port-left') {
-          relType = 'restringe';
-          intensity = 0.7;
-        } else if (sHandle === 'port-right' || tHandle === 'port-right') {
-          relType = 'tensiona';
-          intensity = 0.75;
-        } else if (sHandle === 'port-bottom' || tHandle === 'port-bottom') {
-          relType = 'amplifica';
-          intensity = 0.85;
-        } else if (sHandle === 'port-top' || tHandle === 'port-top') {
-          relType = 'define';
-          intensity = 0.9;
-        }
-
         addRelation({
           from: params.source,
           to: params.target,
-          type: relType,
+          type: 'define',
           dir: 'A→B',
-          intensity,
+          intensity: 0.85,
           sourceHandle: params.sourceHandle,
           targetHandle: params.targetHandle,
         });
@@ -167,45 +141,35 @@ const DiagramCanvasInner: React.FC = () => {
           <div className="flex flex-col gap-3 font-mono text-[11px]">
             <div>
               <span className="font-bold text-diagramaxis-gold block uppercase text-[10px] mb-1">
-                1. Función de los 4 Puertos de Conexión (Pines de Color):
+                1. Conexión en Serie & Puertos de Flujo (Pipeline):
               </span>
               <div className="grid grid-cols-1 gap-1.5 pl-1">
-                <div className="flex items-start gap-2 bg-diagramaxis-bg p-2 rounded-xs border border-diagramaxis-gold/30">
-                  <span className="w-3 h-3 rounded-full bg-diagramaxis-gold shrink-0 mt-0.5 shadow-[0_0_6px_rgb(var(--da-gold))]" />
-                  <div>
-                    <strong className="text-diagramaxis-gold">Pin Superior (Dorado / Oro):</strong>
-                    <p className="text-[10px] text-diagramaxis-textMuted leading-tight mt-0.5">
-                      <strong>Entrada Jerárquica / Causa:</strong> Recibe órdenes y condicionantes rectores de escala superior.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2 bg-diagramaxis-bg p-2 rounded-xs border border-diagramaxis-orange/30">
-                  <span className="w-3 h-3 rounded-full bg-diagramaxis-orange shrink-0 mt-0.5 shadow-[0_0_6px_rgb(var(--da-orange))]" />
-                  <div>
-                    <strong className="text-diagramaxis-orange">Pin Inferior (Naranja / Rojo):</strong>
-                    <p className="text-[10px] text-diagramaxis-textMuted leading-tight mt-0.5">
-                      <strong>Salida Generativa / Efecto:</strong> Emite operaciones morfológicas, transformaciones y consecuencias espaciales.
-                    </p>
-                  </div>
-                </div>
-
                 <div className="flex items-start gap-2 bg-diagramaxis-bg p-2 rounded-xs border border-diagramaxis-cyan/30">
                   <span className="w-3 h-3 rounded-full bg-diagramaxis-cyan shrink-0 mt-0.5 shadow-[0_0_6px_rgb(var(--da-cyan))]" />
                   <div>
-                    <strong className="text-diagramaxis-cyan">Pin Izquierdo (Cyan / Azul):</strong>
+                    <strong className="text-diagramaxis-cyan">Puerto de Entrada (Izquierda):</strong>
                     <p className="text-[10px] text-diagramaxis-textMuted leading-tight mt-0.5">
-                      <strong>Entrada Condicionante / Contexto:</strong> Recibe restricciones ambientales (viento, sol, topografía, preexistencias).
+                      Presente en <strong>modificadores</strong> y <strong>volúmenes</strong>. Recibe la transformación geométrica anterior en la serie.
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2 bg-diagramaxis-bg p-2 rounded-xs border border-diagramaxis-success/30">
-                  <span className="w-3 h-3 rounded-full bg-diagramaxis-success shrink-0 mt-0.5 shadow-[0_0_6px_rgb(var(--da-success))]" />
+                <div className="flex items-start gap-2 bg-diagramaxis-bg p-2 rounded-xs border border-diagramaxis-gold/30">
+                  <span className="w-3 h-3 rounded-full bg-diagramaxis-gold shrink-0 mt-0.5 shadow-[0_0_6px_rgb(var(--da-gold))]" />
                   <div>
-                    <strong className="text-diagramaxis-success">Pin Derecho (Verde):</strong>
+                    <strong className="text-diagramaxis-gold">Puerto de Salida (Derecha):</strong>
                     <p className="text-[10px] text-diagramaxis-textMuted leading-tight mt-0.5">
-                      <strong>Salida Articuladora / Vínculo:</strong> Conecta relaciones compositivas, ensambles volumétricos y continuidades.
+                      Presente en <strong>modificadores</strong>. Emite la forma modificada hacia el siguiente modificador o directamente al volumen principal.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2 bg-diagramaxis-bg p-2 rounded-xs border border-diagramaxis-border">
+                  <span className="w-3 h-3 rounded-full bg-diagramaxis-orange shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-diagramaxis-orange">Orden Secuencial & Suma Multivolumen:</strong>
+                    <p className="text-[10px] text-diagramaxis-textMuted leading-tight mt-0.5">
+                      El orden de conexión en serie define la secuencia de operaciones (ej. Elevación $\rightarrow$ Desfragmentación). Si un modificador se conecta a dos o más volúmenes, los afecta conjuntamente como un ensamble colectivo (ej. Recorrido exterior compartido).
                     </p>
                   </div>
                 </div>

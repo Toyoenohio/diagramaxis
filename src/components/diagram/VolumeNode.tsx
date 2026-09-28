@@ -43,68 +43,20 @@ export const VolumeNode: React.FC<NodeProps> = memo(({ id, data, selected }) => 
           : '1px solid rgba(229, 169, 59, 0.45)',
       }}
     >
-      {/* 4 Pines de Conexión del Volumen Base (Bidireccionales: admiten entrada y salida) */}
-      {/* 1. Pin Superior: Entrada Jerárquica / Causa (Dorado) */}
-      <Handle
-        type="target"
-        position={Position.Top}
-        id="port-top"
-        title="Pin Superior (Dorado): Entrada Jerárquica. Conecta conceptos rectores que moldean la jerarquía del volumen."
-        className="!w-4 !h-4 !bg-diagramaxis-gold !border-2 !border-diagramaxis-bg !shadow-[0_0_10px_rgb(var(--da-gold)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
-      />
-      <Handle
-        type="source"
-        position={Position.Top}
-        id="port-top-src"
-        title="Pin Superior (Dorado): Entrada Jerárquica."
-        className="!w-4 !h-4 !opacity-0 cursor-crosshair !z-20"
-      />
-
-      {/* 2. Pin Inferior: Salida Generativa / Efecto (Naranja) */}
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="port-bottom"
-        title="Pin Inferior (Naranja): Salida Generativa. Conecta transformaciones directas y operaciones morfológicas."
-        className="!w-4 !h-4 !bg-diagramaxis-orange !border-2 !border-diagramaxis-bg !shadow-[0_0_10px_rgb(var(--da-orange)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
-      />
-      <Handle
-        type="target"
-        position={Position.Bottom}
-        id="port-bottom-tgt"
-        title="Pin Inferior (Naranja): Salida Generativa."
-        className="!w-4 !h-4 !opacity-0 cursor-crosshair !z-20"
-      />
-
-      {/* 3. Pin Izquierdo: Entrada Condicionante / Contexto (Cyan) */}
+      {/* Único Puerto de Entrada del Volumen Principal */}
       <Handle
         type="target"
         position={Position.Left}
-        id="port-left"
-        title="Pin Izquierdo (Cyan): Entrada Condicionante. Conecta factores ambientales o restricciones espaciales."
-        className="!w-4 !h-4 !bg-diagramaxis-cyan !border-2 !border-diagramaxis-bg !shadow-[0_0_10px_rgb(var(--da-cyan)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
+        id="input"
+        title="Entrada de Modificaciones: Conecta aquí la salida del modificador para transformar este volumen."
+        className="!w-4 !h-4 !bg-diagramaxis-gold !border-2 !border-diagramaxis-bg !shadow-[0_0_12px_rgb(var(--da-gold)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
       />
+      {/* Handle auxiliar de salida en la misma posición para permitir arrastrar desde el volumen si el usuario inicia la conexión desde aquí */}
       <Handle
         type="source"
         position={Position.Left}
-        id="port-left-src"
-        title="Pin Izquierdo (Cyan): Entrada Condicionante."
-        className="!w-4 !h-4 !opacity-0 cursor-crosshair !z-20"
-      />
-
-      {/* 4. Pin Derecho: Salida Articuladora / Vínculo (Verde) */}
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="port-right"
-        title="Pin Derecho (Verde): Salida Articuladora. Conecta vínculos entre volúmenes o recorridos de articulación."
-        className="!w-4 !h-4 !bg-diagramaxis-success !border-2 !border-diagramaxis-bg !shadow-[0_0_10px_rgb(var(--da-success)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
-      />
-      <Handle
-        type="target"
-        position={Position.Right}
-        id="port-right-tgt"
-        title="Pin Derecho (Verde): Salida Articuladora."
+        id="input-src"
+        title="Entrada de Modificaciones"
         className="!w-4 !h-4 !opacity-0 cursor-crosshair !z-20"
       />
 
@@ -150,7 +102,7 @@ export const VolumeNode: React.FC<NodeProps> = memo(({ id, data, selected }) => 
         </div>
 
         <div className="text-[9px] text-diagramaxis-textDim italic leading-tight pt-0.5">
-          Conecta los pines a las fichas temáticas para gobernar morfológicamente este sólido.
+          Conecta la salida de la cadena de modificadores a este pin de entrada.
         </div>
       </div>
     </div>

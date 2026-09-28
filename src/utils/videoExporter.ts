@@ -221,12 +221,14 @@ export async function exportTransitionVideo(
   const totalFrames = calculateTotalFrames(config, concepts.length);
   let globalFrame = 0;
 
-  // Ángulo de cámara para turntable
+  // Ángulo de cámara inicial
   const initialTheta = config.cameraMode === 'alz' ? 0 : 0.75;
-  let theta = initialTheta;
-  const thetaIncrement = (Math.PI * 3) / totalFrames; // 1.5 vueltas completas
+  let currentTheta = initialTheta;
 
-  const maxDim = Math.max(baseDimensions.w, baseDimensions.h, baseDimensions.d);
+  // Calculamos el incremento de ángulo EXCLUSIVAMENTE para el paneo final del Outro (360 grados completos)
+  const outroThetaIncrement = config.framesOutro > 0 ? (Math.PI * 2) / config.framesOutro : 0;
+
+  let currentMaxDim = Math.max(baseDimensions.w, baseDimensions.h, baseDimensions.d);
 
   // Limpia luces secundarias previas
   const cleanAtriumLights = () => {
@@ -236,10 +238,13 @@ export async function exportTransitionVideo(
 
   /**
    * Renderiza un frame con un subset/interpolación de conceptos dados.
+   * La cámara permanece fija durante la construcción morfológica.
    */
   const renderFrame = (
     activeSubset: string[],
-    interpolatedParams: Record<string, NodeParam>
+    interpolatedParams: Record<string, NodeParam>,
+    frameTheta: number,
+    framingDim?: number
   ) => {
     clearGroup(volumeGroup);
     cleanAtriumLights();
@@ -260,12 +265,21 @@ export async function exportTransitionVideo(
       scene.add(l);
     });
 
+    if (built.finalDimensions) {
+      currentMaxDim = Math.max(
+        currentMaxDim,
+        built.finalDimensions.w,
+        built.finalDimensions.h,
+        built.finalDimensions.d
+      );
+    }
+
+    const effectiveDim = framingDim || currentMaxDim;
     const lookAtY = (built.finalDimensions?.h || baseDimensions.h) * 0.45;
-    setupCameraForMode(camera, config.cameraMode, maxDim, theta, lookAtY);
+    setupCameraForMode(camera, config.cameraMode, effectiveDim, frameTheta, lookAtY);
 
     renderer.render(scene, camera);
 
-    theta += thetaIncrement;
     globalFrame++;
   };
 
@@ -287,7 +301,7 @@ export async function exportTransitionVideo(
   recorder.start();
 
   try {
-    // === FASE INTRO: Cubo base girando ===
+    // === FASE INTRO: Cubo base estático en perspectiva nítida ===
     for (let f = 0; f < config.framesIntro; f++) {
       if (abortSignal.aborted) throw new DOMException('Export cancelled', 'AbortError');
 
@@ -300,11 +314,12 @@ export async function exportTransitionVideo(
         percent: Math.round((globalFrame / totalFrames) * 100),
       });
 
-      renderFrame([], nodeParams);
+      // Cámara ESTÁTICA para apreciar la geometría inicial sin mareos
+      renderFrame([], nodeParams, initialTheta);
       await yieldFrame();
     }
 
-    // === FASE TRANSICIÓN: Concepto por concepto ===
+    // === FASE TRANSICIÓN: Construcción paso a paso de cada modificador ===
     for (let i = 0; i < concepts.length; i++) {
       const conceptId = concepts[i];
       const targetParam = nodeParams[conceptId] || { weight: 0.6, intensity: 0.5 };
@@ -329,7 +344,6 @@ export async function exportTransitionVideo(
                 k.includes('factor') ||
                 k.includes('proporcion')
               ) {
-                // Multiplicadores escalares: interpolan desde 1.0 hasta el valor final
                 interpolatedCustom[key] = 1.0 + (val - 1.0) * t;
               } else if (
                 k.includes('subdivision') ||
@@ -337,10 +351,8 @@ export async function exportTransitionVideo(
                 k.includes('count') ||
                 k.includes('pisos')
               ) {
-                // Conteos discretos
                 interpolatedCustom[key] = Math.max(1, Math.round(val * t));
               } else {
-                // Dimensiones, profundidades, radios, desplazamientos: interpolan desde 0
                 interpolatedCustom[key] = val * t;
               }
             } else {
@@ -355,7 +367,6 @@ export async function exportTransitionVideo(
           custom: interpolatedCustom,
         };
 
-        // Subset: todos los conceptos hasta el actual (inclusive)
         const activeSubset = concepts.slice(0, i + 1);
 
         onProgress({
@@ -367,26 +378,32 @@ export async function exportTransitionVideo(
           percent: Math.round((globalFrame / totalFrames) * 100),
         });
 
-        renderFrame(activeSubset, interpolatedParams);
+        // Cámara ESTÁTICA: la persona ve cómo se construye y transforma el modelo claramente
+        renderFrame(activeSubset, interpolatedParams, initialTheta);
         await yieldFrame();
       }
     }
 
-    // === FASE OUTRO: Turntable completa con resultado final ===
+    // === FASE OUTRO: Paneo final 360° a distancia de encuadre óptima ===
     if (config.includeOutroTurntable) {
+      // Distancia de encuadre acorde para que todo el modelo y sus modificaciones queden a la vista
+      const outroFramingDim = Math.max(currentMaxDim * 1.15, baseDimensions.w, baseDimensions.h, baseDimensions.d);
+
       for (let f = 0; f < config.framesOutro; f++) {
         if (abortSignal.aborted) throw new DOMException('Export cancelled', 'AbortError');
 
         onProgress({
           phase: 'outro',
           conceptIndex: concepts.length - 1,
-          conceptName: 'Resultado Final',
+          conceptName: 'Paneo 360° del Modelo Final',
           currentFrame: globalFrame,
           totalFrames,
           percent: Math.round((globalFrame / totalFrames) * 100),
         });
 
-        renderFrame(concepts, nodeParams);
+        // Aquí sí se hace el paneo suave girando 360° sobre el modelo final terminado
+        renderFrame(concepts, nodeParams, currentTheta, outroFramingDim);
+        currentTheta += outroThetaIncrement;
         await yieldFrame();
       }
     }

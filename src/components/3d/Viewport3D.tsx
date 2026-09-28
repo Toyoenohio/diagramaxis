@@ -533,10 +533,96 @@ export const Viewport3D: React.FC = () => {
     });
 
     // =====================================================================
-    // RELACIONES INTER-VOLUMEN (Ensambles, Puentes, Recorridos Exteriores)
+    // MODIFICADORES COMPARTIDOS MULTIVOLUMEN (Suma Colectiva)
     // =====================================================================
     if (renderObjects.length > 1) {
-      // Buscar relaciones directas entre volúmenes o a través de conceptos como Recorrido exterior
+      // 1. Recorrido exterior compartido entre 2 o más volúmenes
+      const objsWithRecorrido = renderObjects.filter((o) =>
+        o.assignedConcepts?.includes('Recorrido exterior')
+      );
+
+      if (objsWithRecorrido.length >= 2) {
+        // Enlazar volúmenes que comparten el modificador con paseo peatonal perimetral y foso ajardinado continuo
+        for (let i = 0; i < objsWithRecorrido.length - 1; i++) {
+          const objA = objsWithRecorrido[i];
+          const objB = objsWithRecorrido[i + 1];
+          const pA = new THREE.Vector3(objA.position.x, objA.position.y, objA.position.z);
+          const pB = new THREE.Vector3(objB.position.x, objB.position.y, objB.position.z);
+          const dist = pA.distanceTo(pB);
+          const midPoint = new THREE.Vector3().addVectors(pA, pB).multiplyScalar(0.5);
+          const angle = Math.atan2(pB.x - pA.x, pB.z - pA.z);
+
+          const sharedCircuitGroup = new THREE.Group();
+          sharedCircuitGroup.name = `shared_circuit_${objA.id}_${objB.id}`;
+
+          const pathWidth = 4.2;
+          const pathMat = new THREE.MeshLambertMaterial({ color: 0x475569 }); // Pavimento pétreo
+          const promenadeGeo = new THREE.BoxGeometry(pathWidth, 0.08, dist);
+          const promenade = new THREE.Mesh(promenadeGeo, pathMat);
+          promenade.position.set(midPoint.x, 0.04, midPoint.z);
+          promenade.rotation.y = angle;
+          promenade.receiveShadow = true;
+          sharedCircuitGroup.add(promenade);
+
+          // Borde técnico arquitectónico del recorrido
+          const curbMat = new THREE.LineBasicMaterial({ color: 0x18181b, linewidth: 2 });
+          const curbGeo = new THREE.EdgesGeometry(promenadeGeo);
+          promenade.add(new THREE.LineSegments(curbGeo, curbMat));
+
+          // Foso ajardinado central de articulación paisajística
+          const gardenMat = new THREE.MeshLambertMaterial({ color: 0x22543d });
+          const gardenGeo = new THREE.BoxGeometry(pathWidth * 0.45, 0.12, dist * 0.85);
+          const garden = new THREE.Mesh(gardenGeo, gardenMat);
+          garden.position.set(midPoint.x, 0.06, midPoint.z);
+          garden.rotation.y = angle;
+          sharedCircuitGroup.add(garden);
+
+          volumeGroup.add(sharedCircuitGroup);
+        }
+      }
+
+      // 2. Puentes y conectividad compartida entre volúmenes
+      const objsWithBridges = renderObjects.filter((o) =>
+        o.assignedConcepts?.some((c) => c === 'Conectividad' || c === 'Vinculado')
+      );
+      if (objsWithBridges.length >= 2) {
+        for (let i = 0; i < objsWithBridges.length - 1; i++) {
+          const objA = objsWithBridges[i];
+          const objB = objsWithBridges[i + 1];
+          const pA = new THREE.Vector3(objA.position.x, objA.position.y, objA.position.z);
+          const pB = new THREE.Vector3(objB.position.x, objB.position.y, objB.position.z);
+          const dist = pA.distanceTo(pB);
+          const midPoint = new THREE.Vector3().addVectors(pA, pB).multiplyScalar(0.5);
+          const angle = Math.atan2(pB.x - pA.x, pB.z - pA.z);
+
+          const bridgeGroup = new THREE.Group();
+          bridgeGroup.name = `shared_bridge_${objA.id}_${objB.id}`;
+
+          const bridgeWidth = 3.2;
+          const bridgeHeight = Math.max(2.8, (objA.dimensions.h + objB.dimensions.h) * 0.25);
+          const bridgeElev = Math.min(objA.dimensions.h, objB.dimensions.h) * 0.45;
+          const bridgeMat = new THREE.MeshLambertMaterial({
+            color: 0x0284c7,
+            transparent: true,
+            opacity: 0.9,
+          });
+
+          const bridgeGeo = new THREE.BoxGeometry(bridgeWidth, bridgeHeight, dist * 0.95);
+          const bridgeMesh = new THREE.Mesh(bridgeGeo, bridgeMat);
+          bridgeMesh.position.set(midPoint.x, bridgeElev, midPoint.z);
+          bridgeMesh.rotation.y = angle;
+          bridgeMesh.castShadow = true;
+          bridgeMesh.receiveShadow = true;
+
+          const edgeMat = new THREE.LineBasicMaterial({ color: 0x18181b, linewidth: 2 });
+          bridgeMesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(bridgeGeo), edgeMat));
+          bridgeGroup.add(bridgeMesh);
+
+          volumeGroup.add(bridgeGroup);
+        }
+      }
+
+      // 3. Relaciones explícitas de tablero entre volúmenes
       relations.forEach((rel) => {
         let idA: string | null = null;
         let idB: string | null = null;
@@ -544,16 +630,6 @@ export const Viewport3D: React.FC = () => {
         if (rel.from.startsWith('vol-') && rel.to.startsWith('vol-')) {
           idA = rel.from.replace('vol-', '');
           idB = rel.to.replace('vol-', '');
-        }
-
-        // También detectar si el concepto 'Recorrido exterior' vincula ambos volúmenes
-        const hasRecorridoBetween =
-          (rel.from === 'Recorrido exterior' && rel.to.startsWith('vol-')) ||
-          (rel.to === 'Recorrido exterior' && rel.from.startsWith('vol-'));
-
-        if (!idA && hasRecorridoBetween && renderObjects.length >= 2) {
-          idA = renderObjects[0].id;
-          idB = renderObjects[1].id;
         }
 
         if (idA && idB && idA !== idB) {
@@ -570,15 +646,12 @@ export const Viewport3D: React.FC = () => {
           const midPoint = new THREE.Vector3().addVectors(pA, pB).multiplyScalar(0.5);
           const angle = Math.atan2(pB.x - pA.x, pB.z - pA.z);
 
-          // Si la relación es 'restringe' o 'Recorrido exterior':
-          // Se modela el foso/circuito perimetral continuo y la pasarela de separación
-          if (rel.type === 'restringe' || hasRecorridoBetween || rel.type === 'tensiona') {
+          if (rel.type === 'restringe' || rel.type === 'tensiona') {
             const pathWidth = Math.max(3.5, 4.0 * (rel.intensity || 0.8));
             const pathMat = new THREE.MeshLambertMaterial({
-              color: 0x475569, // Pavimento de piedra de circuito
+              color: 0x475569,
             });
 
-            // Paseo peatonal / explanada entre los dos volúmenes
             const promenadeGeo = new THREE.BoxGeometry(pathWidth, 0.08, dist);
             const promenade = new THREE.Mesh(promenadeGeo, pathMat);
             promenade.position.set(midPoint.x, 0.04, midPoint.z);
@@ -586,13 +659,11 @@ export const Viewport3D: React.FC = () => {
             promenade.receiveShadow = true;
             interGroup.add(promenade);
 
-            // Borde técnico arquitectónico del recorrido
             const curbMat = new THREE.LineBasicMaterial({ color: 0x18181b, linewidth: 2 });
             const curbGeo = new THREE.EdgesGeometry(promenadeGeo);
             promenade.add(new THREE.LineSegments(curbGeo, curbMat));
 
-            // Foso o cantero vegetal central si es de restricción
-            if (rel.type === 'restringe' || hasRecorridoBetween) {
+            if (rel.type === 'restringe') {
               const gardenMat = new THREE.MeshLambertMaterial({ color: 0x22543d });
               const gardenGeo = new THREE.BoxGeometry(pathWidth * 0.45, 0.12, dist * 0.8);
               const garden = new THREE.Mesh(gardenGeo, gardenMat);
@@ -601,12 +672,11 @@ export const Viewport3D: React.FC = () => {
               interGroup.add(garden);
             }
           } else {
-            // Relación 'define', 'amplifica' o 'vincula': puente aéreo conector
             const bridgeWidth = Math.max(2.5, 3.0 * (rel.intensity || 0.8));
             const bridgeHeight = Math.max(2.8, (objA.dimensions.h + objB.dimensions.h) * 0.25);
             const bridgeElev = Math.min(objA.dimensions.h, objB.dimensions.h) * 0.45;
             const bridgeMat = new THREE.MeshLambertMaterial({
-              color: 0x0284c7, // Azul tectónico
+              color: 0x0284c7,
               transparent: true,
               opacity: 0.9,
             });

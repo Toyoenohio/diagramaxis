@@ -70,68 +70,36 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
           : '1px solid rgb(var(--da-gold)/0.32)',
       }}
     >
-      {/* Conectores con estilo Pin de Tablero / Chincheta (Bidireccionales) */}
-      {/* 1. Puerto Superior: Entrada Jerárquica / Causa (Dorado) */}
-      <Handle
-        type="target"
-        position={Position.Top}
-        id="port-top"
-        title="Pin Superior (Dorado): Entrada Jerárquica / Causa. Recibe condicionantes de orden superior o entidades determinantes."
-        className="!w-3.5 !h-3.5 !bg-diagramaxis-gold !border-2 !border-diagramaxis-bg !shadow-[0_0_8px_rgb(var(--da-gold)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
-      />
-      <Handle
-        type="source"
-        position={Position.Top}
-        id="port-top-src"
-        title="Pin Superior (Dorado): Entrada Jerárquica."
-        className="!w-3.5 !h-3.5 !opacity-0 cursor-crosshair !z-20"
-      />
-
-      {/* 2. Puerto Inferior: Salida Generativa / Efecto (Naranja) */}
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="port-bottom"
-        title="Pin Inferior (Naranja): Salida Generativa / Efecto. Emite operaciones morfológicas derivadas y transformaciones."
-        className="!w-3.5 !h-3.5 !bg-diagramaxis-orange !border-2 !border-diagramaxis-bg !shadow-[0_0_8px_rgb(var(--da-orange)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
-      />
-      <Handle
-        type="target"
-        position={Position.Bottom}
-        id="port-bottom-tgt"
-        title="Pin Inferior (Naranja): Salida Generativa."
-        className="!w-3.5 !h-3.5 !opacity-0 cursor-crosshair !z-20"
-      />
-
-      {/* 3. Puerto Izquierdo: Entrada Condicionante / Contexto (Cyan) */}
+      {/* Conectores en Serie: 1 Entrada (Izquierda) y 1 Salida (Derecha) */}
+      {/* 1. Puerto de Entrada: Recibe el modificador anterior en la cadena */}
       <Handle
         type="target"
         position={Position.Left}
-        id="port-left"
-        title="Pin Izquierdo (Cyan): Entrada Condicionante / Contexto. Recibe factores ambientales, climáticos o del entorno."
-        className="!w-3.5 !h-3.5 !bg-diagramaxis-cyan !border-2 !border-diagramaxis-bg !shadow-[0_0_8px_rgb(var(--da-cyan)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
+        id="input"
+        title="Entrada: Recibe la transformación anterior en la cadena en serie."
+        className="!w-3.5 !h-3.5 !bg-diagramaxis-cyan !border-2 !border-diagramaxis-bg !shadow-[0_0_10px_rgb(var(--da-cyan)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
       />
       <Handle
         type="source"
         position={Position.Left}
-        id="port-left-src"
-        title="Pin Izquierdo (Cyan): Entrada Condicionante."
+        id="input-src"
+        title="Entrada"
         className="!w-3.5 !h-3.5 !opacity-0 cursor-crosshair !z-20"
       />
 
-      {/* 4. Puerto Derecho: Salida Articuladora / Vínculo (Verde) */}
+      {/* 2. Puerto de Salida: Conecta al siguiente modificador o al volumen */}
       <Handle
         type="source"
         position={Position.Right}
-        id="port-right"
-        title="Pin Derecho (Verde): Salida Articuladora / Vínculo. Conecta ensambles espaciales y relaciones compositivas."
-        className="!w-3.5 !h-3.5 !bg-diagramaxis-success !border-2 !border-diagramaxis-bg !shadow-[0_0_8px_rgb(var(--da-success)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
+        id="output"
+        title="Salida: Conecta al siguiente modificador en serie o al volumen principal."
+        className="!w-3.5 !h-3.5 !bg-diagramaxis-gold !border-2 !border-diagramaxis-bg !shadow-[0_0_10px_rgb(var(--da-gold)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
       />
       <Handle
         type="target"
         position={Position.Right}
-        id="port-right-tgt"
-        title="Pin Derecho (Verde): Salida Articuladora."
+        id="output-tgt"
+        title="Salida"
         className="!w-3.5 !h-3.5 !opacity-0 cursor-crosshair !z-20"
       />
 

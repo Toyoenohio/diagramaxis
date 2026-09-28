@@ -127,6 +127,77 @@ interface ProjectState {
   getCoherenceReport: () => CoherenceReport;
 }
 
+/**
+ * Resuelve las cadenas de modificadores conectados en serie hacia cada volumen.
+ * Ordena topológicamente los modificadores para que se apliquen en secuencia
+ * (ej. Modificador A -> Modificador B -> Volumen aplica A primero y luego B sobre A).
+ */
+export function recalculateObjectChains(
+  objects: ProjectObject[],
+  edges: Edge[],
+  _relations: ProjectRelation[],
+  globalNodeParams: Record<string, NodeParam>
+): ProjectObject[] {
+  return objects.map((obj) => {
+    const volNodeId = `vol-${obj.id}`;
+
+    // Encuentra los nodos predecesores que alimentan a un nodo dado
+    const getIncoming = (nodeId: string): string[] => {
+      const incoming: string[] = [];
+      edges.forEach((e) => {
+        // Flujo normal: e.source -> e.target (el source alimenta al target)
+        if (e.target === nodeId && e.source !== nodeId && !e.source.startsWith('vol-')) {
+          if (!incoming.includes(e.source)) incoming.push(e.source);
+        }
+        // Flujo inverso accidental conectado al volumen
+        else if (e.source === nodeId && e.target !== nodeId && !e.target.startsWith('vol-') && nodeId === volNodeId) {
+          if (!incoming.includes(e.target)) incoming.push(e.target);
+        }
+      });
+      return incoming;
+    };
+
+    const visited = new Set<string>();
+    const inStack = new Set<string>();
+    const ordered: string[] = [];
+
+    const dfs = (nodeId: string) => {
+      if (inStack.has(nodeId)) return; // Prevenir ciclo
+      if (visited.has(nodeId)) return;
+
+      inStack.add(nodeId);
+      visited.add(nodeId);
+
+      const predecessors = getIncoming(nodeId);
+      for (const pred of predecessors) {
+        dfs(pred);
+      }
+
+      inStack.delete(nodeId);
+
+      if (nodeId !== volNodeId) {
+        ordered.push(nodeId);
+      }
+    };
+
+    dfs(volNodeId);
+
+    // Actualizar los parámetros de los conceptos en la cadena del objeto
+    const updatedNodeParams = { ...(obj.nodeParams || {}) };
+    ordered.forEach((conceptId) => {
+      if (!updatedNodeParams[conceptId]) {
+        updatedNodeParams[conceptId] = globalNodeParams[conceptId] || { weight: 0.6, intensity: 0.5 };
+      }
+    });
+
+    return {
+      ...obj,
+      assignedConcepts: ordered,
+      nodeParams: updatedNodeParams,
+    };
+  });
+}
+
 export const useProjectStore = create<ProjectState>((set, get) => ({
   isInitialized: false,
   projectName: 'Sin título',
@@ -221,13 +292,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       const newNodes = nodes.filter((n) => n.id !== id);
       const newRelations = relations.filter((r) => r.from !== id && r.to !== id);
       const newEdges = edges.filter((e) => e.source !== id && e.target !== id);
-      const updatedObjects = objects.map((obj) => ({
-        ...obj,
-        assignedConcepts: obj.assignedConcepts.filter((c) => c !== id),
-        nodeParams: obj.nodeParams
-          ? Object.fromEntries(Object.entries(obj.nodeParams).filter(([k]) => k !== id))
-          : {},
-      }));
+      const updatedObjects = recalculateObjectChains(objects, newEdges, newRelations, newParams);
 
       set({
         activeConcepts: newActive,
@@ -291,13 +356,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       const newNodes = nodes.filter((n) => n.id !== id);
       const newRelations = relations.filter((r) => r.from !== id && r.to !== id);
       const newEdges = edges.filter((e) => e.source !== id && e.target !== id);
-      const updatedObjects = objects.map((obj) => ({
-        ...obj,
-        assignedConcepts: obj.assignedConcepts.filter((c) => c !== id),
-        nodeParams: obj.nodeParams
-          ? Object.fromEntries(Object.entries(obj.nodeParams).filter(([k]) => k !== id))
-          : {},
-      }));
+      const updatedObjects = recalculateObjectChains(objects, newEdges, newRelations, newParams);
 
       set({
         activeArtifacts: newActive,
@@ -429,7 +488,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   },
 
   addRelation: (relData) => {
-    const { relations, edges } = get();
+    const { relations, edges, objects, nodeParams } = get();
     const id = `rel_${relData.from}_${relData.to}_${Date.now()}`;
     const newRel: ProjectRelation = { ...relData, id };
 
@@ -447,46 +506,17 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       },
     };
 
-    // Si la conexión involucra un VolumeNode (e.g. vol-obj-1), vincular el concepto a ese objeto
-    let objIdToAssign: string | null = null;
-    let conceptIdToAssign: string | null = null;
-    let connectedHandle: string | null = null;
-
-    if (relData.from.startsWith('vol-')) {
-      objIdToAssign = relData.from.replace('vol-', '');
-      conceptIdToAssign = relData.to;
-      connectedHandle = relData.sourceHandle ? relData.sourceHandle.replace('-src', '').replace('-tgt', '') : null;
-    } else if (relData.to.startsWith('vol-')) {
-      objIdToAssign = relData.to.replace('vol-', '');
-      conceptIdToAssign = relData.from;
-      connectedHandle = relData.targetHandle ? relData.targetHandle.replace('-src', '').replace('-tgt', '') : null;
-    }
-
-    if (objIdToAssign && conceptIdToAssign && !conceptIdToAssign.startsWith('vol-')) {
-      get().assignConceptToObject(conceptIdToAssign, objIdToAssign);
-
-      // Calibrar peso e intensidad según el pin de conexión en el volumen
-      if (connectedHandle === 'port-top') {
-        get().setObjectNodeParam(objIdToAssign, conceptIdToAssign, 'weight', 0.9);
-        get().setObjectNodeParam(objIdToAssign, conceptIdToAssign, 'intensity', 0.75);
-      } else if (connectedHandle === 'port-bottom') {
-        get().setObjectNodeParam(objIdToAssign, conceptIdToAssign, 'weight', 0.7);
-        get().setObjectNodeParam(objIdToAssign, conceptIdToAssign, 'intensity', 0.9);
-      } else if (connectedHandle === 'port-left') {
-        get().setObjectNodeParam(objIdToAssign, conceptIdToAssign, 'weight', 0.5);
-        get().setObjectNodeParam(objIdToAssign, conceptIdToAssign, 'intensity', 0.65);
-      } else if (connectedHandle === 'port-right') {
-        get().setObjectNodeParam(objIdToAssign, conceptIdToAssign, 'weight', 0.65);
-        get().setObjectNodeParam(objIdToAssign, conceptIdToAssign, 'intensity', 0.7);
-      }
-    }
+    const nextEdges = [...edges, newEdge];
+    const nextRelations = [...relations, newRel];
+    const updatedObjects = recalculateObjectChains(objects, nextEdges, nextRelations, nodeParams);
 
     set({
-      relations: [...relations, newRel],
-      edges: [...edges, newEdge],
+      relations: nextRelations,
+      edges: nextEdges,
+      objects: updatedObjects,
       isRelationModalOpen: false,
     });
-    get().showToast(`Relación: ${relData.from} ${relData.dir} ${relData.to} [${relData.type}]`);
+    get().showToast(`Conexión: ${relData.from} → ${relData.to}`);
   },
 
   updateRelation: (id, updates) => {
@@ -524,40 +554,17 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   },
 
   removeRelation: (id) => {
-    const { relations, edges } = get();
-    const relToRemove = relations.find((r) => r.id === id);
+    const { relations, edges, objects, nodeParams } = get();
     const newRelations = relations.filter((r) => r.id !== id);
     const newEdges = edges.filter((e) => e.id !== id);
-
-    // Si la relación involucraba un volumen y un concepto, revisar si quedan otras relaciones entre ellos
-    if (relToRemove) {
-      let objId: string | null = null;
-      let conceptId: string | null = null;
-      if (relToRemove.from.startsWith('vol-')) {
-        objId = relToRemove.from.replace('vol-', '');
-        conceptId = relToRemove.to;
-      } else if (relToRemove.to.startsWith('vol-')) {
-        objId = relToRemove.to.replace('vol-', '');
-        conceptId = relToRemove.from;
-      }
-
-      if (objId && conceptId && !conceptId.startsWith('vol-')) {
-        const stillConnected = newRelations.some(
-          (r) =>
-            (r.from === `vol-${objId}` && r.to === conceptId) ||
-            (r.to === `vol-${objId}` && r.from === conceptId)
-        );
-        if (!stillConnected) {
-          get().unassignConceptFromObject(conceptId, objId);
-        }
-      }
-    }
+    const updatedObjects = recalculateObjectChains(objects, newEdges, newRelations, nodeParams);
 
     set({
       relations: newRelations,
       edges: newEdges,
+      objects: updatedObjects,
     });
-    get().showToast('Relación eliminada');
+    get().showToast('Conexión eliminada');
   },
 
   setSelectedNodeId: (id) => {
@@ -766,7 +773,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   },
 
   removeObject: (id: string) => {
-    const { objects, selectedObjectId, nodes, edges } = get();
+    const { objects, selectedObjectId, nodes, edges, relations, nodeParams } = get();
     if (objects.length <= 1) {
       get().showToast('Se requiere al menos un objeto principal');
       return;
@@ -774,11 +781,16 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     const newObjects = objects.filter((o) => o.id !== id);
     const newSelected = selectedObjectId === id ? newObjects[0].id : selectedObjectId;
     const volNodeId = `vol-${id}`;
+    const nextNodes = nodes.filter((n) => n.id !== volNodeId);
+    const nextEdges = edges.filter((e) => e.source !== volNodeId && e.target !== volNodeId);
+    const nextRelations = relations.filter((r) => r.from !== volNodeId && r.to !== volNodeId);
+    const updatedObjects = recalculateObjectChains(newObjects, nextEdges, nextRelations, nodeParams);
     set({
-      objects: newObjects,
+      objects: updatedObjects,
       selectedObjectId: newSelected,
-      nodes: nodes.filter((n) => n.id !== volNodeId),
-      edges: edges.filter((e) => e.source !== volNodeId && e.target !== volNodeId),
+      nodes: nextNodes,
+      edges: nextEdges,
+      relations: nextRelations,
     });
     get().showToast('Objeto eliminado');
   },
