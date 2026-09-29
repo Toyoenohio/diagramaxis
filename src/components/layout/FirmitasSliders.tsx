@@ -1046,7 +1046,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
                   onClick={() => onChange('caraSustraccion', c.id)}
                   className={`py-1 rounded-xs border transition-colors ${
                     cara === c.id
-                      ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                      ? 'bg-diagramaxis-cyan text-diagramaxis-bg font-bold border-diagramaxis-cyan'
                       : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
                   }`}
                 >
@@ -1058,7 +1058,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
           <div className="flex flex-col gap-1">
             <div className="flex justify-between font-mono text-[10.5px]">
               <span className="text-diagramaxis-textMuted">Ancho de talla (X/Z):</span>
-              <span className="font-bold text-diagramaxis-gold">{Math.round(w * 100)}%</span>
+              <span className="font-bold text-diagramaxis-cyan">{Math.round(w * 100)}%</span>
             </div>
             <input
               type="range"
@@ -1067,13 +1067,13 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
               step="0.05"
               value={w}
               onChange={(e) => onChange('anchoTalla', parseFloat(e.target.value))}
-              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+              className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
             />
           </div>
           <div className="flex flex-col gap-1">
             <div className="flex justify-between font-mono text-[10.5px]">
               <span className="text-diagramaxis-textMuted">Alto de talla (Y):</span>
-              <span className="font-bold text-diagramaxis-gold">{Math.round(h * 100)}%</span>
+              <span className="font-bold text-diagramaxis-cyan">{Math.round(h * 100)}%</span>
             </div>
             <input
               type="range"
@@ -1082,7 +1082,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
               step="0.05"
               value={h}
               onChange={(e) => onChange('altoTalla', parseFloat(e.target.value))}
-              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+              className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -1134,7 +1134,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
                   onClick={() => toggleCara(c.id)}
                   className={`py-1 rounded-xs border transition-colors ${
                     activeCaras.includes(c.id)
-                      ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                      ? 'bg-diagramaxis-cyan text-diagramaxis-bg font-bold border-diagramaxis-cyan'
                       : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
                   }`}
                 >
@@ -1146,7 +1146,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
           <div className="flex flex-col gap-1">
             <div className="flex justify-between font-mono text-[10.5px]">
               <span className="text-diagramaxis-textMuted">Proporción de apertura / vano:</span>
-              <span className="font-bold text-diagramaxis-gold">{Math.round(prop * 100)}%</span>
+              <span className="font-bold text-diagramaxis-cyan">{Math.round(prop * 100)}%</span>
             </div>
             <input
               type="range"
@@ -1155,7 +1155,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
               step="0.05"
               value={prop}
               onChange={(e) => onChange('proporcionApertura', parseFloat(e.target.value))}
-              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+              className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
             />
           </div>
           <span className="font-mono text-[9px] text-diagramaxis-textDim">
@@ -1173,7 +1173,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
           <div className="flex flex-col gap-1">
             <div className="flex justify-between font-mono text-[10.5px]">
               <span className="text-diagramaxis-textMuted">Grado de penetración / Solapamiento:</span>
-              <span className="font-bold text-diagramaxis-gold">{Math.round(overlap * 100)}%</span>
+              <span className="font-bold text-diagramaxis-cyan">{Math.round(overlap * 100)}%</span>
             </div>
             <input
               type="range"
@@ -1182,7 +1182,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
               step="0.05"
               value={overlap}
               onChange={(e) => onChange('solapamiento', parseFloat(e.target.value))}
-              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+              className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -1223,7 +1223,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
                   onClick={() => onChange('ejeSimetria', ax)}
                   className={`py-1 rounded-xs border transition-colors ${
                     eje === ax
-                      ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                      ? 'bg-diagramaxis-cyan text-diagramaxis-bg font-bold border-diagramaxis-cyan'
                       : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
                   }`}
                 >
@@ -1235,7 +1235,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
           <div className="flex flex-col gap-1">
             <div className="flex justify-between font-mono text-[10.5px]">
               <span className="text-diagramaxis-textMuted">Separación de alas simétricas:</span>
-              <span className="font-bold text-diagramaxis-gold">{desp.toFixed(2)}x</span>
+              <span className="font-bold text-diagramaxis-cyan">{desp.toFixed(2)}x</span>
             </div>
             <input
               type="range"
@@ -1244,7 +1244,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
               step="0.05"
               value={desp}
               onChange={(e) => onChange('desplazamientoEspejo', parseFloat(e.target.value))}
-              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+              className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -1284,7 +1284,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
                   onClick={() => onChange('ejeAsimetria', ax)}
                   className={`py-1 rounded-xs border transition-colors ${
                     eje === ax
-                      ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                      ? 'bg-diagramaxis-cyan text-diagramaxis-bg font-bold border-diagramaxis-cyan'
                       : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
                   }`}
                 >
@@ -1296,7 +1296,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
           <div className="flex flex-col gap-1">
             <div className="flex justify-between font-mono text-[10.5px]">
               <span className="text-diagramaxis-textMuted">Desfase / Dislocación compositiva:</span>
-              <span className="font-bold text-diagramaxis-gold">{Math.round(shift * 100)}%</span>
+              <span className="font-bold text-diagramaxis-cyan">{Math.round(shift * 100)}%</span>
             </div>
             <input
               type="range"
@@ -1305,7 +1305,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
               step="0.05"
               value={shift}
               onChange={(e) => onChange('desplazamientoMasa', parseFloat(e.target.value))}
-              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+              className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
             />
           </div>
           <span className="font-mono text-[9px] text-diagramaxis-textDim">
@@ -1334,7 +1334,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
                 step="0.5"
                 value={aw}
                 onChange={(e) => onChange('anchoAdicion', parseFloat(e.target.value))}
-                className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+                className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -1346,7 +1346,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
                 step="0.5"
                 value={ah}
                 onChange={(e) => onChange('altoAdicion', parseFloat(e.target.value))}
-                className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+                className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -1358,7 +1358,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
                 step="0.5"
                 value={ad}
                 onChange={(e) => onChange('profundidadAdicion', parseFloat(e.target.value))}
-                className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+                className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
               />
             </div>
           </div>
@@ -1429,7 +1429,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
                   onClick={() => onChange('ejeRotacion', ax)}
                   className={`py-1 rounded-xs border transition-colors ${
                     eje === ax
-                      ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                      ? 'bg-diagramaxis-cyan text-diagramaxis-bg font-bold border-diagramaxis-cyan'
                       : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
                   }`}
                 >
@@ -1441,7 +1441,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
           <div className="flex flex-col gap-1">
             <div className="flex justify-between font-mono text-[10.5px]">
               <span className="text-diagramaxis-textMuted">Ángulo de giro:</span>
-              <span className="font-bold text-diagramaxis-gold">{ang}°</span>
+              <span className="font-bold text-diagramaxis-cyan">{ang}°</span>
             </div>
             <input
               type="range"
@@ -1450,7 +1450,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
               step="5"
               value={ang}
               onChange={(e) => onChange('anguloRotacion', parseFloat(e.target.value))}
-              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+              className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
             />
           </div>
           <span className="font-mono text-[9px] text-diagramaxis-textDim">
@@ -1476,7 +1476,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
                   onClick={() => onChange('ejeRepeticion', ax)}
                   className={`py-1 rounded-xs border transition-colors ${
                     eje === ax
-                      ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                      ? 'bg-diagramaxis-cyan text-diagramaxis-bg font-bold border-diagramaxis-cyan'
                       : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
                   }`}
                 >
@@ -1488,7 +1488,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
           <div className="flex flex-col gap-1">
             <div className="flex justify-between font-mono text-[10.5px]">
               <span className="text-diagramaxis-textMuted">Número de módulos repetidos (2 a 8):</span>
-              <span className="font-bold text-diagramaxis-gold">{count} módulos</span>
+              <span className="font-bold text-diagramaxis-cyan">{count} módulos</span>
             </div>
             <input
               type="range"
@@ -1497,7 +1497,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
               step="1"
               value={count}
               onChange={(e) => onChange('numeroRepeticiones', parseInt(e.target.value, 10))}
-              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+              className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -1530,7 +1530,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
           <div className="flex flex-col gap-1">
             <div className="flex justify-between font-mono text-[10.5px]">
               <span className="text-diagramaxis-textMuted">Factor de expansión horizontal (XZ):</span>
-              <span className="font-bold text-diagramaxis-gold">{horiz.toFixed(1)}x</span>
+              <span className="font-bold text-diagramaxis-cyan">{horiz.toFixed(1)}x</span>
             </div>
             <input
               type="range"
@@ -1539,7 +1539,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
               step="0.1"
               value={horiz}
               onChange={(e) => onChange('factorHorizontal', parseFloat(e.target.value))}
-              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+              className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -1572,7 +1572,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
         <div className="flex flex-col gap-2 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border font-mono text-[10.5px]">
           <div className="flex items-center justify-between">
             <span className="text-diagramaxis-textMuted">Rol Utilitario:</span>
-            <span className="text-diagramaxis-gold font-bold">Envolvente Exterior</span>
+            <span className="text-diagramaxis-orange font-bold">Envolvente Exterior</span>
           </div>
           <span className="text-diagramaxis-textDim text-[9.5px]">
             Crea una cáscara tectónica expandida de retícula porosa que aloja el contenido interior.
@@ -1586,7 +1586,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
         <div className="flex flex-col gap-2 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border font-mono text-[10.5px]">
           <div className="flex items-center justify-between">
             <span className="text-diagramaxis-textMuted">Rol Utilitario:</span>
-            <span className="text-diagramaxis-gold font-bold">Cuerpo Interior</span>
+            <span className="text-diagramaxis-orange font-bold">Cuerpo Interior</span>
           </div>
           <span className="text-diagramaxis-textDim text-[9.5px]">
             Escala el volumen a dimensiones compactas alojadas dentro del espacio protegido.
@@ -1600,7 +1600,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
         <div className="flex flex-col gap-2 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border font-mono text-[10.5px]">
           <div className="flex items-center justify-between">
             <span className="text-diagramaxis-textMuted">Rol Utilitario:</span>
-            <span className="text-diagramaxis-gold font-bold">Espacio Servido (Principal)</span>
+            <span className="text-diagramaxis-orange font-bold">Espacio Servido (Principal)</span>
           </div>
           <span className="text-diagramaxis-textDim text-[9.5px]">
             Espacio amplio y diáfano jerarquizado, liberado de núcleos duros.
@@ -1614,7 +1614,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
         <div className="flex flex-col gap-2 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border font-mono text-[10.5px]">
           <div className="flex items-center justify-between">
             <span className="text-diagramaxis-textMuted">Rol Utilitario:</span>
-            <span className="text-diagramaxis-gold font-bold">Núcleos Servidores (Servicios)</span>
+            <span className="text-diagramaxis-orange font-bold">Núcleos Servidores (Servicios)</span>
           </div>
           <span className="text-diagramaxis-textDim text-[9.5px]">
             Acopla torres y núcleos técnicos perimetrales para liberar la planta noble.
@@ -1632,7 +1632,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
           <div className="flex flex-col gap-1">
             <div className="flex justify-between font-mono text-[10.5px]">
               <span className="text-diagramaxis-textMuted">Distancia de separación física:</span>
-              <span className="font-bold text-diagramaxis-gold">{dist.toFixed(1)} m</span>
+              <span className="font-bold text-diagramaxis-orange">{dist.toFixed(1)} m</span>
             </div>
             <input
               type="range"
@@ -1641,7 +1641,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
               step="0.5"
               value={dist}
               onChange={(e) => onChange('distanciaSeparacion', parseFloat(e.target.value))}
-              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+              className="w-full h-1.5 accent-diagramaxis-orange cursor-pointer"
             />
           </div>
           <label className="flex items-center gap-2 cursor-pointer font-mono text-[10.5px] text-diagramaxis-textMuted hover:text-diagramaxis-text">
@@ -1649,7 +1649,7 @@ export const FirmitasSliders: React.FC<FirmitasSlidersProps> = ({ conceptId, cus
               type="checkbox"
               checked={isLinked}
               onChange={(e) => onChange('vincularConPuente', e.target.checked)}
-              className="accent-diagramaxis-gold cursor-pointer"
+              className="accent-diagramaxis-orange cursor-pointer"
             />
             <span>Articular mediante puente / pasarela de enlace</span>
           </label>

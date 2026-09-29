@@ -3,16 +3,18 @@
 @tailwind utilities;
 
 /* ============================================================
-   ThoughtStream Design System
-   Minimal, zen, distraction-free.
-   Warm neutral palette, sharp geometric edges (0px radius),
-   completely flat (no shadows), generous whitespace,
-   Libre Baskerville (display) & Inter (UI/body) & Source Code Pro (mono).
+   ThoughtStream Design System + Living Architectural Accents
+   Minimal, zen, distraction-free with vibrant Vitruvian accents:
+   - Firmitas: Gold / Amber (#C27812)
+   - Venustas: Cyan / Teal (#0E87AF)
+   - Utilitas: Terracotta / Orange (#D95312)
+   - Success: Emerald (#2E9432)
+   - Circular, tactile slider knobs (50% border radius)
    ============================================================ */
 :root {
   color-scheme: light;
 
-  /* Surface Palette */
+  /* Surface Palette (ThoughtStream Neutral Paper) */
   --da-bg: 250 250 249;          /* #FAFAF9 Warm white page background */
   --da-surface: 245 245 244;     /* #F5F5F4 Card and section backgrounds */
   --da-surface2: 239 237 235;    /* #EFEDEB Surface Raised / subtle callouts */
@@ -21,16 +23,16 @@
   --da-border-light: 214 211 209;/* #D6D3D1 Border Medium */
   --da-brand-chip: 28 25 23;     /* #1C1917 Warm Black */
 
-  /* Brand Palette */
-  --da-gold: 120 113 108;        /* #78716C Primary Stone */
-  --da-gold-muted: 168 162 158;  /* #A8A29E Secondary Sage */
-  --da-gold-hover: 87 83 78;     /* #57534E Stone-600 */
-  --da-gold-engraved: 28 25 23;  /* #1C1917 Tertiary */
-  --da-orange: 120 113 108;      /* #78716C Primary Stone */
-  --da-orange-ink: 28 25 23;
-  --da-cyan: 168 162 158;        /* #A8A29E Secondary Sage */
-  --da-cyan-bright: 120 113 108;
-  --da-cyan-ink: 28 25 23;
+  /* Living Brand & Architectural Accent Palette */
+  --da-gold: 194 120 18;         /* #C27812 Warm Architectural Gold / Firmitas */
+  --da-gold-muted: 168 110 30;   /* #A86E1E */
+  --da-gold-hover: 160 95 12;    /* #A05F0C */
+  --da-gold-engraved: 120 70 8;   /* #784608 */
+  --da-orange: 217 83 18;        /* #D95312 Vibrant Terracotta / Utilitas */
+  --da-orange-ink: 185 65 12;    /* #B9410C */
+  --da-cyan: 14 135 175;         /* #0E87AF Crisp Architectural Cyan / Venustas */
+  --da-cyan-bright: 2 132 199;   /* #0284C7 Sky Blue */
+  --da-cyan-ink: 7 100 135;      /* #076487 */
 
   /* Neutral Materials */
   --da-kraft: 245 245 244;       /* #F5F5F4 */
@@ -48,11 +50,11 @@
   --da-text-dim: 168 162 158;    /* #A8A29E Text Tertiary */
 
   /* Semantic Colors */
-  --da-success: 101 163 13;      /* #65A30D */
-  --da-success-hover: 77 124 15;
+  --da-success: 46 148 50;       /* #2E9432 Emerald */
+  --da-success-hover: 34 120 38;
   --da-success-ink: 250 250 249;
-  --da-warn: 202 138 4;          /* #CA8A04 */
-  --da-danger: 220 38 38;        /* #DC2626 */
+  --da-warn: 217 119 6;          /* #D97706 Amber */
+  --da-danger: 220 38 38;        /* #DC2626 Red */
   --da-white: 250 250 249;
 
   /* Panels */
@@ -74,15 +76,15 @@
   --da-wood-muted: 87 83 78;
 
   /* Range & Scrollbar */
-  --da-range-track: 214 211 209; /* #D6D3D1 */
+  --da-range-track: 220 216 210; /* Soft neutral track */
   --da-scroll-thumb: 214 211 209;/* #D6D3D1 */
   --da-scroll-thumb-hover: 120 113 108; /* #78716C */
 
-  /* React Flow: ThoughtStream Palette */
-  --xy-selection-background-color: rgb(120 113 108 / 0.08);
-  --xy-selection-border: 1px dotted rgb(120 113 108 / 0.6);
-  --xy-connectionline-stroke: rgb(120 113 108);
-  --xy-edge-stroke: rgb(120 113 108);
+  /* React Flow: Living Color Accents */
+  --xy-selection-background-color: rgb(194 120 18 / 0.08);
+  --xy-selection-border: 1px dotted rgb(194 120 18 / 0.6);
+  --xy-connectionline-stroke: rgb(194 120 18);
+  --xy-edge-stroke: rgb(194 120 18);
   --xy-minimap-background-color: rgb(245 245 244);
   --xy-minimap-mask-background-color: rgba(239, 237, 235, 0.85);
   --xy-attribution-background-color: transparent;
@@ -90,7 +92,7 @@
   /* 3D Viewport */
   --da-3d-bg: 250 250 249;       /* #FAFAF9 */
   --da-3d-ground: 239 237 235;   /* #EFEDEB */
-  --da-3d-grid-major: 120 113 108; /* #78716C */
+  --da-3d-grid-major: 194 120 18; /* warm gold grid line */
   --da-3d-grid-minor: 214 211 209; /* #D6D3D1 */
   --da-3d-fog: 250 250 249;
 }
@@ -107,16 +109,16 @@
   --da-border-light: 68 64 60;   /* #44403C */
   --da-brand-chip: 250 250 249;  /* #FAFAF9 */
 
-  /* Brand Palette */
-  --da-gold: 168 162 158;        /* #A8A29E Secondary Sage */
-  --da-gold-muted: 120 113 108;  /* #78716C Primary Stone */
-  --da-gold-hover: 214 211 209;  /* #D6D3D1 */
-  --da-gold-engraved: 250 250 249;
-  --da-orange: 168 162 158;
-  --da-orange-ink: 250 250 249;
-  --da-cyan: 120 113 108;
-  --da-cyan-bright: 168 162 158;
-  --da-cyan-ink: 250 250 249;
+  /* Living Brand & Architectural Accent Palette */
+  --da-gold: 229 169 59;         /* #E5A93B Warm Gold / Firmitas */
+  --da-gold-muted: 180 130 45;
+  --da-gold-hover: 245 185 75;
+  --da-gold-engraved: 250 215 130;
+  --da-orange: 249 115 22;       /* #F97316 Vibrant Orange / Utilitas */
+  --da-orange-ink: 251 146 60;
+  --da-cyan: 56 189 248;         /* #38BDF8 Electric Cyan / Venustas */
+  --da-cyan-bright: 14 165 233;
+  --da-cyan-ink: 125 211 252;
 
   /* Materials */
   --da-kraft: 41 37 36;
@@ -134,11 +136,11 @@
   --da-text-dim: 168 162 158;    /* #A8A29E */
 
   /* Semantics */
-  --da-success: 101 163 13;      /* #65A30D */
-  --da-success-hover: 132 204 22;
+  --da-success: 34 197 94;       /* #22C55E */
+  --da-success-hover: 74 222 128;
   --da-success-ink: 28 25 23;
-  --da-warn: 202 138 4;          /* #CA8A04 */
-  --da-danger: 220 38 38;        /* #DC2626 */
+  --da-warn: 245 158 11;         /* #F59E0B */
+  --da-danger: 239 68 68;        /* #EF4444 */
   --da-white: 250 250 249;
 
   /* Panels */
@@ -165,10 +167,10 @@
   --da-scroll-thumb-hover: 168 162 158;
 
   /* React Flow */
-  --xy-selection-background-color: rgb(168 162 158 / 0.12);
-  --xy-selection-border: 1px dotted rgb(168 162 158 / 0.6);
-  --xy-connectionline-stroke: rgb(168 162 158);
-  --xy-edge-stroke: rgb(168 162 158);
+  --xy-selection-background-color: rgb(229 169 59 / 0.12);
+  --xy-selection-border: 1px dotted rgb(229 169 59 / 0.6);
+  --xy-connectionline-stroke: rgb(229 169 59);
+  --xy-edge-stroke: rgb(229 169 59);
   --xy-minimap-background-color: rgb(41 37 36);
   --xy-minimap-mask-background-color: rgba(28, 25, 23, 0.85);
   --xy-attribution-background-color: transparent;
@@ -176,7 +178,7 @@
   /* 3D Viewport */
   --da-3d-bg: 28 25 23;          /* #1C1917 */
   --da-3d-ground: 35 32 30;
-  --da-3d-grid-major: 168 162 158;
+  --da-3d-grid-major: 229 169 59;
   --da-3d-grid-minor: 68 64 60;
   --da-3d-fog: 28 25 23;
 }
@@ -201,14 +203,10 @@
     font-family: 'Source Code Pro', 'Fira Code', Consolas, monospace;
   }
 
-  /* ThoughtStream Focus Ring: 0 0 0 2px #FAFAF9, 0 0 0 4px #78716C */
+  /* Focus Ring */
   :focus-visible {
     outline: none !important;
-    box-shadow: 0 0 0 2px #FAFAF9, 0 0 0 4px #78716C !important;
-  }
-  .dark :focus-visible {
-    outline: none !important;
-    box-shadow: 0 0 0 2px #1C1917, 0 0 0 4px #A8A29E !important;
+    box-shadow: 0 0 0 2px rgb(var(--da-bg)), 0 0 0 4px rgb(var(--da-gold)) !important;
   }
 
   /* Selection style */
@@ -217,61 +215,99 @@
     color: inherit;
   }
 
-  /* ThoughtStream Flat & Sharp edges rule:
-     0px radius for all elements; full 9999px only for avatars/radios */
-  button, input, select, textarea, div:not(.rounded-full):not([class*="rounded-full"]), span:not(.rounded-full):not([class*="rounded-full"]) {
+  /* Flat & Sharp edges rule:
+     0px radius for containers and inputs, but keep full rounding for circular thumbs, radios, pills, avatars */
+  button, input:not([type='range']):not([type='radio']):not(.rounded-full), select, textarea, div:not(.rounded-full):not([class*="rounded-full"]), span:not(.rounded-full):not([class*="rounded-full"]) {
     border-radius: 0px !important;
   }
   .rounded-full {
     border-radius: 9999px !important;
   }
 
-  /* ThoughtStream Flat Rule: Completely flat, no box shadows */
-  *, ::before, ::after {
-    box-shadow: none !important;
-  }
-  *:focus-visible {
-    box-shadow: 0 0 0 2px #FAFAF9, 0 0 0 4px #78716C !important;
-  }
-  .dark *:focus-visible {
-    box-shadow: 0 0 0 2px #1C1917, 0 0 0 4px #A8A29E !important;
-  }
-
-  /* Range inputs geometric & flat */
+  /* ============================================================
+     Circular Sliders (Modificadores y Parámetros con perillas redondas)
+     ============================================================ */
   input[type='range'] {
     -webkit-appearance: none;
     appearance: none;
     background: rgb(var(--da-range-track));
-    border-radius: 0px !important;
-    height: 4px;
+    border-radius: 9999px !important;
+    height: 6px;
+    outline: none;
+    cursor: pointer;
+    transition: background 0.15s ease;
   }
 
+  /* Webkit Circular Thumbs */
   input[type='range']::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 14px;
-    height: 14px;
-    border-radius: 0px !important;
-    background: #78716C;
+    width: 16px;
+    height: 16px;
+    border-radius: 50% !important;
+    background: rgb(var(--da-gold));
     cursor: pointer;
-    border: none;
+    border: 2.5px solid rgb(var(--da-bg));
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25) !important;
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s ease;
   }
 
+  /* Firefox Circular Thumbs */
   input[type='range']::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
-    border-radius: 0px !important;
-    background: #78716C;
+    width: 16px;
+    height: 16px;
+    border-radius: 50% !important;
+    background: rgb(var(--da-gold));
     cursor: pointer;
-    border: none;
+    border: 2.5px solid rgb(var(--da-bg));
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25) !important;
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s ease;
   }
 
-  .dark input[type='range']::-webkit-slider-thumb {
-    background: #A8A29E;
+  input[type='range']:hover::-webkit-slider-thumb {
+    transform: scale(1.22);
+    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.35) !important;
+  }
+  input[type='range']:hover::-moz-range-thumb {
+    transform: scale(1.22);
+    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.35) !important;
   }
 
-  .dark input[type='range']::-moz-range-thumb {
-    background: #A8A29E;
+  /* Mapeo de acentos de color vibrantes a las perillas circulares */
+  input[type='range'].accent-diagramaxis-gold::-webkit-slider-thumb,
+  input[type='range'][class*='accent-diagramaxis-gold']::-webkit-slider-thumb {
+    background: rgb(var(--da-gold)) !important;
+  }
+  input[type='range'].accent-diagramaxis-gold::-moz-range-thumb,
+  input[type='range'][class*='accent-diagramaxis-gold']::-moz-range-thumb {
+    background: rgb(var(--da-gold)) !important;
+  }
+
+  input[type='range'].accent-diagramaxis-cyan::-webkit-slider-thumb,
+  input[type='range'][class*='accent-diagramaxis-cyan']::-webkit-slider-thumb {
+    background: rgb(var(--da-cyan)) !important;
+  }
+  input[type='range'].accent-diagramaxis-cyan::-moz-range-thumb,
+  input[type='range'][class*='accent-diagramaxis-cyan']::-moz-range-thumb {
+    background: rgb(var(--da-cyan)) !important;
+  }
+
+  input[type='range'].accent-diagramaxis-orange::-webkit-slider-thumb,
+  input[type='range'][class*='accent-diagramaxis-orange']::-webkit-slider-thumb {
+    background: rgb(var(--da-orange)) !important;
+  }
+  input[type='range'].accent-diagramaxis-orange::-moz-range-thumb,
+  input[type='range'][class*='accent-diagramaxis-orange']::-moz-range-thumb {
+    background: rgb(var(--da-orange)) !important;
+  }
+
+  input[type='range'].accent-diagramaxis-success::-webkit-slider-thumb,
+  input[type='range'][class*='accent-diagramaxis-success']::-webkit-slider-thumb {
+    background: rgb(var(--da-success)) !important;
+  }
+  input[type='range'].accent-diagramaxis-success::-moz-range-thumb,
+  input[type='range'][class*='accent-diagramaxis-success']::-moz-range-thumb {
+    background: rgb(var(--da-success)) !important;
   }
 }
 
@@ -285,7 +321,7 @@
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: rgb(var(--da-scroll-thumb));
-  border-radius: 0px !important;
+  border-radius: 9999px !important;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgb(var(--da-scroll-thumb-hover));

@@ -5,7 +5,7 @@ import { getVolumetricOperation } from '../../data/volumetricOperations';
 import { DiscourseEditor } from '../discourse/DiscourseEditor';
 import { ReferencesList } from '../discourse/ReferencesList';
 import { CoherenceMeter } from '../evaluation/CoherenceMeter';
-import { FirmitasSliders, ARCHITECTURAL_CUSTOM_LIST } from './FirmitasSliders';
+import { FirmitasSliders, ARCHITECTURAL_CUSTOM_LIST, VENUSTAS_LIST, UTILITAS_LIST } from './FirmitasSliders';
 import { Sparkles, X, Plus, Trash2, Move, Layers, Box, RotateCcw } from 'lucide-react';
 
 export const RightSidebar: React.FC = () => {
@@ -49,6 +49,14 @@ export const RightSidebar: React.FC = () => {
   const currentParam = (currentNodeId && currentObject?.nodeParams?.[currentNodeId])
     ? currentObject.nodeParams[currentNodeId]
     : (currentNodeId ? nodeParams[currentNodeId] || { weight: 0.6, intensity: 0.5 } : { weight: 0.6, intensity: 0.5 });
+
+  const isVenustas = currentConcept?.subcategory === 'Venustas' || (currentNodeId ? (VENUSTAS_LIST as readonly string[]).includes(currentNodeId) : false);
+  const isUtilitas = currentConcept?.subcategory === 'Utilitas' || (currentNodeId ? (UTILITAS_LIST as readonly string[]).includes(currentNodeId) : false);
+  const categoryLabel = isVenustas ? 'Venustas' : isUtilitas ? 'Utilitas' : 'Firmitas';
+  const categoryColorClass = isVenustas ? 'text-diagramaxis-cyan' : isUtilitas ? 'text-diagramaxis-orange' : 'text-diagramaxis-gold';
+  const categoryBgClass = isVenustas ? 'bg-diagramaxis-cyan' : isUtilitas ? 'bg-diagramaxis-orange' : 'bg-diagramaxis-gold';
+  const categoryBorderClass = isVenustas ? 'border-diagramaxis-cyan' : isUtilitas ? 'border-diagramaxis-orange' : 'border-diagramaxis-gold';
+  const categoryAccentClass = isVenustas ? 'accent-diagramaxis-cyan' : isUtilitas ? 'accent-diagramaxis-orange' : 'accent-diagramaxis-gold';
 
   return (
     <aside className="w-[340px] min-w-[340px] h-full bg-diagramaxis-surface border-l border-diagramaxis-border flex flex-col z-20 select-none text-diagramaxis-text">
@@ -453,9 +461,9 @@ export const RightSidebar: React.FC = () => {
 
                     {/* Badge de Operación Volumétrica */}
                     {currentOp ? (
-                      <div className="p-3 bg-diagramaxis-chipBg border border-diagramaxis-gold/40 rounded-xs flex flex-col gap-1">
-                        <div className="flex items-center gap-2 font-mono text-[12px] text-diagramaxis-gold font-bold">
-                          <Sparkles className="w-4 h-4 text-diagramaxis-gold" />
+                      <div className={`p-3 bg-diagramaxis-chipBg border ${categoryBorderClass}/40 rounded-xs flex flex-col gap-1`}>
+                        <div className={`flex items-center gap-2 font-mono text-[12px] ${categoryColorClass} font-bold`}>
+                          <Sparkles className={`w-4 h-4 ${categoryColorClass}`} />
                           <span>Operación 3D: {currentOp.label}</span>
                         </div>
                         {currentOp.pedagogicalTip && (
@@ -512,9 +520,14 @@ export const RightSidebar: React.FC = () => {
                     {/* Modificadores Operacionales Configurables */}
                     {currentOp && (
                       <div className="flex flex-col gap-3 pt-3 border-t border-diagramaxis-border">
-                        <span className="font-mono text-[10px] uppercase tracking-widest text-diagramaxis-gold font-bold">
-                          Modificadores Volumétricos 3D
-                        </span>
+                        <div className="flex items-center justify-between">
+                          <span className={`font-mono text-[10px] uppercase tracking-widest font-bold ${categoryColorClass}`}>
+                            Modificadores Volumétricos 3D
+                          </span>
+                          <span className={`font-mono text-[9px] uppercase px-1.5 py-0.5 rounded-xs font-semibold ${categoryBgClass}/15 ${categoryColorClass} border ${categoryBorderClass}/30`}>
+                            {categoryLabel}
+                          </span>
+                        </div>
 
                         {ARCHITECTURAL_CUSTOM_LIST.includes(currentNodeId as any) ? (
                           <FirmitasSliders
@@ -539,7 +552,7 @@ export const RightSidebar: React.FC = () => {
                                     onClick={() => setNodeCustomParam(currentNodeId, 'voidAxis', ax)}
                                     className={`py-1 rounded-xs border transition-colors ${
                                       (currentParam.custom?.voidAxis || currentOp.dir || 'Z') === ax
-                                        ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                                        ? `${categoryBgClass} text-diagramaxis-bg font-bold ${categoryBorderClass}`
                                         : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
                                     }`}
                                   >
@@ -552,7 +565,7 @@ export const RightSidebar: React.FC = () => {
                             <div className="flex flex-col gap-1">
                               <div className="flex justify-between font-mono text-[10.5px]">
                                 <span className="text-diagramaxis-textMuted">Ancho del Vacío:</span>
-                                <span className="font-bold text-diagramaxis-gold">
+                                <span className={`font-bold ${categoryColorClass}`}>
                                   {Math.round(((currentParam.custom?.voidW as number) ?? (currentOp.size || 0.35)) * 100)}%
                                 </span>
                               </div>
@@ -563,14 +576,14 @@ export const RightSidebar: React.FC = () => {
                                 step="0.05"
                                 value={(currentParam.custom?.voidW as number) ?? (currentOp.size || 0.35)}
                                 onChange={(e) => setNodeCustomParam(currentNodeId, 'voidW', parseFloat(e.target.value))}
-                                className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+                                className={`w-full h-1.5 ${categoryAccentClass} cursor-pointer`}
                               />
                             </div>
 
                             <div className="flex flex-col gap-1">
                               <div className="flex justify-between font-mono text-[10.5px]">
                                 <span className="text-diagramaxis-textMuted">Alto del Vacío:</span>
-                                <span className="font-bold text-diagramaxis-gold">
+                                <span className={`font-bold ${categoryColorClass}`}>
                                   {Math.round(((currentParam.custom?.voidH as number) ?? (currentOp.size || 0.35)) * 100)}%
                                 </span>
                               </div>
@@ -581,7 +594,7 @@ export const RightSidebar: React.FC = () => {
                                 step="0.05"
                                 value={(currentParam.custom?.voidH as number) ?? (currentOp.size || 0.35)}
                                 onChange={(e) => setNodeCustomParam(currentNodeId, 'voidH', parseFloat(e.target.value))}
-                                className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+                                className={`w-full h-1.5 ${categoryAccentClass} cursor-pointer`}
                               />
                             </div>
 
@@ -638,7 +651,7 @@ export const RightSidebar: React.FC = () => {
                                     onClick={() => setNodeCustomParam(currentNodeId, 'fragments', cnt)}
                                     className={`py-1 rounded-xs border transition-colors ${
                                       ((currentParam.custom?.fragments as number) || 2) === cnt
-                                        ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                                        ? `${categoryBgClass} text-diagramaxis-bg font-bold ${categoryBorderClass}`
                                         : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
                                     }`}
                                   >
@@ -651,7 +664,7 @@ export const RightSidebar: React.FC = () => {
                             <div className="flex flex-col gap-1">
                               <div className="flex justify-between font-mono text-[10.5px]">
                                 <span className="text-diagramaxis-textMuted">Distancia de Fisura (Gap):</span>
-                                <span className="font-bold text-diagramaxis-gold">
+                                <span className={`font-bold ${categoryColorClass}`}>
                                   {(((currentParam.custom?.gap as number) ?? 0.15) * 100).toFixed(0)}%
                                 </span>
                               </div>
@@ -662,7 +675,7 @@ export const RightSidebar: React.FC = () => {
                                 step="0.02"
                                 value={(currentParam.custom?.gap as number) ?? 0.15}
                                 onChange={(e) => setNodeCustomParam(currentNodeId, 'gap', parseFloat(e.target.value))}
-                                className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+                                className={`w-full h-1.5 ${categoryAccentClass} cursor-pointer`}
                               />
                             </div>
 
@@ -691,7 +704,7 @@ export const RightSidebar: React.FC = () => {
                           <div className="flex flex-col gap-2 bg-diagramaxis-bg p-2.5 rounded-xs border border-diagramaxis-border">
                             <div className="flex justify-between font-mono text-[10.5px]">
                               <span className="text-diagramaxis-textMuted">Escala vs Figura Humana:</span>
-                              <span className="font-bold text-diagramaxis-gold">
+                              <span className={`font-bold ${categoryColorClass}`}>
                                 {((currentParam.custom?.colossalScale as number) ?? (currentNodeId === 'Colosal' ? 2.5 : 1.0)).toFixed(1)}x
                               </span>
                             </div>
@@ -702,7 +715,7 @@ export const RightSidebar: React.FC = () => {
                               step="0.1"
                               value={(currentParam.custom?.colossalScale as number) ?? (currentNodeId === 'Colosal' ? 2.5 : 1.0)}
                               onChange={(e) => setNodeCustomParam(currentNodeId, 'colossalScale', parseFloat(e.target.value))}
-                              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+                              className={`w-full h-1.5 ${categoryAccentClass} cursor-pointer`}
                             />
                             <span className="font-mono text-[9.5px] text-diagramaxis-textMuted">
                               Compara visualmente con la silueta humana dorada de 1.75m.
@@ -716,7 +729,7 @@ export const RightSidebar: React.FC = () => {
                             <div className="flex flex-col gap-1">
                               <div className="flex justify-between font-mono text-[10.5px]">
                                 <span className="text-diagramaxis-textMuted">Ancho de Patio:</span>
-                                <span className="font-bold text-diagramaxis-gold">
+                                <span className={`font-bold ${categoryColorClass}`}>
                                   {Math.round(((currentParam.custom?.courtW as number) ?? 0.45) * 100)}%
                                 </span>
                               </div>
@@ -727,14 +740,14 @@ export const RightSidebar: React.FC = () => {
                                 step="0.05"
                                 value={(currentParam.custom?.courtW as number) ?? 0.45}
                                 onChange={(e) => setNodeCustomParam(currentNodeId, 'courtW', parseFloat(e.target.value))}
-                                className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+                                className={`w-full h-1.5 ${categoryAccentClass} cursor-pointer`}
                               />
                             </div>
 
                             <div className="flex flex-col gap-1">
                               <div className="flex justify-between font-mono text-[10.5px]">
                                 <span className="text-diagramaxis-textMuted">Profundidad de Patio:</span>
-                                <span className="font-bold text-diagramaxis-gold">
+                                <span className={`font-bold ${categoryColorClass}`}>
                                   {Math.round(((currentParam.custom?.courtD as number) ?? 0.45) * 100)}%
                                 </span>
                               </div>
@@ -745,7 +758,7 @@ export const RightSidebar: React.FC = () => {
                                 step="0.05"
                                 value={(currentParam.custom?.courtD as number) ?? 0.45}
                                 onChange={(e) => setNodeCustomParam(currentNodeId, 'courtD', parseFloat(e.target.value))}
-                                className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+                                className={`w-full h-1.5 ${categoryAccentClass} cursor-pointer`}
                               />
                             </div>
 
