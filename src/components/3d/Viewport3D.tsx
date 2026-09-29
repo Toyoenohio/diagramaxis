@@ -1120,7 +1120,7 @@ export const Viewport3D: React.FC = () => {
             y="11"
             textAnchor="middle"
             fontSize="8"
-            fontFamily="DM Mono"
+            fontFamily="'Source Code Pro', monospace"
             style={{ fill: 'rgb(var(--da-gold))' }}
             fontWeight="bold"
           >
@@ -1130,13 +1130,13 @@ export const Viewport3D: React.FC = () => {
       </div>
 
       {/* Controles de Renderizado Inferiores */}
-      <div className="absolute bottom-3.5 right-3.5 flex items-center bg-diagramaxis-surface/95 backdrop-blur-md border border-diagramaxis-border shadow-xl rounded-sm p-1.5 gap-1.5 z-10">
+      <div className="absolute bottom-3.5 right-3.5 flex items-center bg-diagramaxis-surface border border-diagramaxis-border p-1.5 gap-1.5 z-10">
         <button
           onClick={() => setShadingMode('solid')}
           title="Modo Sólido (Bloques Blancos)"
-          className={`px-3 py-1.5 text-[11px] font-mono rounded-xs transition-all ${
+          className={`px-3 py-1.5 text-[11px] font-mono transition-colors ${
             shadingMode === 'solid'
-              ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold shadow-[0_0_10px_rgb(var(--da-gold)/0.3)]'
+              ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold'
               : 'text-diagramaxis-textMuted hover:bg-diagramaxis-surface2 hover:text-diagramaxis-text'
           }`}
         >
@@ -1145,9 +1145,9 @@ export const Viewport3D: React.FC = () => {
         <button
           onClick={() => setShadingMode('wire')}
           title="Modo Alámbrico"
-          className={`px-3 py-1.5 text-[11px] font-mono rounded-xs transition-all ${
+          className={`px-3 py-1.5 text-[11px] font-mono transition-colors ${
             shadingMode === 'wire'
-              ? 'bg-diagramaxis-cyan text-diagramaxis-bg font-bold shadow-[0_0_10px_rgb(var(--da-cyan)/0.3)]'
+              ? 'bg-diagramaxis-cyan text-diagramaxis-bg font-bold'
               : 'text-diagramaxis-textMuted hover:bg-diagramaxis-surface2 hover:text-diagramaxis-text'
           }`}
         >
@@ -1156,9 +1156,9 @@ export const Viewport3D: React.FC = () => {
         <button
           onClick={() => setShadingMode('ghost')}
           title="Modo Rayos X"
-          className={`px-3 py-1.5 text-[11px] font-mono rounded-xs transition-all ${
+          className={`px-3 py-1.5 text-[11px] font-mono transition-colors ${
             shadingMode === 'ghost'
-              ? 'bg-diagramaxis-orange text-diagramaxis-white font-bold shadow-[0_0_10px_rgb(var(--da-orange)/0.3)]'
+              ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold'
               : 'text-diagramaxis-textMuted hover:bg-diagramaxis-surface2 hover:text-diagramaxis-text'
           }`}
         >
@@ -1168,9 +1168,9 @@ export const Viewport3D: React.FC = () => {
         <button
           onClick={toggleHumanFigure}
           title={showHumanFigure ? 'Ocultar Escala Humana (1.75m)' : 'Mostrar Escala Humana (1.75m)'}
-          className={`px-3 py-1.5 text-[11px] font-mono rounded-xs transition-all ${
+          className={`px-3 py-1.5 text-[11px] font-mono transition-colors ${
             showHumanFigure
-              ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold shadow-[0_0_10px_rgb(var(--da-gold)/0.3)]'
+              ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold'
               : 'text-diagramaxis-textMuted hover:bg-diagramaxis-surface2 hover:text-diagramaxis-text'
           }`}
         >

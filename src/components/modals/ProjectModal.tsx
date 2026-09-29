@@ -53,17 +53,17 @@ export const ProjectModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 bg-diagramaxis-overlay/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-diagramaxis-evalDeep border border-diagramaxis-evalBorder w-full max-w-[480px] rounded-sm shadow-2xl p-7 flex flex-col gap-5 select-none text-diagramaxis-text">
+      <div className="bg-diagramaxis-surface border border-diagramaxis-border w-full max-w-[480px] p-7 flex flex-col gap-5 select-none text-diagramaxis-text">
         {/* Cabecera */}
         <div className="flex items-start justify-between">
           <div>
-            <span className="font-mono text-[9px] uppercase tracking-widest text-diagramaxis-success font-semibold">
+            <span className="font-sans text-[11px] uppercase tracking-wider text-diagramaxis-gold font-semibold">
               Simulador Proyectual Arquitectónico
             </span>
-            <h2 className="font-serif font-bold text-[24px] text-diagramaxis-text leading-tight">
+            <h2 className="font-serif font-bold text-[24px] text-diagramaxis-text leading-tight mt-0.5">
               {isInitialized ? 'Propiedades del Proyecto' : 'Iniciar Nuevo Proyecto'}
             </h2>
-            <span className="font-mono text-[10.5px] text-diagramaxis-textMuted">
+            <span className="font-sans text-[12px] text-diagramaxis-textMuted">
               Sistema Proyectual ARPV · Angel Ramón Peña Villegas
             </span>
           </div>
@@ -71,7 +71,7 @@ export const ProjectModal: React.FC = () => {
           {isInitialized && (
             <button
               onClick={() => setModalOpen('project', false)}
-              className="text-diagramaxis-textMuted hover:text-diagramaxis-text p-1"
+              className="text-diagramaxis-textMuted hover:text-diagramaxis-text p-1 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -81,7 +81,7 @@ export const ProjectModal: React.FC = () => {
         {/* Formulario */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="font-mono text-[10.5px] uppercase tracking-wider text-diagramaxis-textMuted font-semibold">
+            <label className="font-sans text-[13px] font-semibold text-diagramaxis-textSecondary">
               Nombre del Proyecto
             </label>
             <input
@@ -90,12 +90,12 @@ export const ProjectModal: React.FC = () => {
               value={pName}
               onChange={(e) => setPName(e.target.value)}
               placeholder="Ej. Centro Cultural del Lago"
-              className="w-full p-3 bg-diagramaxis-evalBg border border-diagramaxis-evalBorder focus:border-diagramaxis-success rounded-xs font-serif italic text-[16px] text-diagramaxis-text outline-none placeholder:text-diagramaxis-textDim"
+              className="w-full p-3 bg-diagramaxis-bg border border-diagramaxis-border focus:border-diagramaxis-gold font-serif italic text-[16px] text-diagramaxis-text outline-none placeholder:text-diagramaxis-textDim transition-colors"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="font-mono text-[10.5px] uppercase tracking-wider text-diagramaxis-textMuted font-semibold">
+            <label className="font-sans text-[13px] font-semibold text-diagramaxis-textSecondary">
               Nombre del Arquitecto / Estudiante
             </label>
             <input
@@ -104,12 +104,12 @@ export const ProjectModal: React.FC = () => {
               value={aName}
               onChange={(e) => setAName(e.target.value)}
               placeholder="Ej. Juan David Giraldo"
-              className="w-full p-3 bg-diagramaxis-evalBg border border-diagramaxis-evalBorder focus:border-diagramaxis-success rounded-xs font-mono text-[12px] text-diagramaxis-text outline-none placeholder:text-diagramaxis-textDim"
+              className="w-full p-3 bg-diagramaxis-bg border border-diagramaxis-border focus:border-diagramaxis-gold font-sans text-[14px] text-diagramaxis-text outline-none placeholder:text-diagramaxis-textDim transition-colors"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="font-mono text-[10.5px] uppercase tracking-wider text-diagramaxis-textMuted font-semibold">
+            <label className="font-sans text-[13px] font-semibold text-diagramaxis-textSecondary">
               Ubicación & Orientación Solar (Ciudad, País)
             </label>
             <input
@@ -117,25 +117,25 @@ export const ProjectModal: React.FC = () => {
               value={loc}
               onChange={(e) => setLoc(e.target.value)}
               placeholder="Ej. Bogotá, Colombia (Lat: 4°N)"
-              className="w-full p-3 bg-diagramaxis-evalBg border border-diagramaxis-evalBorder focus:border-diagramaxis-success rounded-xs font-mono text-[12px] text-diagramaxis-text outline-none placeholder:text-diagramaxis-textDim"
+              className="w-full p-3 bg-diagramaxis-bg border border-diagramaxis-border focus:border-diagramaxis-gold font-sans text-[14px] text-diagramaxis-text outline-none placeholder:text-diagramaxis-textDim transition-colors"
             />
           </div>
 
-          <div className="p-3 bg-diagramaxis-evalBg border border-diagramaxis-evalBorder rounded-xs flex flex-col gap-1">
-            <span className="font-mono text-[9px] uppercase tracking-wider text-diagramaxis-cyan font-semibold">
+          <div className="p-3 bg-diagramaxis-surface2 border border-diagramaxis-border flex flex-col gap-1">
+            <span className="font-sans text-[11px] uppercase tracking-wider text-diagramaxis-textSecondary font-semibold">
               Declaración Metodológica y Derechos:
             </span>
-            <p className="font-mono text-[9.5px] text-diagramaxis-textBright leading-relaxed">
+            <p className="font-sans text-[12px] text-diagramaxis-textSecondary leading-relaxed">
               El Sistema Proyectual ARPV es propiedad intelectual de Angel Ramón Peña Villegas. El usuario es el único autor intelectual de las composiciones generadas.
             </p>
           </div>
 
-          <label className="flex items-center gap-2.5 font-mono text-[10.5px] text-diagramaxis-textBright cursor-pointer">
+          <label className="flex items-center gap-2.5 font-sans text-[13px] text-diagramaxis-textSecondary cursor-pointer">
             <input
               type="checkbox"
               checked={termsAccepted}
               onChange={(e) => setTermsAccepted(e.target.checked)}
-              className="w-4 h-4 accent-diagramaxis-success rounded-xs cursor-pointer"
+              className="w-4 h-4 accent-diagramaxis-gold cursor-pointer"
             />
             <span>Acepto las condiciones metodológicas de la herramienta</span>
           </label>
@@ -143,7 +143,7 @@ export const ProjectModal: React.FC = () => {
           <button
             type="submit"
             disabled={!termsAccepted || !pName.trim() || !aName.trim()}
-            className="w-full py-3 bg-diagramaxis-success hover:bg-diagramaxis-successHover text-diagramaxis-successInk font-mono text-[11px] font-bold uppercase tracking-widest disabled:opacity-30 rounded-xs transition-all mt-2 shadow-[0_0_12px_rgb(var(--da-success)/0.3)]"
+            className="w-full py-3 bg-diagramaxis-gold hover:bg-diagramaxis-goldHover text-diagramaxis-bg font-sans text-[14px] font-semibold uppercase tracking-wider disabled:opacity-40 transition-colors mt-2"
           >
             {isInitialized ? 'Guardar Cambios' : 'Comenzar Proceso Proyectual'}
           </button>

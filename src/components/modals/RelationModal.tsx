@@ -64,20 +64,20 @@ export const RelationModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 bg-diagramaxis-overlay/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-diagramaxis-evalDeep border border-diagramaxis-evalBorder w-full max-w-[460px] rounded-sm shadow-2xl p-6 flex flex-col gap-4 select-none text-diagramaxis-text">
+      <div className="bg-diagramaxis-surface border border-diagramaxis-border w-full max-w-[460px] p-6 flex flex-col gap-4 select-none text-diagramaxis-text">
         {/* Cabecera */}
         <div className="flex items-start justify-between">
           <div>
-            <span className="font-mono text-[9px] uppercase tracking-widest text-diagramaxis-cyan font-semibold">
+            <span className="font-sans text-[11px] uppercase tracking-wider text-diagramaxis-gold font-semibold">
               Topología Semántica
             </span>
-            <h2 className="font-serif font-bold text-[22px] text-diagramaxis-text">
+            <h2 className="font-serif font-bold text-[22px] text-diagramaxis-text mt-0.5">
               Nueva Relación Conceptual
             </h2>
           </div>
           <button
             onClick={() => setModalOpen('relation', false)}
-            className="text-diagramaxis-textMuted hover:text-diagramaxis-text p-1"
+            className="text-diagramaxis-textMuted hover:text-diagramaxis-text p-1 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -217,14 +217,14 @@ export const RelationModal: React.FC = () => {
             <button
               type="button"
               onClick={() => setModalOpen('relation', false)}
-              className="flex-1 py-2.5 bg-diagramaxis-evalBg hover:bg-diagramaxis-evalHover text-diagramaxis-textBright font-mono text-[11px] uppercase tracking-wider rounded-xs transition-colors"
+              className="flex-1 py-2.5 bg-transparent text-diagramaxis-gold border border-diagramaxis-border hover:bg-diagramaxis-surface2 font-sans text-[13px] font-semibold transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={fromNode === toNode || !fromNode || !toNode}
-              className="flex-1 py-2.5 bg-diagramaxis-success hover:bg-diagramaxis-successHover text-diagramaxis-successInk font-mono text-[11px] font-bold uppercase tracking-wider disabled:opacity-30 rounded-xs transition-colors shadow-[0_0_10px_rgb(var(--da-success)/0.25)]"
+              className="flex-1 py-2.5 bg-diagramaxis-gold hover:bg-diagramaxis-goldHover text-diagramaxis-bg border border-diagramaxis-gold font-sans text-[13px] font-semibold uppercase tracking-wider disabled:opacity-40 transition-colors"
             >
               Agregar Vínculo
             </button>

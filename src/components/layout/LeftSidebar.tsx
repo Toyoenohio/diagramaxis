@@ -240,11 +240,11 @@ export const LeftSidebar: React.FC = () => {
                         <div
                           key={c.id}
                           onClick={() => toggleConcept(c.id)}
-                          className={`p-3 rounded-sm border cursor-pointer transition-all flex flex-col gap-1.5 select-none ${
+                          className={`p-3 border cursor-pointer transition-all flex flex-col gap-1.5 select-none ${
                             isActive
                               ? activeCategory === 'Temas Arquitectónicos'
-                                ? 'bg-diagramaxis-surface2 border-diagramaxis-gold shadow-[0_0_14px_rgb(var(--da-gold)/0.25)] ring-1 ring-diagramaxis-gold'
-                                : 'bg-diagramaxis-surface2 border-diagramaxis-cyan shadow-[0_0_14px_rgb(var(--da-cyan)/0.25)] ring-1 ring-diagramaxis-cyan'
+                                ? 'bg-diagramaxis-surface2 border-diagramaxis-gold ring-1 ring-diagramaxis-gold'
+                                : 'bg-diagramaxis-surface2 border-diagramaxis-cyan ring-1 ring-diagramaxis-cyan'
                               : 'bg-diagramaxis-surface2/60 border-diagramaxis-border hover:border-diagramaxis-gold/70 hover:bg-diagramaxis-surface3'
                           }`}
                         >

@@ -54,53 +54,45 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
   return (
     <div
       onClick={() => setSelectedNodeId(id)}
-      className={`relative min-w-[190px] max-w-[240px] rounded-sm transition-all shadow-xl select-none ${
+      className={`relative min-w-[190px] max-w-[240px] bg-diagramaxis-bg dark:bg-diagramaxis-surface transition-colors select-none ${
         selected
-          ? 'ring-2 ring-diagramaxis-gold shadow-[0_0_18px_rgb(var(--da-gold)/0.4)]'
-          : 'shadow-md'
-      }`}
-      style={{
-        background: isArtifact
-          ? 'linear-gradient(135deg, rgb(var(--da-wood-a-art)) 0%, rgb(var(--da-wood-b-art)) 100%)'
-          : 'linear-gradient(135deg, rgb(var(--da-wood-a)) 0%, rgb(var(--da-wood-b)) 100%)',
-        border: selected
-          ? '1px solid rgb(var(--da-gold))'
+          ? 'border-2 border-diagramaxis-gold ring-1 ring-diagramaxis-gold'
           : isArtifact
-          ? '1px solid rgb(var(--da-cyan)/0.45)'
-          : '1px solid rgb(var(--da-gold)/0.32)',
-      }}
+          ? 'border border-diagramaxis-borderLight hover:border-diagramaxis-gold'
+          : 'border border-diagramaxis-border hover:border-diagramaxis-borderLight'
+      }`}
     >
       {/* Conectores en Serie: 1 Entrada (Izquierda) y 1 Salida (Derecha) */}
-      {/* 1. Puerto de Entrada: Recibe el modificador anterior en la cadena */}
+      {/* 1. Puerto de Entrada */}
       <Handle
         type="target"
         position={Position.Left}
         id="input"
         title="Entrada: Recibe la transformación anterior en la cadena en serie."
-        className="!w-3.5 !h-3.5 !bg-diagramaxis-cyan !border-2 !border-diagramaxis-bg !shadow-[0_0_10px_rgb(var(--da-cyan)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
+        className="!w-3 !h-3 !bg-diagramaxis-cyan !border !border-diagramaxis-bg cursor-crosshair hover:scale-110 transition-transform !z-10"
       />
       <Handle
         type="source"
         position={Position.Left}
         id="input-src"
         title="Entrada"
-        className="!w-3.5 !h-3.5 !opacity-0 cursor-crosshair !z-20"
+        className="!w-3 !h-3 !opacity-0 cursor-crosshair !z-20"
       />
 
-      {/* 2. Puerto de Salida: Conecta al siguiente modificador o al volumen */}
+      {/* 2. Puerto de Salida */}
       <Handle
         type="source"
         position={Position.Right}
         id="output"
         title="Salida: Conecta al siguiente modificador en serie o al volumen principal."
-        className="!w-3.5 !h-3.5 !bg-diagramaxis-gold !border-2 !border-diagramaxis-bg !shadow-[0_0_10px_rgb(var(--da-gold)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
+        className="!w-3 !h-3 !bg-diagramaxis-gold !border !border-diagramaxis-bg cursor-crosshair hover:scale-110 transition-transform !z-10"
       />
       <Handle
         type="target"
         position={Position.Right}
         id="output-tgt"
         title="Salida"
-        className="!w-3.5 !h-3.5 !opacity-0 cursor-crosshair !z-20"
+        className="!w-3 !h-3 !opacity-0 cursor-crosshair !z-20"
       />
 
       {/* Cabecera de la Ficha Grabada */}

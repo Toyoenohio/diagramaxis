@@ -31,17 +31,11 @@ export const VolumeNode: React.FC<NodeProps> = memo(({ id, data, selected }) => 
   return (
     <div
       onClick={handleClick}
-      className={`relative min-w-[210px] max-w-[250px] rounded-sm transition-all shadow-2xl select-none cursor-pointer ${
+      className={`relative min-w-[210px] max-w-[250px] bg-diagramaxis-surface transition-colors select-none cursor-pointer ${
         isSelected
-          ? 'ring-2 ring-diagramaxis-gold shadow-[0_0_22px_rgb(var(--da-gold)/0.45)]'
-          : 'shadow-lg hover:border-diagramaxis-gold/80'
+          ? 'border-2 border-diagramaxis-gold ring-1 ring-diagramaxis-gold'
+          : 'border border-diagramaxis-borderLight hover:border-diagramaxis-gold'
       }`}
-      style={{
-        background: 'linear-gradient(135deg, #18191d 0%, #0d0e11 100%)',
-        border: isSelected
-          ? '1.5px solid rgb(var(--da-gold))'
-          : '1px solid rgba(229, 169, 59, 0.45)',
-      }}
     >
       {/* Único Puerto de Entrada del Volumen Principal */}
       <Handle
@@ -49,7 +43,7 @@ export const VolumeNode: React.FC<NodeProps> = memo(({ id, data, selected }) => 
         position={Position.Left}
         id="input"
         title="Entrada de Modificaciones: Conecta aquí la salida del modificador para transformar este volumen."
-        className="!w-4 !h-4 !bg-diagramaxis-gold !border-2 !border-diagramaxis-bg !shadow-[0_0_12px_rgb(var(--da-gold)/0.9)] cursor-crosshair hover:scale-125 transition-transform !z-10"
+        className="!w-3 !h-3 !bg-diagramaxis-gold !border !border-diagramaxis-bg cursor-crosshair hover:scale-110 transition-transform !z-10"
       />
       {/* Handle auxiliar de salida en la misma posición para permitir arrastrar desde el volumen si el usuario inicia la conexión desde aquí */}
       <Handle
@@ -57,7 +51,7 @@ export const VolumeNode: React.FC<NodeProps> = memo(({ id, data, selected }) => 
         position={Position.Left}
         id="input-src"
         title="Entrada de Modificaciones"
-        className="!w-4 !h-4 !opacity-0 cursor-crosshair !z-20"
+        className="!w-3 !h-3 !opacity-0 cursor-crosshair !z-20"
       />
 
       {/* Cabecera del Volumen Base */}

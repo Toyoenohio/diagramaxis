@@ -44,7 +44,7 @@ export const StatusBar: React.FC = () => {
 
       {/* Toast Notificación Central */}
       {toastMessage && (
-        <div className="absolute left-1/2 -translate-x-1/2 bg-diagramaxis-gold text-diagramaxis-bg font-bold px-4 py-1 rounded-sm font-mono text-[12px] shadow-[0_0_16px_rgb(var(--da-gold)/0.5)] animate-fade-in flex items-center gap-1.5">
+        <div className="absolute left-1/2 -translate-x-1/2 bg-diagramaxis-gold text-diagramaxis-bg font-bold px-4 py-1 border border-diagramaxis-gold font-mono text-[12px] animate-fade-in flex items-center gap-1.5">
           <span>{toastMessage}</span>
         </div>
       )}

@@ -79,12 +79,12 @@ export const VideoExportModal: React.FC<VideoExportModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999]">
-      <div className="bg-diagramaxis-surface border border-diagramaxis-border rounded-sm shadow-2xl w-full max-w-md mx-4">
+      <div className="bg-diagramaxis-surface border border-diagramaxis-border w-full max-w-md mx-4 select-none">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-diagramaxis-border">
           <div className="flex items-center gap-2.5">
             <Video className="w-5 h-5 text-diagramaxis-gold" />
-            <h2 className="font-mono text-sm font-bold text-diagramaxis-text uppercase tracking-wider">
+            <h2 className="font-serif font-bold text-[16px] text-diagramaxis-text">
               Exportar Video de Transición
             </h2>
           </div>
@@ -224,14 +224,14 @@ export const VideoExportModal: React.FC<VideoExportModalProps> = ({
         <div className="flex items-center justify-end gap-2.5 px-5 py-3.5 border-t border-diagramaxis-border">
           <button
             onClick={onClose}
-            className="px-4 py-2 font-mono text-[11px] text-diagramaxis-textMuted hover:text-diagramaxis-text border border-diagramaxis-border rounded-xs transition-colors"
+            className="px-4 py-2 font-sans text-[13px] text-diagramaxis-textMuted hover:text-diagramaxis-text border border-diagramaxis-border transition-colors"
           >
             Cancelar
           </button>
           <button
             onClick={handleExport}
             disabled={!browserSupport.supported || (!includeOutro && conceptCount === 0)}
-            className="px-5 py-2 font-mono text-[11px] font-bold uppercase tracking-wider bg-diagramaxis-gold text-diagramaxis-bg rounded-xs hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_0_12px_rgb(var(--da-gold)/0.25)]"
+            className="px-5 py-2 font-sans text-[13px] font-semibold uppercase tracking-wider bg-diagramaxis-gold text-diagramaxis-bg border border-diagramaxis-gold hover:bg-diagramaxis-goldHover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             🎬 Exportar Video
           </button>

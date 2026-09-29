@@ -15,10 +15,10 @@ export const CoherenceMeter: React.FC = () => {
   };
 
   const getProgressColor = (score: number) => {
-    if (score >= 80) return 'bg-diagramaxis-success shadow-[0_0_8px_rgb(var(--da-success)/0.4)]';
-    if (score >= 60) return 'bg-diagramaxis-cyan shadow-[0_0_8px_rgb(var(--da-cyan)/0.4)]';
-    if (score >= 40) return 'bg-diagramaxis-warn shadow-[0_0_8px_rgb(var(--da-warn)/0.4)]';
-    return 'bg-diagramaxis-danger shadow-[0_0_8px_rgb(var(--da-danger)/0.4)]';
+    if (score >= 80) return 'bg-diagramaxis-success';
+    if (score >= 60) return 'bg-diagramaxis-cyan';
+    if (score >= 40) return 'bg-diagramaxis-warn';
+    return 'bg-diagramaxis-danger';
   };
 
   return (
@@ -41,13 +41,13 @@ export const CoherenceMeter: React.FC = () => {
 
       {/* Explicación Transparente de la Fórmula Matemática */}
       {showFormula && (
-        <div className="p-3 bg-diagramaxis-evalDeep border border-diagramaxis-gold/50 rounded-sm flex flex-col gap-2 font-mono text-[10.5px] leading-relaxed shadow-lg">
+        <div className="p-3 bg-diagramaxis-evalDeep border border-diagramaxis-gold/50 flex flex-col gap-2 font-mono text-[10.5px] leading-relaxed">
           <div className="flex items-center justify-between border-b border-diagramaxis-border pb-1">
             <span className="font-bold text-diagramaxis-gold uppercase text-[10px]">
               Fórmula Matemática de Coherencia Tripartita:
             </span>
           </div>
-          <div className="p-2 bg-diagramaxis-bg rounded-xs border border-diagramaxis-border text-center text-diagramaxis-cyan font-bold text-[11px]">
+          <div className="p-2 bg-diagramaxis-bg border border-diagramaxis-border text-center text-diagramaxis-cyan font-bold text-[11px]">
             Score = (Discurso × 0.40) + (Topología × 0.40) + (Madurez × 0.20)
           </div>
           <ul className="flex flex-col gap-1.5 text-diagramaxis-textBright text-[10px]">
@@ -65,7 +65,7 @@ export const CoherenceMeter: React.FC = () => {
       )}
 
       {/* Indicador Principal */}
-      <div className="p-3.5 bg-diagramaxis-evalBg border border-diagramaxis-evalBorder rounded-sm flex items-center justify-between gap-3 shadow-md">
+      <div className="p-3.5 bg-diagramaxis-evalBg border border-diagramaxis-evalBorder flex items-center justify-between gap-3">
         <div className="flex flex-col">
           <span className="font-mono text-[9px] uppercase tracking-wider text-diagramaxis-textMuted">
             Índice de Coherencia Tripartita

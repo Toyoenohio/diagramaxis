@@ -99,16 +99,16 @@ export const DiscourseEditor: React.FC = () => {
         <button
           onClick={syncDiscourseToDiagram}
           disabled={!discourse.trim()}
-          className="flex items-center justify-center gap-1.5 px-3 py-2 font-mono text-[10.5px] uppercase tracking-wider bg-diagramaxis-evalBg hover:bg-diagramaxis-evalHover text-diagramaxis-cyanBright border border-diagramaxis-cyan/40 disabled:opacity-30 rounded-sm transition-all"
+          className="flex items-center justify-center gap-1.5 px-3 py-2 font-sans text-[12px] font-semibold uppercase tracking-wider bg-transparent hover:bg-diagramaxis-surface2 text-diagramaxis-gold border border-diagramaxis-border disabled:opacity-40 transition-colors"
         >
-          <ArrowRight className="w-3.5 h-3.5 text-diagramaxis-cyan" />
+          <ArrowRight className="w-3.5 h-3.5 text-diagramaxis-gold" />
           <span>Discurso → Grafo</span>
         </button>
 
         <button
           onClick={handleGenerateAI}
           disabled={isGeneratingDiscourse || (activeConcepts.length === 0 && activeArtifacts.length === 0)}
-          className="flex items-center justify-center gap-1.5 px-3 py-2 font-mono text-[10.5px] uppercase tracking-wider bg-diagramaxis-success hover:bg-diagramaxis-successHover text-diagramaxis-successInk font-bold disabled:opacity-30 rounded-sm transition-all shadow-[0_0_8px_rgb(var(--da-success)/0.3)]"
+          className="flex items-center justify-center gap-1.5 px-3 py-2 font-sans text-[12px] font-semibold uppercase tracking-wider bg-diagramaxis-gold hover:bg-diagramaxis-goldHover text-diagramaxis-bg disabled:opacity-40 transition-colors"
         >
           {isGeneratingDiscourse ? (
             <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -121,8 +121,8 @@ export const DiscourseEditor: React.FC = () => {
 
       {/* Conceptos Detectados */}
       {totalDetected > 0 && (
-        <div className="flex flex-col gap-2 pt-2.5 border-t border-diagramaxis-evalBorder">
-          <span className="font-mono text-[9px] uppercase tracking-wider text-diagramaxis-textMuted font-semibold">
+        <div className="flex flex-col gap-2 pt-2.5 border-t border-diagramaxis-border">
+          <span className="font-sans text-[11px] uppercase tracking-wider text-diagramaxis-textMuted font-semibold">
             Términos Identificados en el Texto:
           </span>
           <div className="flex flex-wrap gap-1.5">
@@ -132,10 +132,10 @@ export const DiscourseEditor: React.FC = () => {
                 <button
                   key={c}
                   onClick={() => toggleConcept(c)}
-                  className={`font-mono text-[10.5px] px-2.5 py-1 rounded-sm border transition-all ${
+                  className={`font-sans text-[12px] px-2.5 py-1 border transition-colors ${
                     isActive
-                      ? 'border-diagramaxis-success bg-diagramaxis-success/20 text-diagramaxis-success font-semibold shadow-[0_0_6px_rgb(var(--da-success)/0.2)]'
-                      : 'border-diagramaxis-evalBorder bg-diagramaxis-evalBg text-diagramaxis-textMuted hover:border-diagramaxis-success hover:text-diagramaxis-text'
+                      ? 'border-diagramaxis-gold bg-diagramaxis-gold text-diagramaxis-bg font-semibold'
+                      : 'border-diagramaxis-border bg-transparent text-diagramaxis-textSecondary hover:border-diagramaxis-gold hover:text-diagramaxis-text'
                   }`}
                   title={isActive ? 'Activo en diagrama (clic para retirar)' : 'Inactivo (clic para activar en diagrama)'}
                 >
@@ -149,10 +149,10 @@ export const DiscourseEditor: React.FC = () => {
                 <button
                   key={a}
                   onClick={() => toggleArtifact(a)}
-                  className={`font-mono text-[10.5px] px-2.5 py-1 rounded-sm border transition-all ${
+                  className={`font-sans text-[12px] px-2.5 py-1 border transition-colors ${
                     isActive
-                      ? 'border-diagramaxis-cyan bg-diagramaxis-cyan/20 text-diagramaxis-cyanBright font-semibold shadow-[0_0_6px_rgb(var(--da-cyan)/0.2)]'
-                      : 'border-diagramaxis-evalBorder bg-diagramaxis-evalBg text-diagramaxis-textMuted hover:border-diagramaxis-cyan hover:text-diagramaxis-text'
+                      ? 'border-diagramaxis-gold bg-diagramaxis-gold text-diagramaxis-bg font-semibold'
+                      : 'border-diagramaxis-border bg-transparent text-diagramaxis-textSecondary hover:border-diagramaxis-gold hover:text-diagramaxis-text'
                   }`}
                   title={isActive ? 'Activo en diagrama (clic para retirar)' : 'Inactivo (clic para activar en diagrama)'}
                 >

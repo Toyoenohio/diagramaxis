@@ -5,10 +5,51 @@ export default {
     './src/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
+    borderRadius: {
+      none: '0px',
+      xs: '0px',
+      sm: '0px',
+      DEFAULT: '0px',
+      md: '0px',
+      lg: '0px',
+      xl: '0px',
+      '2xl': '0px',
+      '3xl': '0px',
+      full: '9999px',
+    },
+    boxShadow: {
+      none: 'none',
+      xs: 'none',
+      sm: 'none',
+      DEFAULT: 'none',
+      md: 'none',
+      lg: 'none',
+      xl: 'none',
+      '2xl': 'none',
+      inner: 'none',
+    },
     extend: {
       colors: {
+        thoughtstream: {
+          primary: '#78716C',
+          secondary: '#A8A29E',
+          tertiary: '#1C1917',
+          bg: '#FAFAF9',
+          surface: '#F5F5F4',
+          surfaceRaised: '#EFEDEB',
+          textPrimary: '#1C1917',
+          textSecondary: '#57534E',
+          textTertiary: '#A8A29E',
+          borderSubtle: '#E7E5E4',
+          borderMedium: '#D6D3D1',
+          borderStrong: '#A8A29E',
+          success: '#65A30D',
+          warning: '#CA8A04',
+          error: '#DC2626',
+          info: '#78716C',
+        },
         diagramaxis: {
-          // Estructura (papel / atelier)
+          // Estructura (ThoughtStream surface & borders)
           bg: 'rgb(var(--da-bg) / <alpha-value>)',
           surface: 'rgb(var(--da-surface) / <alpha-value>)',
           surface2: 'rgb(var(--da-surface2) / <alpha-value>)',
@@ -16,7 +57,7 @@ export default {
           border: 'rgb(var(--da-border) / <alpha-value>)',
           borderLight: 'rgb(var(--da-border-light) / <alpha-value>)',
           brandChip: 'rgb(var(--da-brand-chip) / <alpha-value>)',
-          // Acentos
+          // Acentos ThoughtStream (Stone & Sage)
           gold: 'rgb(var(--da-gold) / <alpha-value>)',
           goldMuted: 'rgb(var(--da-gold-muted) / <alpha-value>)',
           goldHover: 'rgb(var(--da-gold-hover) / <alpha-value>)',
@@ -32,7 +73,7 @@ export default {
           warn: 'rgb(var(--da-warn) / <alpha-value>)',
           danger: 'rgb(var(--da-danger) / <alpha-value>)',
           white: 'rgb(var(--da-white) / <alpha-value>)',
-          // Materiales (madera / corcho)
+          // Materiales neutrales ThoughtStream
           kraft: 'rgb(var(--da-kraft) / <alpha-value>)',
           kraftDark: 'rgb(var(--da-kraft-dark) / <alpha-value>)',
           kraftBorder: 'rgb(var(--da-kraft-border) / <alpha-value>)',
@@ -40,18 +81,18 @@ export default {
           cork: 'rgb(var(--da-cork) / <alpha-value>)',
           corkLight: 'rgb(var(--da-cork-light) / <alpha-value>)',
           blockWhite: 'rgb(var(--da-block-white) / <alpha-value>)',
-          // Texto
+          // Texto ThoughtStream
           text: 'rgb(var(--da-text) / <alpha-value>)',
           textBright: 'rgb(var(--da-text-bright) / <alpha-value>)',
           textMuted: 'rgb(var(--da-text-muted) / <alpha-value>)',
           textDim: 'rgb(var(--da-text-dim) / <alpha-value>)',
-          // Paneles de evaluación
+          // Paneles
           evalBg: 'rgb(var(--da-eval-bg) / <alpha-value>)',
           evalDeep: 'rgb(var(--da-eval-deep) / <alpha-value>)',
           evalBorder: 'rgb(var(--da-eval-border) / <alpha-value>)',
           evalHover: 'rgb(var(--da-eval-hover) / <alpha-value>)',
           overlay: 'rgb(var(--da-overlay) / <alpha-value>)',
-          // Fichas de madera grabada
+          // Fichas
           nodeHead: 'rgb(var(--da-node-head) / <alpha-value>)',
           nodeHeadBorder: 'rgb(var(--da-node-head-border) / <alpha-value>)',
           chipBg: 'rgb(var(--da-chip-bg) / <alpha-value>)',
@@ -60,9 +101,9 @@ export default {
         },
       },
       fontFamily: {
-        serif: ['"Cormorant Garamond"', 'serif'],
-        mono: ['"DM Mono"', 'monospace'],
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        serif: ['"Libre Baskerville"', 'Georgia', '"Times New Roman"', 'serif'],
+        sans: ['Inter', '-apple-system', '"Segoe UI"', 'Helvetica', 'sans-serif'],
+        mono: ['"Source Code Pro"', '"Fira Code"', 'Consolas', 'monospace'],
       },
     },
   },

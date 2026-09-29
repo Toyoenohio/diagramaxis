@@ -79,22 +79,22 @@ const DiagramCanvasInner: React.FC = () => {
             documenta como limitación conocida en lugar de re-posicionarlos. */}
         <Controls
           showInteractive={false}
-          className="!bg-diagramaxis-surface !border !border-diagramaxis-border !rounded-sm !shadow-xl [&>button]:!bg-diagramaxis-surface2 [&>button]:!border-diagramaxis-border [&>button]:!text-diagramaxis-gold"
+          className="!bg-diagramaxis-surface !border !border-diagramaxis-border [&>button]:!bg-diagramaxis-surface2 [&>button]:!border-diagramaxis-border [&>button]:!text-diagramaxis-gold"
         />
         <MiniMap
           nodeColor={(node) => {
             return node.data?.isArtifact ? 'rgb(var(--da-cyan))' : 'rgb(var(--da-gold))';
           }}
-          className="!bg-diagramaxis-surface !border !border-diagramaxis-gold/40 !rounded-sm !shadow-xl !w-28 !h-24"
+          className="!bg-diagramaxis-surface !border !border-diagramaxis-border !w-28 !h-24"
         />
       </ReactFlow>
 
       {/* Barra de Herramientas Superior del Tablero */}
-      <div className="absolute top-3.5 left-3.5 flex items-center bg-diagramaxis-surface/95 backdrop-blur-md border border-diagramaxis-border shadow-xl rounded-sm p-1.5 gap-1.5 z-10">
+      <div className="absolute top-3.5 left-3.5 flex items-center bg-diagramaxis-surface/95 border border-diagramaxis-border p-1.5 gap-1.5 z-10">
         <button
           onClick={() => setModalOpen('relation', true)}
           disabled={totalElements < 2}
-          className="flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider bg-diagramaxis-gold hover:bg-diagramaxis-goldHover text-diagramaxis-bg font-bold disabled:opacity-30 rounded-xs transition-all shadow-[0_0_10px_rgb(var(--da-gold)/0.3)]"
+          className="flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider bg-diagramaxis-gold hover:bg-diagramaxis-goldHover text-diagramaxis-bg font-bold disabled:opacity-30 transition-all"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>+ Hilo / Vínculo</span>
@@ -102,14 +102,14 @@ const DiagramCanvasInner: React.FC = () => {
         <button
           onClick={autoLayoutNodes}
           disabled={totalElements === 0}
-          className="flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider bg-diagramaxis-surface2 hover:bg-diagramaxis-surface3 text-diagramaxis-textBright hover:text-diagramaxis-text border border-diagramaxis-border disabled:opacity-30 rounded-xs transition-all"
+          className="flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider bg-diagramaxis-surface2 hover:bg-diagramaxis-surface3 text-diagramaxis-textBright hover:text-diagramaxis-text border border-diagramaxis-border disabled:opacity-30 transition-all"
         >
           <LayoutGrid className="w-3.5 h-3.5" />
           <span>Ordenar Fichas</span>
         </button>
         <button
           onClick={() => setShowPortGuide(!showPortGuide)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider border rounded-xs transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider border transition-all ${
             showPortGuide
               ? 'bg-diagramaxis-cyan text-diagramaxis-bg font-bold border-diagramaxis-cyan'
               : 'bg-diagramaxis-surface2 hover:bg-diagramaxis-surface3 text-diagramaxis-textBright hover:text-diagramaxis-text border border-diagramaxis-border'
@@ -122,10 +122,10 @@ const DiagramCanvasInner: React.FC = () => {
 
       {/* Modal / Overlay de Guía de Puertos y Taxonomía ARPV */}
       {showPortGuide && (
-        <div className="absolute top-16 left-3.5 z-30 w-full max-w-[440px] bg-diagramaxis-surface border border-diagramaxis-gold shadow-2xl rounded-sm p-4 text-diagramaxis-text select-none">
+        <div className="absolute top-16 left-3.5 z-30 w-full max-w-[440px] bg-diagramaxis-surface border border-diagramaxis-border p-4 text-diagramaxis-text select-none">
           <div className="flex items-center justify-between border-b border-diagramaxis-border pb-2 mb-3">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-diagramaxis-gold animate-pulse" />
+              <span className="w-2.5 h-2.5 rounded-full bg-diagramaxis-gold" />
               <h3 className="font-serif italic font-bold text-[16px] text-diagramaxis-text">
                 Guía de Puertos y Taxonomía ARPV
               </h3>
@@ -144,8 +144,8 @@ const DiagramCanvasInner: React.FC = () => {
                 1. Conexión en Serie & Puertos de Flujo (Pipeline):
               </span>
               <div className="grid grid-cols-1 gap-1.5 pl-1">
-                <div className="flex items-start gap-2 bg-diagramaxis-bg p-2 rounded-xs border border-diagramaxis-cyan/30">
-                  <span className="w-3 h-3 rounded-full bg-diagramaxis-cyan shrink-0 mt-0.5 shadow-[0_0_6px_rgb(var(--da-cyan))]" />
+                <div className="flex items-start gap-2 bg-diagramaxis-bg p-2 border border-diagramaxis-cyan/30">
+                  <span className="w-3 h-3 rounded-full bg-diagramaxis-cyan shrink-0 mt-0.5" />
                   <div>
                     <strong className="text-diagramaxis-cyan">Puerto de Entrada (Izquierda):</strong>
                     <p className="text-[10px] text-diagramaxis-textMuted leading-tight mt-0.5">
@@ -154,8 +154,8 @@ const DiagramCanvasInner: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2 bg-diagramaxis-bg p-2 rounded-xs border border-diagramaxis-gold/30">
-                  <span className="w-3 h-3 rounded-full bg-diagramaxis-gold shrink-0 mt-0.5 shadow-[0_0_6px_rgb(var(--da-gold))]" />
+                <div className="flex items-start gap-2 bg-diagramaxis-bg p-2 border border-diagramaxis-gold/30">
+                  <span className="w-3 h-3 rounded-full bg-diagramaxis-gold shrink-0 mt-0.5" />
                   <div>
                     <strong className="text-diagramaxis-gold">Puerto de Salida (Derecha):</strong>
                     <p className="text-[10px] text-diagramaxis-textMuted leading-tight mt-0.5">

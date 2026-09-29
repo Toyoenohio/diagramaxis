@@ -53,7 +53,7 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-[58px] bg-diagramaxis-surface border-b border-diagramaxis-border z-40 flex items-center px-4 justify-between shadow-lg select-none text-diagramaxis-text">
+    <header className="fixed top-0 left-0 right-0 h-[58px] bg-diagramaxis-surface border-b border-diagramaxis-border z-40 flex items-center px-4 justify-between select-none text-diagramaxis-text">
       {/* Brand & Project Info */}
       <div className="flex items-center gap-4">
         <div
@@ -61,7 +61,7 @@ export const Header: React.FC = () => {
           onClick={() => setModalOpen('project', true)}
         >
           {/* Logo Diagramaxis Icon */}
-          <div className="w-8 h-8 bg-diagramaxis-brandChip border border-diagramaxis-gold/60 flex items-center justify-center rounded-xs shadow-[0_0_10px_rgb(var(--da-gold)/0.2)] group-hover:border-diagramaxis-gold transition-all">
+          <div className="w-8 h-8 bg-diagramaxis-brandChip border border-diagramaxis-border flex items-center justify-center group-hover:border-diagramaxis-gold transition-colors">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ stroke: 'rgb(var(--da-gold))' }} strokeWidth="1.8">
               <polygon points="12 2 2 7 12 12 22 7 12 2" />
               <polyline points="2 17 12 22 22 17" />
@@ -71,11 +71,11 @@ export const Header: React.FC = () => {
 
           <div className="flex flex-col leading-tight">
             <div className="flex items-baseline gap-1">
-              <span className="font-sans font-black text-[18px] tracking-wider text-diagramaxis-text uppercase">
+              <span className="font-serif font-bold text-[18px] tracking-wide text-diagramaxis-text">
                 DIAGRAMAXIS<span className="text-diagramaxis-gold">.</span>
               </span>
             </div>
-            <span className="font-mono text-[8px] tracking-wider text-diagramaxis-textMuted">
+            <span className="font-mono text-[8.5px] tracking-wider text-diagramaxis-textMuted">
               Un juego contra el silencio sistémico · Angel Peña Villegas
             </span>
           </div>
@@ -97,7 +97,7 @@ export const Header: React.FC = () => {
       </div>
 
       {/* Indicador de Coherencia Proyectual */}
-      <div className="hidden md:flex items-center gap-2.5 px-3.5 py-1.5 bg-diagramaxis-surface2 border border-diagramaxis-border rounded-sm shadow-inner">
+      <div className="hidden md:flex items-center gap-2.5 px-3.5 py-1.5 bg-diagramaxis-surface2 border border-diagramaxis-border">
         <ShieldCheck
           className={`w-4 h-4 ${
             coherence.score >= 70 ? 'text-diagramaxis-gold' : coherence.score >= 40 ? 'text-diagramaxis-orange' : 'text-diagramaxis-danger'
@@ -121,7 +121,7 @@ export const Header: React.FC = () => {
         <button
           onClick={() => setModalOpen('studyCases', true)}
           title="Manual de Reglas y Casos de Estudio"
-          className="flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider bg-diagramaxis-surface2 hover:bg-diagramaxis-surface3 text-diagramaxis-gold border border-diagramaxis-gold/40 hover:border-diagramaxis-gold rounded-sm transition-all shadow-xs"
+          className="flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider bg-diagramaxis-surface2 hover:bg-diagramaxis-surface3 text-diagramaxis-gold border border-diagramaxis-border hover:border-diagramaxis-gold transition-all"
         >
           <BookMarked className="w-3.5 h-3.5 text-diagramaxis-gold" />
           <span className="hidden sm:inline font-semibold">Casos / Reglas</span>
@@ -131,7 +131,7 @@ export const Header: React.FC = () => {
           onClick={() => setModalOpen('relation', true)}
           disabled={activeConcepts.length + activeArtifacts.length < 2}
           title="Conectar dos fichas mediante un hilo / vínculo semántico"
-          className="flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider bg-diagramaxis-gold hover:bg-diagramaxis-goldHover text-diagramaxis-bg font-bold border border-diagramaxis-gold disabled:opacity-30 rounded-sm transition-all shadow-[0_0_12px_rgb(var(--da-gold)/0.3)]"
+          className="flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider bg-diagramaxis-gold hover:bg-diagramaxis-goldHover text-diagramaxis-bg font-bold border border-diagramaxis-gold disabled:opacity-30 transition-all"
         >
           <Plus className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">+ Hilo / Vínculo</span>

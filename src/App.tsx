@@ -110,11 +110,11 @@ export const App: React.FC = () => {
         {/* Zona Central Dividida: Tablero + Visor 3D */}
         <div ref={containerRef} className="flex-1 flex overflow-hidden relative select-none">
           {/* Selector Flotante de Modo de Visualización */}
-          <div className="absolute top-3.5 right-3.5 z-30 flex items-center bg-diagramaxis-surface/95 backdrop-blur-md border border-diagramaxis-border rounded-sm p-1 gap-1 shadow-xl">
+          <div className="absolute top-3.5 right-3.5 z-30 flex items-center bg-diagramaxis-surface border border-diagramaxis-border p-1 gap-1">
             <button
               onClick={() => setViewMode('split')}
               title="Vista Dividida (Tablero + 3D)"
-              className={`p-1.5 rounded-xs transition-colors ${
+              className={`p-1.5 transition-colors ${
                 viewMode === 'split' ? 'bg-diagramaxis-gold text-diagramaxis-bg' : 'text-diagramaxis-textMuted hover:text-diagramaxis-text'
               }`}
             >
@@ -123,7 +123,7 @@ export const App: React.FC = () => {
             <button
               onClick={() => setViewMode('diagram')}
               title="Solo Tablero de Fichas (100%)"
-              className={`p-1.5 rounded-xs transition-colors ${
+              className={`p-1.5 transition-colors ${
                 viewMode === 'diagram' ? 'bg-diagramaxis-gold text-diagramaxis-bg' : 'text-diagramaxis-textMuted hover:text-diagramaxis-text'
               }`}
             >
@@ -132,7 +132,7 @@ export const App: React.FC = () => {
             <button
               onClick={() => setViewMode('3d')}
               title="Solo Visor 3D Modular (100%)"
-              className={`p-1.5 rounded-xs transition-colors ${
+              className={`p-1.5 transition-colors ${
                 viewMode === '3d' ? 'bg-diagramaxis-gold text-diagramaxis-bg' : 'text-diagramaxis-textMuted hover:text-diagramaxis-text'
               }`}
             >

@@ -65,10 +65,7 @@ export const CustomEdge: React.FC<EdgeProps> = memo(({
             : 'rgb(var(--da-gold))',
           strokeWidth,
           strokeDasharray: relationType === 'contradice' ? '6 4' : undefined,
-          opacity: 0.6 + intensity * 0.4,
-          filter: selected
-            ? 'drop-shadow(0 0 6px rgb(var(--da-gold)))'
-            : 'drop-shadow(0 0 3px rgb(var(--da-gold)/0.4))',
+          opacity: 0.7 + intensity * 0.3,
         }}
       />
       <EdgeLabelRenderer>
@@ -78,10 +75,10 @@ export const CustomEdge: React.FC<EdgeProps> = memo(({
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
             pointerEvents: 'all',
           }}
-          className={`nodrag nopan flex items-center gap-1.5 px-2 py-1 rounded-sm text-[9.5px] font-mono border shadow-lg transition-all ${
+          className={`nodrag nopan flex items-center gap-1.5 px-2 py-1 text-[9.5px] font-mono border transition-all ${
             selected
-              ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold scale-105'
-              : 'bg-diagramaxis-surface text-diagramaxis-gold border-diagramaxis-gold/40 hover:border-diagramaxis-gold'
+              ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+              : 'bg-diagramaxis-surface text-diagramaxis-gold border-diagramaxis-border hover:border-diagramaxis-gold'
           }`}
         >
           {isEditing ? (
