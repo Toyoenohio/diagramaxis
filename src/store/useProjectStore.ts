@@ -131,62 +131,183 @@ interface ProjectState {
 
 /**
  * Resuelve las cadenas de modificadores conectados en serie hacia cada volumen.
- * Ordena topológicamente los modificadores para que se apliquen en secuencia
- * (ej. Modificador A -> Modificador B -> Volumen aplica A primero y luego B sobre A).
+ * 1. Soporta conexiones directas o inversas (Modificador -> Volumen o Volumen -> Modificador).
+ * 2. Si el usuario conecta conceptos entre sí (ej. Concepto A -> Concepto B) sin haber
+ *    cableado aún explícitamente hacia un volumen, se auto-asignan y fusionan inmediatamente
+ *    en el volumen seleccionado o principal, sin obligar al usuario a ir a la ventana de la derecha.
+ * 3. Ordena topológicamente los modificadores para que se apliquen en secuencia
+ *    (ej. Modificador A -> Modificador B aplica A primero y luego B sobre A).
+ * 4. Si un modificador se conecta a 2 o más volúmenes, se comparte entre ellos (Suma Multivolumen).
+ * 5. Conserva asignaciones manuales previas que sigan activas, evitando borrarlas inesperadamente.
  */
 export function recalculateObjectChains(
   objects: ProjectObject[],
   edges: Edge[],
   _relations: ProjectRelation[],
-  globalNodeParams: Record<string, NodeParam>
+  globalNodeParams: Record<string, NodeParam>,
+  activeSelectedObjectId?: string | null
 ): ProjectObject[] {
-  return objects.map((obj) => {
-    const volNodeId = `vol-${obj.id}`;
+  if (!objects || objects.length === 0) return [];
 
-    // Encuentra los nodos predecesores que alimentan a un nodo dado
-    const getIncoming = (nodeId: string): string[] => {
-      const incoming: string[] = [];
-      edges.forEach((e) => {
-        // Flujo normal: e.source -> e.target (el source alimenta al target)
-        if (e.target === nodeId && e.source !== nodeId && !e.source.startsWith('vol-')) {
-          if (!incoming.includes(e.source)) incoming.push(e.source);
-        }
-        // Flujo inverso accidental conectado al volumen
-        else if (e.source === nodeId && e.target !== nodeId && !e.target.startsWith('vol-') && nodeId === volNodeId) {
-          if (!incoming.includes(e.target)) incoming.push(e.target);
+  const defaultObjId = activeSelectedObjectId || objects[0]?.id;
+
+  // 1. Construir grafo no dirigido de adyacencia y grafo dirigido de conceptos
+  const neighbors = new Map<string, Set<string>>();
+  const conceptSuccessors = new Map<string, Set<string>>();
+  const conceptPredecessors = new Map<string, Set<string>>();
+
+  const addEdge = (u: string, v: string) => {
+    if (!neighbors.has(u)) neighbors.set(u, new Set());
+    if (!neighbors.has(v)) neighbors.set(v, new Set());
+    neighbors.get(u)!.add(v);
+    neighbors.get(v)!.add(u);
+  };
+
+  edges.forEach((e) => {
+    if (!e.source || !e.target || e.source === e.target) return;
+    addEdge(e.source, e.target);
+
+    // Si ambos son conceptos, registrar flujo dirigido
+    if (!e.source.startsWith('vol-') && !e.target.startsWith('vol-')) {
+      if (!conceptSuccessors.has(e.source)) conceptSuccessors.set(e.source, new Set());
+      if (!conceptPredecessors.has(e.target)) conceptPredecessors.set(e.target, new Set());
+      conceptSuccessors.get(e.source)!.add(e.target);
+      conceptPredecessors.get(e.target)!.add(e.source);
+    }
+  });
+
+  // 2. Extraer componentes conexos (clusters)
+  const visitedGlobal = new Set<string>();
+  const components: { volumes: string[]; concepts: string[] }[] = [];
+
+  const allNodes = new Set<string>();
+  edges.forEach((e) => {
+    allNodes.add(e.source);
+    allNodes.add(e.target);
+  });
+
+  allNodes.forEach((nodeId) => {
+    if (visitedGlobal.has(nodeId)) return;
+
+    const compVolumes: string[] = [];
+    const compConcepts: string[] = [];
+    const queue = [nodeId];
+    visitedGlobal.add(nodeId);
+
+    while (queue.length > 0) {
+      const curr = queue.shift()!;
+      if (curr.startsWith('vol-')) {
+        compVolumes.push(curr.replace('vol-', ''));
+      } else {
+        compConcepts.push(curr);
+      }
+
+      const adj = neighbors.get(curr) || new Set();
+      adj.forEach((next) => {
+        if (!visitedGlobal.has(next)) {
+          visitedGlobal.add(next);
+          queue.push(next);
         }
       });
-      return incoming;
-    };
+    }
 
-    const visited = new Set<string>();
-    const inStack = new Set<string>();
-    const ordered: string[] = [];
+    if (compConcepts.length > 0) {
+      components.push({ volumes: compVolumes, concepts: compConcepts });
+    }
+  });
 
-    const dfs = (nodeId: string) => {
-      if (inStack.has(nodeId)) return; // Prevenir ciclo
-      if (visited.has(nodeId)) return;
+  // 3. Para cada objeto, recopilar los conceptos que le corresponden y ordenarlos en serie
+  return objects.map((obj) => {
+    const objId = obj.id;
+    const isDefault = objId === defaultObjId;
 
-      inStack.add(nodeId);
-      visited.add(nodeId);
+    const matchedConceptsSet = new Set<string>();
+    const orderedChains: string[][] = [];
 
-      const predecessors = getIncoming(nodeId);
-      for (const pred of predecessors) {
-        dfs(pred);
+    components.forEach((comp) => {
+      const connectsToThisObj = comp.volumes.includes(objId);
+      const isOrphanCluster = comp.volumes.length === 0;
+
+      if (connectsToThisObj || (isOrphanCluster && isDefault)) {
+        // Ordenar los conceptos del componente topológicamente
+        const clusterConcepts = comp.concepts;
+        const inDegree = new Map<string, number>();
+        clusterConcepts.forEach((c) => {
+          let deg = 0;
+          const preds = conceptPredecessors.get(c);
+          if (preds) {
+            preds.forEach((p) => {
+              if (clusterConcepts.includes(p)) deg++;
+            });
+          }
+          inDegree.set(c, deg);
+        });
+
+        // Nodos raíz (indegree == 0 o fuentes en la serie)
+        const roots = clusterConcepts.filter((c) => (inDegree.get(c) || 0) === 0);
+        const q = roots.length > 0 ? [...roots] : [clusterConcepts[0]];
+        const orderedComp: string[] = [];
+        const seenInComp = new Set<string>();
+
+        while (q.length > 0) {
+          const curr = q.shift()!;
+          if (!seenInComp.has(curr)) {
+            seenInComp.add(curr);
+            orderedComp.push(curr);
+
+            const succs = conceptSuccessors.get(curr);
+            if (succs) {
+              succs.forEach((next) => {
+                if (clusterConcepts.includes(next) && !seenInComp.has(next)) {
+                  const newDeg = (inDegree.get(next) || 1) - 1;
+                  inDegree.set(next, newDeg);
+                  if (newDeg <= 0) {
+                    q.push(next);
+                  }
+                }
+              });
+            }
+          }
+        }
+
+        // Agregar cualquier concepto restante (en caso de ciclos o desconexiones internas)
+        clusterConcepts.forEach((c) => {
+          if (!seenInComp.has(c)) {
+            orderedComp.push(c);
+          }
+        });
+
+        orderedChains.push(orderedComp);
+        clusterConcepts.forEach((c) => matchedConceptsSet.add(c));
       }
+    });
 
-      inStack.delete(nodeId);
+    // Aplanar las cadenas respetando el orden de conexión
+    const graphAssigned: string[] = [];
+    orderedChains.forEach((chain) => {
+      chain.forEach((conceptId) => {
+        if (!graphAssigned.includes(conceptId)) {
+          graphAssigned.push(conceptId);
+        }
+      });
+    });
 
-      if (nodeId !== volNodeId) {
-        ordered.push(nodeId);
-      }
-    };
+    // 4. Conservar asignaciones manuales previas si el concepto sigue activo en el proyecto
+    const finalOrdered = [...graphAssigned];
+    if (obj.assignedConcepts && obj.assignedConcepts.length > 0) {
+      obj.assignedConcepts.forEach((prevConceptId) => {
+        if (
+          !finalOrdered.includes(prevConceptId) &&
+          (globalNodeParams[prevConceptId] !== undefined || matchedConceptsSet.has(prevConceptId))
+        ) {
+          finalOrdered.push(prevConceptId);
+        }
+      });
+    }
 
-    dfs(volNodeId);
-
-    // Actualizar los parámetros de los conceptos en la cadena del objeto
+    // 5. Asegurar parámetros para cada concepto en la cadena
     const updatedNodeParams = { ...(obj.nodeParams || {}) };
-    ordered.forEach((conceptId) => {
+    finalOrdered.forEach((conceptId) => {
       if (!updatedNodeParams[conceptId]) {
         updatedNodeParams[conceptId] = globalNodeParams[conceptId] || { weight: 0.6, intensity: 0.5 };
       }
@@ -194,7 +315,7 @@ export function recalculateObjectChains(
 
     return {
       ...obj,
-      assignedConcepts: ordered,
+      assignedConcepts: finalOrdered,
       nodeParams: updatedNodeParams,
     };
   });
@@ -294,7 +415,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       const newNodes = nodes.filter((n) => n.id !== id);
       const newRelations = relations.filter((r) => r.from !== id && r.to !== id);
       const newEdges = edges.filter((e) => e.source !== id && e.target !== id);
-      const updatedObjects = recalculateObjectChains(objects, newEdges, newRelations, newParams);
+      const updatedObjects = recalculateObjectChains(objects, newEdges, newRelations, newParams, get().selectedObjectId);
 
       set({
         activeConcepts: newActive,
@@ -358,7 +479,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       const newNodes = nodes.filter((n) => n.id !== id);
       const newRelations = relations.filter((r) => r.from !== id && r.to !== id);
       const newEdges = edges.filter((e) => e.source !== id && e.target !== id);
-      const updatedObjects = recalculateObjectChains(objects, newEdges, newRelations, newParams);
+      const updatedObjects = recalculateObjectChains(objects, newEdges, newRelations, newParams, get().selectedObjectId);
 
       set({
         activeArtifacts: newActive,
@@ -490,7 +611,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   },
 
   addRelation: (relData) => {
-    const { relations, edges, objects, nodeParams } = get();
+    const { relations, edges, objects, nodeParams, selectedObjectId } = get();
     const id = `rel_${relData.from}_${relData.to}_${Date.now()}`;
     const newRel: ProjectRelation = { ...relData, id };
 
@@ -510,7 +631,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
     const nextEdges = [...edges, newEdge];
     const nextRelations = [...relations, newRel];
-    const updatedObjects = recalculateObjectChains(objects, nextEdges, nextRelations, nodeParams);
+    const updatedObjects = recalculateObjectChains(objects, nextEdges, nextRelations, nodeParams, selectedObjectId);
 
     set({
       relations: nextRelations,
@@ -518,7 +639,13 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       objects: updatedObjects,
       isRelationModalOpen: false,
     });
-    get().showToast(`Conexión: ${relData.from} → ${relData.to}`);
+
+    if (!relData.from.startsWith('vol-') && !relData.to.startsWith('vol-')) {
+      const activeObj = objects.find((o) => o.id === (selectedObjectId || objects[0]?.id));
+      get().showToast(`Fusión activa: "${relData.from}" → "${relData.to}" en serie sobre ${activeObj?.name || 'volumen'}`);
+    } else {
+      get().showToast(`Conexión: ${relData.from} → ${relData.to}`);
+    }
   },
 
   updateRelation: (id, updates) => {
@@ -556,10 +683,10 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   },
 
   removeRelation: (id) => {
-    const { relations, edges, objects, nodeParams } = get();
+    const { relations, edges, objects, nodeParams, selectedObjectId } = get();
     const newRelations = relations.filter((r) => r.id !== id);
     const newEdges = edges.filter((e) => e.id !== id);
-    const updatedObjects = recalculateObjectChains(objects, newEdges, newRelations, nodeParams);
+    const updatedObjects = recalculateObjectChains(objects, newEdges, newRelations, nodeParams, selectedObjectId);
 
     set({
       relations: newRelations,

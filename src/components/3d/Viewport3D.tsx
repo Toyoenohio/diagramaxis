@@ -267,6 +267,9 @@ export const Viewport3D: React.FC = () => {
       }
 
       if (cameraMode === 'int') {
+        if (e.code === 'Space') {
+          e.preventDefault();
+        }
         if (e.code === 'Escape') {
           setCameraMode('ext');
           return;
@@ -408,74 +411,119 @@ export const Viewport3D: React.FC = () => {
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
 
-      // Animar partículas de flujo de viento
-      if (windParticlesRef.current) {
-        const { positions, speeds, geom } = windParticlesRef.current;
-        const count = positions.length / 3;
-        for (let i = 0; i < count; i++) {
-          const idx = i * 3;
-          positions[idx + 2] += speeds[i];
-          if (positions[idx + 2] > 45) {
-            positions[idx + 2] = -45;
-            positions[idx] = (Math.random() - 0.5) * 35;
+      try {
+        // Animar partículas de flujo de viento
+        if (windParticlesRef.current) {
+          const { positions, speeds, geom } = windParticlesRef.current;
+          const count = positions.length / 3;
+          for (let i = 0; i < count; i++) {
+            const idx = i * 3;
+            positions[idx + 2] += speeds[i];
+            if (positions[idx + 2] > 45) {
+              positions[idx + 2] = -45;
+              positions[idx] = (Math.random() - 0.5) * 35;
+            }
+          }
+          geom.attributes.position.needsUpdate = true;
+        }
+
+        // Animar neblina de humedad
+        if (mistParticlesRef.current) {
+          const { positions, geom } = mistParticlesRef.current;
+          const count = positions.length / 3;
+          const time = Date.now() * 0.002;
+          for (let i = 0; i < count; i++) {
+            const idx = i * 3;
+            positions[idx + 1] = 0.2 + Math.sin(time + i * 0.5) * 0.2 + 0.15;
+          }
+          geom.attributes.position.needsUpdate = true;
+        }
+
+        // Modo Habitar: Navegación fluida en primera persona (WASD + Flechas) con física de escaleras/rampas
+        const orb = orbitRef.current;
+        if (orb.isInterior) {
+          const keys = keysPressedRef.current;
+          const isRunning = keys['ShiftLeft'] || keys['ShiftRight'];
+          const moveSpeed = isRunning ? 0.32 : 0.15;
+
+          let moved = false;
+          // Caminar adelante / atrás según yaw
+          if (keys['KeyW'] || keys['ArrowUp']) {
+            orb.eyePos.x += Math.sin(orb.yaw) * moveSpeed;
+            orb.eyePos.z += Math.cos(orb.yaw) * moveSpeed;
+            moved = true;
+          }
+          if (keys['KeyS'] || keys['ArrowDown']) {
+            orb.eyePos.x -= Math.sin(orb.yaw) * moveSpeed;
+            orb.eyePos.z -= Math.cos(orb.yaw) * moveSpeed;
+            moved = true;
+          }
+          // Desplazamiento lateral (strafe)
+          if (keys['KeyA'] || keys['ArrowLeft']) {
+            orb.eyePos.x += Math.cos(orb.yaw) * moveSpeed;
+            orb.eyePos.z -= Math.sin(orb.yaw) * moveSpeed;
+            moved = true;
+          }
+          if (keys['KeyD'] || keys['ArrowRight']) {
+            orb.eyePos.x -= Math.cos(orb.yaw) * moveSpeed;
+            orb.eyePos.z += Math.sin(orb.yaw) * moveSpeed;
+            moved = true;
+          }
+
+          // Subir manualmente (Espacio / E) o Bajar (Q / C)
+          const isAscending = keys['Space'] || keys['KeyE'] || keys['PageUp'];
+          const isDescending = keys['KeyQ'] || keys['KeyC'] || keys['PageDown'];
+
+          if (isAscending) {
+            orb.eyePos.y += moveSpeed * 0.9;
+            moved = true;
+          } else if (isDescending) {
+            orb.eyePos.y = Math.max(1.75, orb.eyePos.y - moveSpeed * 0.9);
+            moved = true;
+          }
+
+          // Detección física del suelo / peldaño / rampa bajo los pies (subir escaleras fluidamente)
+          if (!isAscending && volumeGroupRef.current) {
+            try {
+              const downRay = new THREE.Raycaster(
+                new THREE.Vector3(orb.eyePos.x, orb.eyePos.y + 6.0, orb.eyePos.z),
+                new THREE.Vector3(0, -1, 0),
+                0.01,
+                30.0
+              );
+              const hits = downRay.intersectObjects(volumeGroupRef.current.children, true);
+              const validHits = hits.filter(
+                (h) => h.point && h.point.y <= orb.eyePos.y + 0.95 && !h.object.userData?.isHandle
+              );
+
+              let surfaceY = 0;
+              if (validHits.length > 0) {
+                surfaceY = Math.max(0, validHits[0].point.y);
+              }
+
+              const targetEyeY = surfaceY + 1.75;
+              if (Math.abs(orb.eyePos.y - targetEyeY) > 0.02) {
+                orb.eyePos.y += (targetEyeY - orb.eyePos.y) * 0.28;
+                moved = true;
+              } else if (orb.eyePos.y !== targetEyeY) {
+                orb.eyePos.y = targetEyeY;
+                moved = true;
+              }
+            } catch {
+              orb.eyePos.y = Math.max(1.75, orb.eyePos.y);
+            }
+          }
+
+          if (moved) {
+            updateCameraPosition();
           }
         }
-        geom.attributes.position.needsUpdate = true;
-      }
 
-      // Animar neblina de humedad
-      if (mistParticlesRef.current) {
-        const { positions, geom } = mistParticlesRef.current;
-        const count = positions.length / 3;
-        const time = Date.now() * 0.002;
-        for (let i = 0; i < count; i++) {
-          const idx = i * 3;
-          positions[idx + 1] = 0.2 + Math.sin(time + i * 0.5) * 0.2 + 0.15;
+        if (!isExportingRef.current && rendererRef.current && sceneRef.current && cameraRef.current) {
+          rendererRef.current.render(sceneRef.current, cameraRef.current);
         }
-        geom.attributes.position.needsUpdate = true;
-      }
-
-      // Modo Habitar: Navegación fluida en primera persona (WASD + Flechas)
-      const orb = orbitRef.current;
-      if (orb.isInterior) {
-        const keys = keysPressedRef.current;
-        const isRunning = keys['ShiftLeft'] || keys['ShiftRight'];
-        const moveSpeed = isRunning ? 0.32 : 0.15;
-
-        let moved = false;
-        // Caminar adelante / atrás según yaw
-        if (keys['KeyW'] || keys['ArrowUp']) {
-          orb.eyePos.x += Math.sin(orb.yaw) * moveSpeed;
-          orb.eyePos.z += Math.cos(orb.yaw) * moveSpeed;
-          moved = true;
-        }
-        if (keys['KeyS'] || keys['ArrowDown']) {
-          orb.eyePos.x -= Math.sin(orb.yaw) * moveSpeed;
-          orb.eyePos.z -= Math.cos(orb.yaw) * moveSpeed;
-          moved = true;
-        }
-        // Desplazamiento lateral (strafe)
-        if (keys['KeyA'] || keys['ArrowLeft']) {
-          orb.eyePos.x += Math.cos(orb.yaw) * moveSpeed;
-          orb.eyePos.z -= Math.sin(orb.yaw) * moveSpeed;
-          moved = true;
-        }
-        if (keys['KeyD'] || keys['ArrowRight']) {
-          orb.eyePos.x -= Math.cos(orb.yaw) * moveSpeed;
-          orb.eyePos.z += Math.sin(orb.yaw) * moveSpeed;
-          moved = true;
-        }
-
-        // Fijar altura humana constante a 1.75m
-        orb.eyePos.y = 1.75;
-
-        if (moved) {
-          updateCameraPosition();
-        }
-      }
-
-      if (!isExportingRef.current && rendererRef.current && sceneRef.current && cameraRef.current) {
-        rendererRef.current.render(sceneRef.current, cameraRef.current);
+      } catch (err) {
+        // Silenciar errores transitorios durante recarga de escena para no quebrar el bucle de render
       }
     };
     animate();
@@ -1117,32 +1165,44 @@ export const Viewport3D: React.FC = () => {
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return;
 
-    // Verificar si se hizo clic sobre un tirador interactivo 3D
-    if (containerRef.current && cameraRef.current && volumeGroupRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      mouseVecRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      mouseVecRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-      raycasterRef.current.setFromCamera(mouseVecRef.current, cameraRef.current);
+    // En Modo Habitar, no ejecutar raycast de tiradores; activar vista directa en primera persona
+    if (orbitRef.current.isInterior) {
+      orbitRef.current.isDragging = true;
+      orbitRef.current.prevX = e.clientX;
+      orbitRef.current.prevY = e.clientY;
+      return;
+    }
 
-      const intersects = raycasterRef.current.intersectObjects(volumeGroupRef.current.children, true);
-      if (intersects.length > 0) {
-        const handleHit = intersects.find((hit) => hit.object.userData?.isHandle);
-        if (handleHit) {
-          const axis = handleHit.object.userData.axis as 'X' | 'Y' | 'Z';
-          const objId = handleHit.object.userData.objectId as string;
-          const targetObj = objects.find((o) => o.id === objId);
-          if (targetObj) {
-            dragHandleRef.current = {
-              active: true,
-              axis,
-              objectId: objId,
-              startX: e.clientX,
-              startY: e.clientY,
-              initialDim: { ...targetObj.dimensions },
-            };
-            return;
+    // Verificar si se hizo clic sobre un tirador interactivo 3D (Modo Exterior)
+    if (containerRef.current && cameraRef.current && volumeGroupRef.current) {
+      try {
+        const rect = containerRef.current.getBoundingClientRect();
+        mouseVecRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mouseVecRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycasterRef.current.setFromCamera(mouseVecRef.current, cameraRef.current);
+
+        const intersects = raycasterRef.current.intersectObjects(volumeGroupRef.current.children, true);
+        if (intersects.length > 0) {
+          const handleHit = intersects.find((hit) => hit.object.userData?.isHandle);
+          if (handleHit) {
+            const axis = handleHit.object.userData.axis as 'X' | 'Y' | 'Z';
+            const objId = handleHit.object.userData.objectId as string;
+            const targetObj = objects.find((o) => o.id === objId);
+            if (targetObj) {
+              dragHandleRef.current = {
+                active: true,
+                axis,
+                objectId: objId,
+                startX: e.clientX,
+                startY: e.clientY,
+                initialDim: { ...targetObj.dimensions },
+              };
+              return;
+            }
           }
         }
+      } catch {
+        // Silenciar errores en detección de tiradores
       }
     }
 
@@ -1176,23 +1236,32 @@ export const Viewport3D: React.FC = () => {
 
     const orb = orbitRef.current;
     if (!orb.isDragging) {
+      if (orb.isInterior) {
+        if (containerRef.current) containerRef.current.style.cursor = 'crosshair';
+        return;
+      }
+
       // Raycasting al pasar el cursor (detectar tiradores interactivos o cajas)
       if (containerRef.current && cameraRef.current && volumeGroupRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        mouseVecRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-        mouseVecRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-        raycasterRef.current.setFromCamera(mouseVecRef.current, cameraRef.current);
-        const intersects = raycasterRef.current.intersectObjects(volumeGroupRef.current.children, true);
-        if (intersects.length > 0) {
-          if (intersects.some((hit) => hit.object.userData?.isHandle)) {
-            containerRef.current.style.cursor = 'ns-resize';
-          } else if (intersects[0].object.userData?.conceptId || intersects[0].object.userData?.objectId) {
-            containerRef.current.style.cursor = 'pointer';
+        try {
+          const rect = containerRef.current.getBoundingClientRect();
+          mouseVecRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+          mouseVecRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+          raycasterRef.current.setFromCamera(mouseVecRef.current, cameraRef.current);
+          const intersects = raycasterRef.current.intersectObjects(volumeGroupRef.current.children, true);
+          if (intersects.length > 0) {
+            if (intersects.some((hit) => hit.object.userData?.isHandle)) {
+              containerRef.current.style.cursor = 'ns-resize';
+            } else if (intersects[0].object.userData?.conceptId || intersects[0].object.userData?.objectId) {
+              containerRef.current.style.cursor = 'pointer';
+            } else {
+              containerRef.current.style.cursor = 'grab';
+            }
           } else {
             containerRef.current.style.cursor = 'grab';
           }
-        } else {
-          containerRef.current.style.cursor = orb.isInterior ? 'crosshair' : 'grab';
+        } catch {
+          // Silenciar errores en hover
         }
       }
       return;
@@ -1221,41 +1290,51 @@ export const Viewport3D: React.FC = () => {
       return;
     }
 
-    // Si fue un clic simple sin arrastre, ejecutar raycasting para seleccionar la caja 3D
     const orb = orbitRef.current;
+    // En Modo Habitar, no ejecutar selección de objetos por clic (evita reconstruir la escena mientras se camina)
+    if (orb.isInterior) {
+      orb.isDragging = false;
+      return;
+    }
+
+    // Si fue un clic simple sin arrastre en vista exterior, ejecutar raycasting para seleccionar la caja 3D
     const dragDistance = Math.abs(e.clientX - orb.prevX) + Math.abs(e.clientY - orb.prevY);
 
     if (dragDistance < 4 && containerRef.current && cameraRef.current && volumeGroupRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      mouseVecRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      mouseVecRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-      raycasterRef.current.setFromCamera(mouseVecRef.current, cameraRef.current);
+      try {
+        const rect = containerRef.current.getBoundingClientRect();
+        mouseVecRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mouseVecRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycasterRef.current.setFromCamera(mouseVecRef.current, cameraRef.current);
 
-      const intersects = raycasterRef.current.intersectObjects(volumeGroupRef.current.children, true);
-      if (intersects.length > 0) {
-        let curr: THREE.Object3D | null = intersects[0].object;
-        let foundObjId: string | null = null;
-        let foundObjName: string | null = null;
-        let foundConceptId: string | null = null;
+        const intersects = raycasterRef.current.intersectObjects(volumeGroupRef.current.children, true);
+        if (intersects.length > 0) {
+          let curr: THREE.Object3D | null = intersects[0].object;
+          let foundObjId: string | null = null;
+          let foundObjName: string | null = null;
+          let foundConceptId: string | null = null;
 
-        while (curr && curr !== volumeGroupRef.current) {
-          if (curr.userData?.objectId && !foundObjId) {
-            foundObjId = curr.userData.objectId;
-            foundObjName = curr.userData.objectName;
+          while (curr && curr !== volumeGroupRef.current) {
+            if (curr.userData?.objectId && !foundObjId) {
+              foundObjId = curr.userData.objectId;
+              foundObjName = curr.userData.objectName;
+            }
+            if (curr.userData?.conceptId && !foundConceptId) {
+              foundConceptId = curr.userData.conceptId;
+            }
+            curr = curr.parent;
           }
-          if (curr.userData?.conceptId && !foundConceptId) {
-            foundConceptId = curr.userData.conceptId;
-          }
-          curr = curr.parent;
-        }
 
-        if (foundObjId) {
-          selectObject(foundObjId);
-          showToast(`Volumen seleccionado: "${foundObjName || 'Objeto'}"`);
+          if (foundObjId) {
+            selectObject(foundObjId);
+            showToast(`Volumen seleccionado: "${foundObjName || 'Objeto'}"`);
+          }
+          if (foundConceptId) {
+            useProjectStore.getState().setSelectedNodeId(foundConceptId);
+          }
         }
-        if (foundConceptId) {
-          useProjectStore.getState().setSelectedNodeId(foundConceptId);
-        }
+      } catch {
+        // Silenciar errores en selección
       }
     }
 
@@ -1654,8 +1733,8 @@ export const Viewport3D: React.FC = () => {
           </div>
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 px-4 py-2 bg-diagramaxis-surface/95 backdrop-blur-md border border-diagramaxis-cyan/50 shadow-2xl rounded-sm font-mono text-[11px] text-diagramaxis-text">
             <span className="w-2 h-2 rounded-full bg-diagramaxis-cyan animate-pulse" />
-            <span className="font-bold text-diagramaxis-cyan uppercase tracking-wider">Modo Habitar (1.75m)</span>
-            <span className="text-diagramaxis-textMuted">· WASD para caminar · Shift trotar · Arrastra ratón para mirar · ESC salir</span>
+            <span className="font-bold text-diagramaxis-cyan uppercase tracking-wider">Modo Habitar (1:1)</span>
+            <span className="text-diagramaxis-textMuted">· WASD caminar/escaleras · Shift trotar · Espacio/E subir · Q/C bajar · Arrastra ratón para mirar · ESC salir</span>
             <button
               onClick={() => setCameraMode('ext')}
               className="ml-2 px-2 py-0.5 text-[10px] uppercase font-bold text-diagramaxis-cyan border border-diagramaxis-cyan/40 hover:bg-diagramaxis-cyan/10 rounded-xs transition-colors"
