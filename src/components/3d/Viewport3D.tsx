@@ -5,9 +5,10 @@ import { CameraViewMode } from '../../types';
 import { buildArchitecturalGeometry } from './GeometryBuilder';
 import { createHumanFigure } from './HumanFigure';
 import { captureCanvasPNG, exportMeshesToOBJ } from '../../utils/exportUtils';
-import { Camera, Box, RotateCcw, PersonStanding, Video } from 'lucide-react';
+import { Camera, Box, RotateCcw, PersonStanding, Video, X } from 'lucide-react';
 import { useTheme } from '../../theme';
 import { VideoExportModal } from '../modals/VideoExportModal';
+import { CONCEPTS_DATA } from '../../data/architecturalMenu';
 import {
   VideoExportConfig,
   VideoExportProgress,
@@ -121,8 +122,43 @@ export const Viewport3D: React.FC = () => {
     setCameraMode,
     setShadingMode,
     toggleHumanFigure,
+    selectedNodeId,
+    setSelectedNodeId,
+    setObjectDimensions,
+    applyConceptDirectlyToObject,
+    applyMasterIntensity,
     showToast,
   } = useProjectStore();
+
+  const [hoveredObjectId, setHoveredObjectId] = useState<string | null>(null);
+  const [liveDragFeedback, setLiveDragFeedback] = useState<string | null>(null);
+  const dragHandleRef = useRef<{
+    active: boolean;
+    axis: 'X' | 'Y' | 'Z';
+    objectId: string;
+    startX: number;
+    startY: number;
+    initialDim: { w: number; h: number; d: number };
+  }>({
+    active: false,
+    axis: 'Y',
+    objectId: '',
+    startX: 0,
+    startY: 0,
+    initialDim: { w: 16, h: 8, d: 14 },
+  });
+  const keysPressedRef = useRef<Record<string, boolean>>({});
+
+  const activeSelectedConcept = React.useMemo(() => {
+    if (!selectedNodeId) return null;
+    return CONCEPTS_DATA.find((c) => c.id === selectedNodeId) || null;
+  }, [selectedNodeId]);
+
+  const activeConceptParam = React.useMemo(() => {
+    if (!selectedNodeId) return null;
+    const selObj = objects.find((o) => o.id === selectedObjectId);
+    return selObj?.nodeParams?.[selectedNodeId] || nodeParams[selectedNodeId] || { weight: 0.6, intensity: 0.5 };
+  }, [selectedNodeId, selectedObjectId, objects, nodeParams]);
 
   // Pasos de transformación de la composición completa para la exportación de video
   const compositionSteps = React.useMemo(() => {
@@ -185,10 +221,14 @@ export const Viewport3D: React.FC = () => {
       orb.radius = maxDim * 2.8;
       camera.fov = 45;
     } else if (cameraMode === 'int') {
-      orb.eyePos.set(0, 1.75, baseDimensions.d * 0.25);
-      orb.yaw = Math.PI;
-      orb.pitch = 0;
-      camera.fov = 65;
+      const store = useProjectStore.getState();
+      const sel = store.objects?.find((o) => o.id === store.selectedObjectId) || store.objects?.[0];
+      const startX = sel ? sel.position.x : 0;
+      const startZ = sel ? sel.position.z + (sel.dimensions?.d || baseDimensions.d) * 0.85 : 8;
+      orb.eyePos.set(startX, 1.75, startZ);
+      orb.yaw = Math.PI; // Mirar hacia la arquitectura (-Z)
+      orb.pitch = 0.08;
+      camera.fov = 68;
     } else if (cameraMode === 'iso') {
       orb.theta = Math.PI / 4;
       orb.phi = Math.PI / 4;
@@ -214,6 +254,38 @@ export const Viewport3D: React.FC = () => {
     camera.updateProjectionMatrix();
     updateCameraPosition();
   }, [cameraMode, updateCameraPosition]);
+
+  // Modo Habitar: Escucha de teclado para caminar con WASD / Flechas y salir con ESC
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea') return;
+
+      if (e.code === 'KeyH') {
+        setCameraMode(cameraMode === 'int' ? 'ext' : 'int');
+        return;
+      }
+
+      if (cameraMode === 'int') {
+        if (e.code === 'Escape') {
+          setCameraMode('ext');
+          return;
+        }
+        keysPressedRef.current[e.code] = true;
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      keysPressedRef.current[e.code] = false;
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [cameraMode, setCameraMode]);
 
   // Inicialización Three.js
   useEffect(() => {
@@ -361,6 +433,45 @@ export const Viewport3D: React.FC = () => {
           positions[idx + 1] = 0.2 + Math.sin(time + i * 0.5) * 0.2 + 0.15;
         }
         geom.attributes.position.needsUpdate = true;
+      }
+
+      // Modo Habitar: Navegación fluida en primera persona (WASD + Flechas)
+      const orb = orbitRef.current;
+      if (orb.isInterior) {
+        const keys = keysPressedRef.current;
+        const isRunning = keys['ShiftLeft'] || keys['ShiftRight'];
+        const moveSpeed = isRunning ? 0.32 : 0.15;
+
+        let moved = false;
+        // Caminar adelante / atrás según yaw
+        if (keys['KeyW'] || keys['ArrowUp']) {
+          orb.eyePos.x += Math.sin(orb.yaw) * moveSpeed;
+          orb.eyePos.z += Math.cos(orb.yaw) * moveSpeed;
+          moved = true;
+        }
+        if (keys['KeyS'] || keys['ArrowDown']) {
+          orb.eyePos.x -= Math.sin(orb.yaw) * moveSpeed;
+          orb.eyePos.z -= Math.cos(orb.yaw) * moveSpeed;
+          moved = true;
+        }
+        // Desplazamiento lateral (strafe)
+        if (keys['KeyA'] || keys['ArrowLeft']) {
+          orb.eyePos.x += Math.cos(orb.yaw) * moveSpeed;
+          orb.eyePos.z -= Math.sin(orb.yaw) * moveSpeed;
+          moved = true;
+        }
+        if (keys['KeyD'] || keys['ArrowRight']) {
+          orb.eyePos.x -= Math.cos(orb.yaw) * moveSpeed;
+          orb.eyePos.z += Math.sin(orb.yaw) * moveSpeed;
+          moved = true;
+        }
+
+        // Fijar altura humana constante a 1.75m
+        orb.eyePos.y = 1.75;
+
+        if (moved) {
+          updateCameraPosition();
+        }
       }
 
       if (!isExportingRef.current && rendererRef.current && sceneRef.current && cameraRef.current) {
@@ -528,6 +639,18 @@ export const Viewport3D: React.FC = () => {
       if (built.hasVegetation) combinedHasVegetation = true;
       if (built.hasTopography) combinedHasTopography = true;
 
+      // Resalte visual del volumen objetivo durante drag-and-drop
+      if (obj.id === hoveredObjectId) {
+        const hoverHelper = new THREE.BoxHelper(objGroup, 0x06b6d4);
+        hoverHelper.renderOrder = 1000;
+        if (hoverHelper.material) {
+          (hoverHelper.material as THREE.LineBasicMaterial).depthTest = false;
+          (hoverHelper.material as THREE.LineBasicMaterial).transparent = true;
+          (hoverHelper.material as THREE.LineBasicMaterial).opacity = 0.95;
+        }
+        objGroup.add(hoverHelper);
+      }
+
       // Resalte visual del volumen activo si hay múltiples objetos
       if (obj.id === selectedObjectId && renderObjects.length > 1) {
         const boxHelper = new THREE.BoxHelper(objGroup, 0xe5a93b);
@@ -539,6 +662,61 @@ export const Viewport3D: React.FC = () => {
           (boxHelper.material as THREE.LineBasicMaterial).opacity = 0.7;
         }
         objGroup.add(boxHelper);
+      }
+
+      // Tiradores Interactivos 3D (Push / Pull de Dimensiones) en el volumen seleccionado
+      if (obj.id === selectedObjectId && cameraMode !== 'int') {
+        const curDim = built.finalDimensions || obj.dimensions || baseDimensions;
+        const handlesGroup = new THREE.Group();
+        handlesGroup.name = 'dimension_handles';
+
+        // 1. Tirador Superior (+Y, Alto) - Dorado
+        const yHandleGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.55, 8);
+        const yHeadGeo = new THREE.ConeGeometry(0.24, 0.45, 12);
+        const yMat = new THREE.MeshBasicMaterial({ color: 0xe5a93b, depthTest: false });
+        const yShaft = new THREE.Mesh(yHandleGeo, yMat);
+        const yHead = new THREE.Mesh(yHeadGeo, yMat);
+        yHead.position.y = 0.42;
+        const yHandle = new THREE.Group();
+        yHandle.add(yShaft);
+        yHandle.add(yHead);
+        yHandle.position.set(0, curDim.h + 0.45, 0);
+        yHandle.userData = { isHandle: true, axis: 'Y', objectId: obj.id };
+        yShaft.userData = yHandle.userData;
+        yHead.userData = yHandle.userData;
+        handlesGroup.add(yHandle);
+
+        // 2. Tirador Lateral (+X, Ancho) - Cyan
+        const xMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4, depthTest: false });
+        const xShaft = new THREE.Mesh(yHandleGeo, xMat);
+        const xHead = new THREE.Mesh(yHeadGeo, xMat);
+        xHead.position.y = 0.42;
+        const xHandle = new THREE.Group();
+        xHandle.add(xShaft);
+        xHandle.add(xHead);
+        xHandle.rotation.z = -Math.PI / 2;
+        xHandle.position.set(curDim.w / 2 + 0.45, curDim.h * 0.5, 0);
+        xHandle.userData = { isHandle: true, axis: 'X', objectId: obj.id };
+        xShaft.userData = xHandle.userData;
+        xHead.userData = xHandle.userData;
+        handlesGroup.add(xHandle);
+
+        // 3. Tirador Frontal (+Z, Profundidad) - Naranja
+        const zMat = new THREE.MeshBasicMaterial({ color: 0xf97316, depthTest: false });
+        const zShaft = new THREE.Mesh(yHandleGeo, zMat);
+        const zHead = new THREE.Mesh(yHeadGeo, zMat);
+        zHead.position.y = 0.42;
+        const zHandle = new THREE.Group();
+        zHandle.add(zShaft);
+        zHandle.add(zHead);
+        zHandle.rotation.x = Math.PI / 2;
+        zHandle.position.set(0, curDim.h * 0.5, curDim.d / 2 + 0.45);
+        zHandle.userData = { isHandle: true, axis: 'Z', objectId: obj.id };
+        zShaft.userData = zHandle.userData;
+        zHead.userData = zHandle.userData;
+        handlesGroup.add(zHandle);
+
+        objGroup.add(handlesGroup);
       }
 
       volumeGroup.add(objGroup);
@@ -817,28 +995,204 @@ export const Viewport3D: React.FC = () => {
   const raycasterRef = useRef(new THREE.Raycaster());
   const mouseVecRef = useRef(new THREE.Vector2());
 
-  // Controladores de ratón (Orbit / Pan / Walk / Raycast Click)
+  // Generador de pulso de impacto visual 3D (Efecto "Tony Stark")
+  const spawnImpactPulse = useCallback((point: THREE.Vector3 | null) => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+    const pos = point || new THREE.Vector3(0, 0.1, 0);
+
+    const ringGeo = new THREE.RingGeometry(0.3, 0.6, 32);
+    ringGeo.rotateX(-Math.PI / 2);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0xe5a93b,
+      transparent: true,
+      opacity: 0.95,
+      side: THREE.DoubleSide,
+      depthTest: false,
+    });
+    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+    ringMesh.position.set(pos.x, Math.max(0.08, pos.y), pos.z);
+    scene.add(ringMesh);
+
+    let scale = 1;
+    let opacity = 0.95;
+    const pulseAnim = () => {
+      scale += 0.35;
+      opacity -= 0.045;
+      ringMesh.scale.set(scale, scale, scale);
+      ringMat.opacity = Math.max(0, opacity);
+      if (opacity > 0) {
+        requestAnimationFrame(pulseAnim);
+      } else {
+        scene.remove(ringMesh);
+        ringGeo.dispose();
+        ringMat.dispose();
+      }
+    };
+    pulseAnim();
+  }, []);
+
+  // Controladores de Arrastre Directo 3D (Lanzar Fichas al Modelo)
+  const handle3DDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    if (!containerRef.current || !cameraRef.current || !volumeGroupRef.current) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    mouseVecRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    mouseVecRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    raycasterRef.current.setFromCamera(mouseVecRef.current, cameraRef.current);
+
+    const intersects = raycasterRef.current.intersectObjects(volumeGroupRef.current.children, true);
+    if (intersects.length > 0) {
+      let curr: THREE.Object3D | null = intersects[0].object;
+      let foundId: string | null = null;
+      while (curr && curr !== volumeGroupRef.current) {
+        if (curr.userData?.objectId) {
+          foundId = curr.userData.objectId;
+          break;
+        }
+        curr = curr.parent;
+      }
+      setHoveredObjectId(foundId);
+    } else {
+      setHoveredObjectId(null);
+    }
+  }, []);
+
+  const handle3DDragLeave = useCallback(() => {
+    setHoveredObjectId(null);
+  }, []);
+
+  const handle3DDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setHoveredObjectId(null);
+
+    let conceptId: string | null = null;
+    try {
+      const dataStr = e.dataTransfer.getData('application/json');
+      if (dataStr) {
+        const parsed = JSON.parse(dataStr);
+        if (parsed.type === 'concept' && parsed.id) {
+          conceptId = parsed.id;
+        }
+      }
+    } catch {
+      /* fallback */
+    }
+    if (!conceptId) {
+      conceptId = e.dataTransfer.getData('text/plain');
+    }
+    if (!conceptId) return;
+
+    // Detectar si cayó sobre un volumen específico
+    let targetObjId: string | null = null;
+    let hitPoint: THREE.Vector3 | null = null;
+
+    if (containerRef.current && cameraRef.current && volumeGroupRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      mouseVecRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouseVecRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      raycasterRef.current.setFromCamera(mouseVecRef.current, cameraRef.current);
+
+      const intersects = raycasterRef.current.intersectObjects(volumeGroupRef.current.children, true);
+      if (intersects.length > 0) {
+        hitPoint = intersects[0].point;
+        let curr: THREE.Object3D | null = intersects[0].object;
+        while (curr && curr !== volumeGroupRef.current) {
+          if (curr.userData?.objectId) {
+            targetObjId = curr.userData.objectId;
+            break;
+          }
+          curr = curr.parent;
+        }
+      }
+    }
+
+    spawnImpactPulse(hitPoint);
+    applyConceptDirectlyToObject(conceptId, targetObjId || selectedObjectId || undefined);
+  }, [applyConceptDirectlyToObject, selectedObjectId, spawnImpactPulse]);
+
+  // Controladores de ratón (Orbit / Pan / Walk / Raycast Click / Push-Pull 3D)
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return;
+
+    // Verificar si se hizo clic sobre un tirador interactivo 3D
+    if (containerRef.current && cameraRef.current && volumeGroupRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      mouseVecRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouseVecRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      raycasterRef.current.setFromCamera(mouseVecRef.current, cameraRef.current);
+
+      const intersects = raycasterRef.current.intersectObjects(volumeGroupRef.current.children, true);
+      if (intersects.length > 0) {
+        const handleHit = intersects.find((hit) => hit.object.userData?.isHandle);
+        if (handleHit) {
+          const axis = handleHit.object.userData.axis as 'X' | 'Y' | 'Z';
+          const objId = handleHit.object.userData.objectId as string;
+          const targetObj = objects.find((o) => o.id === objId);
+          if (targetObj) {
+            dragHandleRef.current = {
+              active: true,
+              axis,
+              objectId: objId,
+              startX: e.clientX,
+              startY: e.clientY,
+              initialDim: { ...targetObj.dimensions },
+            };
+            return;
+          }
+        }
+      }
+    }
+
     orbitRef.current.isDragging = true;
     orbitRef.current.prevX = e.clientX;
     orbitRef.current.prevY = e.clientY;
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
+    // 1. Arrastre de Tirador Interactivo 3D (Push / Pull de dimensiones)
+    if (dragHandleRef.current.active) {
+      const { axis, objectId, startX, startY, initialDim } = dragHandleRef.current;
+      if (axis === 'Y') {
+        const delta = (startY - e.clientY) * 0.12;
+        const newH = Math.max(2, Math.min(60, Math.round((initialDim.h + delta) * 2) / 2));
+        setObjectDimensions(objectId, { h: newH });
+        setLiveDragFeedback(`Alto (Y): ${newH.toFixed(1)} m`);
+      } else if (axis === 'X') {
+        const delta = (e.clientX - startX) * 0.12;
+        const newW = Math.max(2, Math.min(80, Math.round((initialDim.w + delta) * 2) / 2));
+        setObjectDimensions(objectId, { w: newW });
+        setLiveDragFeedback(`Ancho (X): ${newW.toFixed(1)} m`);
+      } else if (axis === 'Z') {
+        const delta = (e.clientY - startY) * 0.12;
+        const newD = Math.max(2, Math.min(80, Math.round((initialDim.d + delta) * 2) / 2));
+        setObjectDimensions(objectId, { d: newD });
+        setLiveDragFeedback(`Profundidad (Z): ${newD.toFixed(1)} m`);
+      }
+      return;
+    }
+
     const orb = orbitRef.current;
     if (!orb.isDragging) {
-      // Raycasting al pasar el cursor
+      // Raycasting al pasar el cursor (detectar tiradores interactivos o cajas)
       if (containerRef.current && cameraRef.current && volumeGroupRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
         mouseVecRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
         mouseVecRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
         raycasterRef.current.setFromCamera(mouseVecRef.current, cameraRef.current);
         const intersects = raycasterRef.current.intersectObjects(volumeGroupRef.current.children, true);
-        if (intersects.length > 0 && intersects[0].object.userData?.conceptId) {
-          if (containerRef.current) containerRef.current.style.cursor = 'pointer';
+        if (intersects.length > 0) {
+          if (intersects.some((hit) => hit.object.userData?.isHandle)) {
+            containerRef.current.style.cursor = 'ns-resize';
+          } else if (intersects[0].object.userData?.conceptId || intersects[0].object.userData?.objectId) {
+            containerRef.current.style.cursor = 'pointer';
+          } else {
+            containerRef.current.style.cursor = 'grab';
+          }
         } else {
-          if (containerRef.current) containerRef.current.style.cursor = 'grab';
+          containerRef.current.style.cursor = orb.isInterior ? 'crosshair' : 'grab';
         }
       }
       return;
@@ -849,7 +1203,7 @@ export const Viewport3D: React.FC = () => {
 
     if (orb.isInterior) {
       orb.yaw -= dx;
-      orb.pitch = Math.max(-0.7, Math.min(0.7, orb.pitch - dy));
+      orb.pitch = Math.max(-1.3, Math.min(1.3, orb.pitch - dy));
     } else {
       orb.theta -= dx;
       orb.phi = Math.max(0.04, Math.min(Math.PI / 2 - 0.02, orb.phi - dy));
@@ -861,6 +1215,12 @@ export const Viewport3D: React.FC = () => {
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
+    if (dragHandleRef.current.active) {
+      dragHandleRef.current.active = false;
+      setLiveDragFeedback(null);
+      return;
+    }
+
     // Si fue un clic simple sin arrastre, ejecutar raycasting para seleccionar la caja 3D
     const orb = orbitRef.current;
     const dragDistance = Math.abs(e.clientX - orb.prevX) + Math.abs(e.clientY - orb.prevY);
@@ -1023,6 +1383,9 @@ export const Viewport3D: React.FC = () => {
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onWheel={handleWheel}
+      onDragOver={handle3DDragOver}
+      onDragLeave={handle3DDragLeave}
+      onDrop={handle3DDrop}
     >
       {!webglFailed ? (
         <canvas ref={canvasRef} className="block w-full h-full cursor-grab active:cursor-grabbing" />
@@ -1091,7 +1454,7 @@ export const Viewport3D: React.FC = () => {
             }`}
           >
             {mode === 'ext' && 'Perspectiva'}
-            {mode === 'int' && 'Interior'}
+            {mode === 'int' && '🚶 Habitar (1:1)'}
             {mode === 'iso' && 'Axonometría'}
             {mode === 'top' && 'Planta'}
             {mode === 'sec' && 'Sección'}
@@ -1265,6 +1628,116 @@ export const Viewport3D: React.FC = () => {
               ✕ Cancelar Exportación
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Badge Flotante de Medición durante Push/Pull 3D */}
+      {liveDragFeedback && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 pointer-events-none z-30 px-3.5 py-1.5 bg-diagramaxis-surface/95 backdrop-blur-md border border-diagramaxis-gold text-diagramaxis-gold shadow-2xl rounded-xs font-mono text-[12px] font-bold">
+          📐 {liveDragFeedback}
+        </div>
+      )}
+
+      {/* Banner de Drag & Drop sobre volumen */}
+      {hoveredObjectId && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 pointer-events-none z-30 px-4 py-1.5 bg-diagramaxis-surface/95 backdrop-blur-md border border-diagramaxis-cyan text-diagramaxis-cyan shadow-2xl rounded-xs font-mono text-[11px] font-bold animate-pulse">
+          ✨ Suelta para aplicar modificador sobre este volumen
+        </div>
+      )}
+
+      {/* Punto de mira y HUD del Modo Habitar (1:1) */}
+      {cameraMode === 'int' && (
+        <>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none font-mono text-diagramaxis-cyan text-[18px] opacity-60">
+            +
+          </div>
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 px-4 py-2 bg-diagramaxis-surface/95 backdrop-blur-md border border-diagramaxis-cyan/50 shadow-2xl rounded-sm font-mono text-[11px] text-diagramaxis-text">
+            <span className="w-2 h-2 rounded-full bg-diagramaxis-cyan animate-pulse" />
+            <span className="font-bold text-diagramaxis-cyan uppercase tracking-wider">Modo Habitar (1.75m)</span>
+            <span className="text-diagramaxis-textMuted">· WASD para caminar · Shift trotar · Arrastra ratón para mirar · ESC salir</span>
+            <button
+              onClick={() => setCameraMode('ext')}
+              className="ml-2 px-2 py-0.5 text-[10px] uppercase font-bold text-diagramaxis-cyan border border-diagramaxis-cyan/40 hover:bg-diagramaxis-cyan/10 rounded-xs transition-colors"
+            >
+              Salir (ESC)
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Mini-HUD Flotante: Control Maestro del Modificador Activo */}
+      {activeSelectedConcept && cameraMode !== 'int' && (
+        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 bg-diagramaxis-surface/95 backdrop-blur-md border border-diagramaxis-gold/50 shadow-2xl rounded-sm px-4 py-2 min-w-[360px] max-w-[520px]">
+          <div className="flex flex-col min-w-[110px]">
+            <span className="font-mono text-[8.5px] uppercase tracking-widest text-diagramaxis-gold font-bold">
+              Modificador Activo
+            </span>
+            <span className="font-serif italic font-bold text-[13.5px] text-diagramaxis-text truncate">
+              {activeSelectedConcept.name}
+            </span>
+          </div>
+
+          {/* Presets Inmediatos */}
+          <div className="flex items-center gap-1 border-l border-r border-diagramaxis-border px-2.5">
+            <button
+              onClick={() => applyMasterIntensity(activeSelectedConcept.id, 0.3)}
+              className={`px-2 py-1 font-mono text-[9.5px] uppercase tracking-wider rounded-xs border transition-colors ${
+                Math.abs((activeConceptParam?.intensity ?? 0.6) - 0.3) < 0.1
+                  ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                  : 'border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
+              }`}
+              title="Gesto sutil / moderado (30%)"
+            >
+              Sutil
+            </button>
+            <button
+              onClick={() => applyMasterIntensity(activeSelectedConcept.id, 0.6)}
+              className={`px-2 py-1 font-mono text-[9.5px] uppercase tracking-wider rounded-xs border transition-colors ${
+                Math.abs((activeConceptParam?.intensity ?? 0.6) - 0.6) < 0.15
+                  ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
+                  : 'border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
+              }`}
+              title="Proporción equilibrada óptima (60%)"
+            >
+              Medio
+            </button>
+            <button
+              onClick={() => applyMasterIntensity(activeSelectedConcept.id, 1.0)}
+              className={`px-2 py-1 font-mono text-[9.5px] uppercase tracking-wider rounded-xs border transition-colors ${
+                (activeConceptParam?.intensity ?? 0.6) > 0.85
+                  ? 'bg-diagramaxis-cyan text-diagramaxis-bg font-bold border-diagramaxis-cyan'
+                  : 'border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-cyan'
+              }`}
+              title="Gesto radical / monumental (100%)"
+            >
+              Radical
+            </button>
+          </div>
+
+          {/* Slider Maestro */}
+          <div className="flex items-center gap-2 flex-1">
+            <input
+              type="range"
+              min="0.1"
+              max="1.0"
+              step="0.05"
+              value={activeConceptParam?.intensity ?? 0.6}
+              onChange={(e) => applyMasterIntensity(activeSelectedConcept.id, parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+              title="Fuerza del Gesto"
+            />
+            <span className="font-mono text-[11px] text-diagramaxis-gold font-bold w-9 text-right">
+              {Math.round((activeConceptParam?.intensity ?? 0.6) * 100)}%
+            </span>
+          </div>
+
+          <button
+            onClick={() => setSelectedNodeId(null)}
+            className="p-1 text-diagramaxis-textMuted hover:text-diagramaxis-text transition-colors"
+            title="Cerrar panel flotante"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 

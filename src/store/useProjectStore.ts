@@ -113,6 +113,8 @@ interface ProjectState {
   unassignConceptFromObject: (conceptId: string, objectId: string) => void;
   setObjectNodeParam: (objectId: string, conceptId: string, field: 'weight' | 'intensity', value: number) => void;
   setObjectNodeCustomParam: (objectId: string, conceptId: string, key: string, value: any) => void;
+  applyConceptDirectlyToObject: (conceptId: string, targetObjectId?: string) => void;
+  applyMasterIntensity: (conceptId: string, masterIntensity: number) => void;
 
   // Casos de Estudio
   loadStudyCase: (caseId: string) => void;
@@ -941,6 +943,197 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         return obj;
       }),
     }));
+  },
+
+  applyConceptDirectlyToObject: (conceptId: string, targetObjectId?: string) => {
+    const { objects, selectedObjectId, activeConcepts, nodeParams, nodes, edges, relations } = get();
+    const targetObjId = targetObjectId || selectedObjectId || objects[0]?.id || 'obj-1';
+    const targetObj = objects.find((o) => o.id === targetObjId) || objects[0];
+    if (!targetObj) return;
+
+    const conceptData = CONCEPTS_DATA.find((c) => c.id === conceptId);
+    if (!conceptData) return;
+
+    // 1. Si el concepto ya está asignado a este objeto, avisar y enfocar
+    if (targetObj.assignedConcepts?.includes(conceptId)) {
+      set({ selectedNodeId: conceptId });
+      get().showToast(`El modificador "${conceptData.name}" ya está aplicado a "${targetObj.name}"`);
+      return;
+    }
+
+    // 2. Asegurar que el concepto esté en activeConcepts y tenga su nodo en el tablero
+    const nextActiveConcepts = activeConcepts.includes(conceptId) ? [...activeConcepts] : [...activeConcepts, conceptId];
+    const nextNodeParams = {
+      ...nodeParams,
+      [conceptId]: nodeParams[conceptId] || { weight: 0.7, intensity: 0.6 },
+    };
+    const nextNodes = [...nodes];
+
+    const volNodeId = `vol-${targetObj.id}`;
+    const volNode = nodes.find((n) => n.id === volNodeId);
+    const volPos = volNode ? volNode.position : { x: 300, y: 220 };
+
+    // Posición en el diagrama a la izquierda del volumen
+    const currentChainLength = targetObj.assignedConcepts?.length || 0;
+    const posX = volPos.x - (currentChainLength + 1) * 220;
+    const posY = volPos.y + (currentChainLength % 2 === 0 ? 0 : 20);
+
+    const existingNode = nextNodes.find((n) => n.id === conceptId);
+    if (!existingNode) {
+      const newNode: Node = {
+        id: conceptId,
+        type: 'conceptNode',
+        position: { x: posX, y: posY },
+        data: {
+          id: conceptId,
+          name: conceptData.name,
+          category: conceptData.category,
+          subcategory: conceptData.subcategory,
+          natures: conceptData.natures,
+          has3DOperation: conceptData.has3DOperation,
+          isArtifact: false,
+          weight: 0.7,
+        },
+      };
+      nextNodes.push(newNode);
+    }
+
+    // 3. Conectar a la cadena serial del objeto:
+    let nextEdges = [...edges];
+    let nextRelations = [...relations];
+
+    if (currentChainLength === 0) {
+      // Conectar directo conceptId -> volNodeId
+      const relId = `rel-${conceptId}-${volNodeId}-${Date.now()}`;
+      nextRelations.push({
+        id: relId,
+        from: conceptId,
+        to: volNodeId,
+        type: 'define',
+        dir: 'A→B',
+        intensity: 0.85,
+        sourceHandle: 'output',
+        targetHandle: 'input',
+      });
+      nextEdges.push({
+        id: relId,
+        source: conceptId,
+        target: volNodeId,
+        sourceHandle: 'output',
+        targetHandle: 'input',
+        type: 'customEdge',
+        data: { relationType: 'define', direction: 'A→B', intensity: 0.85 },
+      });
+    } else {
+      const lastConceptId = targetObj.assignedConcepts[currentChainLength - 1];
+      // Remover conexión previa lastConceptId -> volNodeId
+      nextEdges = nextEdges.filter(
+        (e) => !(e.source === lastConceptId && e.target === volNodeId)
+      );
+      nextRelations = nextRelations.filter(
+        (r) => !(r.from === lastConceptId && r.to === volNodeId)
+      );
+
+      // Conectar lastConceptId -> conceptId
+      const relMidId = `rel-${lastConceptId}-${conceptId}-${Date.now()}`;
+      nextRelations.push({
+        id: relMidId,
+        from: lastConceptId,
+        to: conceptId,
+        type: 'define',
+        dir: 'A→B',
+        intensity: 0.85,
+        sourceHandle: 'output',
+        targetHandle: 'input',
+      });
+      nextEdges.push({
+        id: relMidId,
+        source: lastConceptId,
+        target: conceptId,
+        sourceHandle: 'output',
+        targetHandle: 'input',
+        type: 'customEdge',
+        data: { relationType: 'define', direction: 'A→B', intensity: 0.85 },
+      });
+
+      // Conectar conceptId -> volNodeId
+      const relEndId = `rel-${conceptId}-${volNodeId}-${Date.now() + 1}`;
+      nextRelations.push({
+        id: relEndId,
+        from: conceptId,
+        to: volNodeId,
+        type: 'define',
+        dir: 'A→B',
+        intensity: 0.85,
+        sourceHandle: 'output',
+        targetHandle: 'input',
+      });
+      nextEdges.push({
+        id: relEndId,
+        source: conceptId,
+        target: volNodeId,
+        sourceHandle: 'output',
+        targetHandle: 'input',
+        type: 'customEdge',
+        data: { relationType: 'define', direction: 'A→B', intensity: 0.85 },
+      });
+    }
+
+    const updatedObjects = recalculateObjectChains(objects, nextEdges, nextRelations, nextNodeParams);
+
+    set({
+      activeConcepts: nextActiveConcepts,
+      nodeParams: nextNodeParams,
+      nodes: nextNodes,
+      edges: nextEdges,
+      relations: nextRelations,
+      objects: updatedObjects,
+      selectedObjectId: targetObj.id,
+      selectedNodeId: conceptId,
+    });
+
+    get().showToast(`✨ Modificador "${conceptData.name}" aplicado a "${targetObj.name}"`);
+  },
+
+  applyMasterIntensity: (conceptId: string, masterIntensity: number) => {
+    const clamped = Math.max(0.05, Math.min(1.0, masterIntensity));
+    const { nodeParams, objects, selectedObjectId } = get();
+    const curGlobal = nodeParams[conceptId] || { weight: 0.6, intensity: 0.5 };
+
+    const newParam: NodeParam = {
+      ...curGlobal,
+      weight: 0.2 + clamped * 0.8,
+      intensity: clamped,
+    };
+
+    const nextGlobalParams = {
+      ...nodeParams,
+      [conceptId]: newParam,
+    };
+
+    // Actualizar también en el objeto seleccionado si lo tiene sobrescrito
+    const updatedObjects = objects.map((obj) => {
+      if (obj.assignedConcepts?.includes(conceptId) && (!selectedObjectId || obj.id === selectedObjectId)) {
+        const curObjParam = obj.nodeParams?.[conceptId] || curGlobal;
+        return {
+          ...obj,
+          nodeParams: {
+            ...(obj.nodeParams || {}),
+            [conceptId]: {
+              ...curObjParam,
+              weight: 0.2 + clamped * 0.8,
+              intensity: clamped,
+            },
+          },
+        };
+      }
+      return obj;
+    });
+
+    set({
+      nodeParams: nextGlobalParams,
+      objects: updatedObjects,
+    });
   },
 
   loadStudyCase: (caseId) => {

@@ -6,10 +6,11 @@ import { DiscourseEditor } from '../discourse/DiscourseEditor';
 import { ReferencesList } from '../discourse/ReferencesList';
 import { CoherenceMeter } from '../evaluation/CoherenceMeter';
 import { FirmitasSliders, ARCHITECTURAL_CUSTOM_LIST, VENUSTAS_LIST, UTILITAS_LIST } from './FirmitasSliders';
-import { Sparkles, X, Plus, Trash2, Move, Layers, Box, RotateCcw } from 'lucide-react';
+import { Sparkles, X, Plus, Trash2, Move, Layers, Box, RotateCcw, ChevronDown, ChevronRight, Sliders } from 'lucide-react';
 
 export const RightSidebar: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'params' | 'relations' | 'discourse' | 'coherence' | 'active'>('params');
+  const [showAdvancedParams, setShowAdvancedParams] = useState(false);
 
   const {
     activeConcepts,
@@ -19,6 +20,7 @@ export const RightSidebar: React.FC = () => {
     nodeParams,
     setNodeParam,
     setNodeCustomParam,
+    applyMasterIntensity,
     relations,
     updateRelation,
     removeRelation,
@@ -478,44 +480,131 @@ export const RightSidebar: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Sliders de Peso e Intensidad */}
-                    <div className="flex flex-col gap-3.5 pt-3 border-t border-diagramaxis-border">
-                      <div className="flex flex-col gap-1.5">
-                        <div className="flex justify-between font-mono text-[11.5px]">
-                          <span className="text-diagramaxis-textMuted">Peso Jerárquico:</span>
-                          <span className="font-bold text-diagramaxis-gold">
-                            {(currentParam.weight || 0.6).toFixed(2)}
-                          </span>
+                    {/* Control Gestual Maestro (Modo Tony Stark) */}
+                    <div className="flex flex-col gap-3 p-3 bg-gradient-to-br from-diagramaxis-chipBg to-diagramaxis-surface2 border border-diagramaxis-gold/40 rounded-sm shadow-md">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 font-mono text-[11px] font-bold text-diagramaxis-gold uppercase tracking-wider">
+                          <Sparkles className="w-3.5 h-3.5 text-diagramaxis-gold animate-pulse" />
+                          <span>Intensidad del Modificador</span>
                         </div>
-                        <input
-                          type="range"
-                          min="0.1"
-                          max="1.0"
-                          step="0.05"
-                          value={currentParam.weight || 0.6}
-                          onChange={(e) => setNodeParam(currentNodeId, 'weight', parseFloat(e.target.value))}
-                          className="w-full h-2 accent-diagramaxis-gold cursor-pointer"
-                        />
+                        <span className="font-mono text-[12px] font-bold px-2 py-0.5 rounded-xs bg-diagramaxis-gold/20 text-diagramaxis-gold border border-diagramaxis-gold/40">
+                          {Math.round((currentParam.intensity ?? 0.5) * 100)}%
+                        </span>
                       </div>
 
-                      <div className="flex flex-col gap-1.5">
-                        <div className="flex justify-between font-mono text-[11.5px]">
-                          <span className="text-diagramaxis-textMuted">Intensidad Formal:</span>
-                          <span className="font-bold text-diagramaxis-cyan">
-                            {(currentParam.intensity || 0.5).toFixed(2)}
-                          </span>
-                        </div>
+                      {/* Slider Principal 0% -> 100% */}
+                      <div className="flex flex-col gap-1">
                         <input
                           type="range"
-                          min="0.0"
+                          min="0.05"
                           max="1.0"
                           step="0.05"
-                          value={currentParam.intensity || 0.5}
-                          onChange={(e) => setNodeParam(currentNodeId, 'intensity', parseFloat(e.target.value))}
-                          className="w-full h-2 accent-diagramaxis-cyan cursor-pointer"
+                          value={currentParam.intensity ?? 0.5}
+                          onChange={(e) => applyMasterIntensity(currentNodeId, parseFloat(e.target.value))}
+                          className="w-full h-2.5 accent-diagramaxis-gold cursor-pointer"
                         />
+                        <div className="flex justify-between font-mono text-[9px] text-diagramaxis-textDim px-0.5">
+                          <span>Sutil (Min)</span>
+                          <span>Equilibrado</span>
+                          <span>Radical (Max)</span>
+                        </div>
+                      </div>
+
+                      {/* Presets Rápidos de Diseño */}
+                      <div className="grid grid-cols-3 gap-1.5 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => applyMasterIntensity(currentNodeId, 0.3)}
+                          className={`py-1.5 px-1 rounded-xs font-mono text-[10px] tracking-wide border transition-all text-center ${
+                            Math.abs((currentParam.intensity ?? 0.5) - 0.3) < 0.08
+                              ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold shadow-xs'
+                              : 'bg-diagramaxis-bg border-diagramaxis-border text-diagramaxis-textMuted hover:border-diagramaxis-gold/60 hover:text-diagramaxis-text'
+                          }`}
+                        >
+                          Sutil (30%)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => applyMasterIntensity(currentNodeId, 0.65)}
+                          className={`py-1.5 px-1 rounded-xs font-mono text-[10px] tracking-wide border transition-all text-center ${
+                            Math.abs((currentParam.intensity ?? 0.5) - 0.65) < 0.08
+                              ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold shadow-xs'
+                              : 'bg-diagramaxis-bg border-diagramaxis-border text-diagramaxis-textMuted hover:border-diagramaxis-gold/60 hover:text-diagramaxis-text'
+                          }`}
+                        >
+                          Equilibrado (65%)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => applyMasterIntensity(currentNodeId, 1.0)}
+                          className={`py-1.5 px-1 rounded-xs font-mono text-[10px] tracking-wide border transition-all text-center ${
+                            (currentParam.intensity ?? 0.5) >= 0.95
+                              ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold shadow-xs'
+                              : 'bg-diagramaxis-bg border-diagramaxis-border text-diagramaxis-textMuted hover:border-diagramaxis-gold/60 hover:text-diagramaxis-text'
+                          }`}
+                        >
+                          Radical (100%)
+                        </button>
                       </div>
                     </div>
+
+                    {/* Acordeón de Ajustes Técnicos Avanzados */}
+                    <div className="border border-diagramaxis-border rounded-xs bg-diagramaxis-bg/50 overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setShowAdvancedParams(!showAdvancedParams)}
+                        className="w-full flex items-center justify-between p-2.5 text-left font-mono text-[11px] text-diagramaxis-textMuted hover:text-diagramaxis-text hover:bg-diagramaxis-surface/60 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Sliders className="w-3.5 h-3.5 text-diagramaxis-textDim" />
+                          <span className="font-semibold">Ajustes Técnicos Avanzados</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] text-diagramaxis-textDim">
+                          <span>{showAdvancedParams ? 'Ocultar' : 'Personalizar'}</span>
+                          {showAdvancedParams ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                        </div>
+                      </button>
+
+                      {showAdvancedParams && (
+                        <div className="p-3 pt-1 border-t border-diagramaxis-border flex flex-col gap-3.5">
+                          {/* Sliders individuales de Peso e Intensidad */}
+                          <div className="flex flex-col gap-2.5 pt-1">
+                            <div className="flex flex-col gap-1">
+                              <div className="flex justify-between font-mono text-[10.5px]">
+                                <span className="text-diagramaxis-textMuted">Peso Jerárquico:</span>
+                                <span className="font-bold text-diagramaxis-gold">
+                                  {(currentParam.weight || 0.6).toFixed(2)}
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="0.1"
+                                max="1.0"
+                                step="0.05"
+                                value={currentParam.weight || 0.6}
+                                onChange={(e) => setNodeParam(currentNodeId, 'weight', parseFloat(e.target.value))}
+                                className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
+                              />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <div className="flex justify-between font-mono text-[10.5px]">
+                                <span className="text-diagramaxis-textMuted">Intensidad Formal:</span>
+                                <span className="font-bold text-diagramaxis-cyan">
+                                  {(currentParam.intensity || 0.5).toFixed(2)}
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="0.0"
+                                max="1.0"
+                                step="0.05"
+                                value={currentParam.intensity || 0.5}
+                                onChange={(e) => setNodeParam(currentNodeId, 'intensity', parseFloat(e.target.value))}
+                                className="w-full h-1.5 accent-diagramaxis-cyan cursor-pointer"
+                              />
+                            </div>
+                          </div>
 
                     {/* Modificadores Operacionales Configurables */}
                     {currentOp && (
@@ -787,6 +876,9 @@ export const RightSidebar: React.FC = () => {
                 )}
               </div>
             )}
+          </div>
+        </div>
+      )}
 
                 {/* Control de Orientación Solar y Entorno */}
                 <div className="p-3.5 bg-diagramaxis-surface2 border border-diagramaxis-border rounded-sm flex flex-col gap-3 shadow-md">

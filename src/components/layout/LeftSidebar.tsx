@@ -239,12 +239,19 @@ export const LeftSidebar: React.FC = () => {
                       return (
                         <div
                           key={c.id}
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData('application/json', JSON.stringify({ type: 'concept', id: c.id, name: c.name }));
+                            e.dataTransfer.setData('text/plain', c.id);
+                            e.dataTransfer.effectAllowed = 'copyMove';
+                          }}
                           onClick={() => toggleConcept(c.id)}
-                          className={`p-3 border cursor-pointer transition-all flex flex-col gap-1.5 select-none ${
+                          title="Haz clic para activar o arrastra directamente sobre el volumen 3D para aplicarlo"
+                          className={`p-3 border cursor-grab active:cursor-grabbing transition-all flex flex-col gap-1.5 select-none hover:scale-[1.01] ${
                             isActive
                               ? activeCategory === 'Temas Arquitectónicos'
-                                ? 'bg-diagramaxis-surface2 border-diagramaxis-gold ring-1 ring-diagramaxis-gold'
-                                : 'bg-diagramaxis-surface2 border-diagramaxis-cyan ring-1 ring-diagramaxis-cyan'
+                                ? 'bg-diagramaxis-surface2 border-diagramaxis-gold ring-1 ring-diagramaxis-gold shadow-md'
+                                : 'bg-diagramaxis-surface2 border-diagramaxis-cyan ring-1 ring-diagramaxis-cyan shadow-md'
                               : 'bg-diagramaxis-surface2/60 border-diagramaxis-border hover:border-diagramaxis-gold/70 hover:bg-diagramaxis-surface3'
                           }`}
                         >
