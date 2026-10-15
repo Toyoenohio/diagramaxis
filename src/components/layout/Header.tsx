@@ -7,11 +7,40 @@ import {
   Download,
   Plus,
   LayoutGrid,
-  BookMarked,
-  ShieldCheck,
+  BookOpen,
+  Columns2,
+  Square,
+  Box,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
-export const Header: React.FC = () => {
+export type ViewMode = 'split' | 'diagram' | '3d';
+
+interface HeaderProps {
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
+}
+
+const IconButton: React.FC<{
+  onClick: () => void;
+  title: string;
+  children: React.ReactNode;
+  disabled?: boolean;
+}> = ({ onClick, title, children, disabled }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    title={title}
+    aria-label={title}
+    disabled={disabled}
+    className="w-8 h-8 flex items-center justify-center rounded-md text-diagramaxis-textMuted hover:text-diagramaxis-text hover:bg-diagramaxis-surface2 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+  >
+    {children}
+  </button>
+);
+
+export const Header: React.FC<HeaderProps> = ({ viewMode, onViewModeChange }) => {
   const theme = useTheme();
   const isDark = theme === 'dark';
   const {
@@ -32,6 +61,8 @@ export const Header: React.FC = () => {
   } = useProjectStore();
 
   const coherence = getCoherenceReport();
+  const coherenceColor =
+    coherence.score >= 70 ? 'bg-diagramaxis-success' : coherence.score >= 40 ? 'bg-diagramaxis-warn' : 'bg-diagramaxis-danger';
 
   const handleExportProject = () => {
     exportProjectToJSON({
@@ -49,139 +80,97 @@ export const Header: React.FC = () => {
       volumen_base: baseDimensions,
       northRot: northRotation,
     });
-    showToast('Partida / Proyecto exportado (.JSON)');
+    showToast('Proyecto exportado (.json)');
   };
 
+  const views: { id: ViewMode; label: string; icon: React.ElementType }[] = [
+    { id: 'diagram', label: 'Tablero', icon: Square },
+    { id: 'split', label: 'Dividido', icon: Columns2 },
+    { id: '3d', label: '3D', icon: Box },
+  ];
+
   return (
-    <header className="fixed top-0 left-0 right-0 h-[58px] bg-diagramaxis-surface border-b border-diagramaxis-border z-40 flex items-center px-4 justify-between select-none text-diagramaxis-text">
-      {/* Brand & Project Info */}
-      <div className="flex items-center gap-4">
-        <div
-          className="flex items-center gap-2.5 cursor-pointer group"
+    <header className="fixed top-0 left-0 right-0 h-12 bg-diagramaxis-surface border-b border-diagramaxis-border z-40 grid grid-cols-[1fr_auto_1fr] items-center px-3 select-none text-diagramaxis-text">
+      {/* Marca + proyecto */}
+      <div className="flex items-center gap-3 min-w-0">
+        <button
+          type="button"
           onClick={() => setModalOpen('project', true)}
+          className="flex items-center gap-2.5 min-w-0 px-1.5 py-1 rounded-md hover:bg-diagramaxis-surface2 transition-colors"
+          title="Datos del proyecto"
         >
-          {/* Logo Diagramaxis Icon */}
-          <div className="w-8 h-8 bg-diagramaxis-brandChip border border-diagramaxis-border flex items-center justify-center group-hover:border-diagramaxis-gold transition-colors">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ stroke: 'rgb(var(--da-gold))' }} strokeWidth="1.8">
+          <div className="w-7 h-7 rounded-md bg-diagramaxis-brandChip flex items-center justify-center shrink-0">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgb(var(--da-bg))" strokeWidth="2" strokeLinejoin="round">
               <polygon points="12 2 2 7 12 12 22 7 12 2" />
               <polyline points="2 17 12 22 22 17" />
               <polyline points="2 12 12 17 22 12" />
             </svg>
           </div>
-
-          <div className="flex flex-col leading-tight">
-            <div className="flex items-baseline gap-1">
-              <span className="font-serif font-bold text-[18px] tracking-wide text-diagramaxis-text">
-                DIAGRAMAXIS<span className="text-diagramaxis-gold">.</span>
-              </span>
-            </div>
-            <span className="font-mono text-[8.5px] tracking-wider text-diagramaxis-textMuted">
-              Un juego contra el silencio sistémico · Angel Peña Villegas
-            </span>
-          </div>
-        </div>
-
-        <div className="w-[1px] h-7 bg-diagramaxis-border hidden sm:block" />
-
-        <div
-          className="hidden sm:flex flex-col cursor-pointer group"
-          onClick={() => setModalOpen('project', true)}
-        >
-          <span className="font-serif italic text-[15px] text-diagramaxis-gold group-hover:underline transition-colors truncate max-w-[260px]">
-            {projectName || 'Partida sin título'}
+          <span className="text-[14px] font-semibold tracking-tight">Diagramaxis</span>
+          <span className="text-diagramaxis-textDim">/</span>
+          <span className="text-[13.5px] text-diagramaxis-textMuted truncate max-w-[220px]">
+            {projectName || 'Proyecto sin título'}
           </span>
-          <span className="font-mono text-[9px] text-diagramaxis-textDim">
-            {architectName || 'Jugador / Arquitecto'} {location ? `· ${location}` : ''}
-          </span>
-        </div>
-      </div>
-
-      {/* Indicador de Coherencia Proyectual */}
-      <div className="hidden md:flex items-center gap-2.5 px-3.5 py-1.5 bg-diagramaxis-surface2 border border-diagramaxis-border">
-        <ShieldCheck
-          className={`w-4 h-4 ${
-            coherence.score >= 70 ? 'text-diagramaxis-gold' : coherence.score >= 40 ? 'text-diagramaxis-orange' : 'text-diagramaxis-danger'
-          }`}
-        />
-        <div className="flex flex-col leading-tight">
-          <span className="font-mono text-[7.5px] uppercase tracking-wider text-diagramaxis-textMuted">
-            Coherencia del Tablero
-          </span>
-          <span className="font-mono text-[11px] font-bold text-diagramaxis-text">
-            {coherence.score}%{' '}
-            <span className="text-diagramaxis-gold font-normal text-[9.5px]">
-              ({coherence.level})
-            </span>
-          </span>
-        </div>
-      </div>
-
-      {/* Botones de Acción */}
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => setModalOpen('studyCases', true)}
-          title="Manual de Reglas y Casos de Estudio"
-          className="flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider bg-diagramaxis-surface2 hover:bg-diagramaxis-surface3 text-diagramaxis-gold border border-diagramaxis-border hover:border-diagramaxis-gold transition-all"
-        >
-          <BookMarked className="w-3.5 h-3.5 text-diagramaxis-gold" />
-          <span className="hidden sm:inline font-semibold">Casos / Reglas</span>
         </button>
+      </div>
+
+      {/* Selector de vista */}
+      <div className="flex items-center p-0.5 rounded-lg bg-diagramaxis-surface2 border border-diagramaxis-border">
+        {views.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => onViewModeChange(id)}
+            className={`flex items-center gap-1.5 px-3 h-7 rounded-md text-[12.5px] font-medium transition-all ${
+              viewMode === id
+                ? 'bg-diagramaxis-surface text-diagramaxis-text shadow-sm'
+                : 'text-diagramaxis-textMuted hover:text-diagramaxis-text'
+            }`}
+          >
+            <Icon className="w-3.5 h-3.5" strokeWidth={1.75} />
+            <span className="hidden md:inline">{label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Acciones */}
+      <div className="flex items-center justify-end gap-1">
+        <div
+          className="hidden lg:flex items-center gap-1.5 px-2.5 h-7 mr-1 rounded-full border border-diagramaxis-border text-[12px] text-diagramaxis-textMuted"
+          title={`Coherencia del tablero: ${coherence.level}`}
+        >
+          <span className={`w-1.5 h-1.5 rounded-full ${coherenceColor}`} />
+          <span className="font-medium text-diagramaxis-text tabular-nums">{coherence.score}%</span>
+          <span>coherencia</span>
+        </div>
+
+        <IconButton onClick={() => setModalOpen('studyCases', true)} title="Casos de estudio y reglas">
+          <BookOpen className="w-4 h-4" strokeWidth={1.75} />
+        </IconButton>
+        <IconButton onClick={autoLayoutNodes} title="Ordenar tablero">
+          <LayoutGrid className="w-4 h-4" strokeWidth={1.75} />
+        </IconButton>
+        <IconButton onClick={handleExportProject} title="Exportar proyecto (.json)">
+          <Download className="w-4 h-4" strokeWidth={1.75} />
+        </IconButton>
+        <IconButton onClick={() => toggleTheme()} title={isDark ? 'Modo claro' : 'Modo oscuro'}>
+          {isDark ? <Sun className="w-4 h-4" strokeWidth={1.75} /> : <Moon className="w-4 h-4" strokeWidth={1.75} />}
+        </IconButton>
+        <IconButton onClick={() => setModalOpen('settings', true)} title="Ajustes de IA">
+          <Settings className="w-4 h-4" strokeWidth={1.75} />
+        </IconButton>
+
+        <div className="w-px h-5 bg-diagramaxis-border mx-1.5" />
 
         <button
+          type="button"
           onClick={() => setModalOpen('relation', true)}
           disabled={activeConcepts.length + activeArtifacts.length < 2}
-          title="Conectar dos fichas mediante un hilo / vínculo semántico"
-          className="flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider bg-diagramaxis-gold hover:bg-diagramaxis-goldHover text-diagramaxis-bg font-bold border border-diagramaxis-gold disabled:opacity-30 transition-all"
+          title="Conectar dos fichas mediante un vínculo"
+          className="flex items-center gap-1.5 pl-2.5 pr-3 h-8 rounded-md bg-diagramaxis-gold hover:bg-diagramaxis-goldHover text-white text-[12.5px] font-medium disabled:opacity-40 disabled:pointer-events-none transition-colors"
         >
-          <Plus className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">+ Hilo / Vínculo</span>
-        </button>
-
-        <button
-          onClick={autoLayoutNodes}
-          title="Distribuir fichas en el tablero"
-          className="flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider bg-diagramaxis-surface2 hover:bg-diagramaxis-surface3 text-diagramaxis-textMuted hover:text-diagramaxis-text border border-diagramaxis-border rounded-sm transition-all"
-        >
-          <LayoutGrid className="w-3.5 h-3.5" />
-          <span className="hidden lg:inline">Ordenar Tablero</span>
-        </button>
-
-        <button
-          onClick={handleExportProject}
-          title="Exportar Partida en Formato JSON"
-          className="flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider bg-diagramaxis-surface2 hover:bg-diagramaxis-surface3 text-diagramaxis-textMuted hover:text-diagramaxis-text border border-diagramaxis-border rounded-sm transition-all"
-        >
-          <Download className="w-3.5 h-3.5" />
-          <span className="hidden lg:inline">JSON</span>
-        </button>
-
-        {/* Alternar Modo Día / Noche */}
-        <button
-          onClick={() => toggleTheme()}
-          title={isDark ? 'Modo diurno (claro)' : 'Modo nocturno (oscuro)'}
-          aria-label={isDark ? 'Cambiar a modo diurno' : 'Cambiar a modo nocturno'}
-          className="p-2 font-mono bg-diagramaxis-surface2 hover:bg-diagramaxis-surface3 text-diagramaxis-textDim hover:text-diagramaxis-gold border border-diagramaxis-border rounded-sm transition-all"
-        >
-          {isDark ? (
-            /* Sol — modo claro */
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              <circle cx="12" cy="12" r="4.5" />
-              <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6" />
-            </svg>
-          ) : (
-            /* Luna — modo nocturno */
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z" />
-            </svg>
-          )}
-        </button>
-
-        <button
-          onClick={() => setModalOpen('settings', true)}
-          title="Ajustes de Inteligencia Artificial (BYOK / Cloudflare)"
-          className="p-2 font-mono bg-diagramaxis-surface2 hover:bg-diagramaxis-surface3 text-diagramaxis-textMuted hover:text-diagramaxis-text border border-diagramaxis-border rounded-sm transition-all"
-        >
-          <Settings className="w-4 h-4" />
+          <Plus className="w-3.5 h-3.5" strokeWidth={2.25} />
+          <span>Vínculo</span>
         </button>
       </div>
     </header>

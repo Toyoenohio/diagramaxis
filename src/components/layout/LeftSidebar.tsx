@@ -2,89 +2,57 @@ import React, { useState, useMemo } from 'react';
 import { useProjectStore } from '../../store/useProjectStore';
 import { CONCEPTS_DATA } from '../../data/architecturalMenu';
 import { getVolumetricOperation } from '../../data/volumetricOperations';
-import { Search, ChevronDown, ChevronRight, Disc, Layers, Sparkles } from 'lucide-react';
+import { Search, X, Check, Plus, GripVertical } from 'lucide-react';
 
-const SUB_PILL_INFO: Record<string, { label: string; desc: string; color: string }> = {
-  'Todos': {
-    label: 'Todos',
-    desc: 'Todos los conceptos de esta categoría ordenadora',
-    color: 'rgb(var(--da-gold))',
-  },
-  'Firmitas': {
-    label: 'Firmitas',
-    desc: 'Tectónica, gravedad, solidez y estructura',
-    color: 'rgb(var(--da-gold))',
-  },
-  'Venustas': {
-    label: 'Venustas',
-    desc: 'Forma, estética, proporción, luz y balance',
-    color: 'rgb(var(--da-cyan))',
-  },
-  'Utilitas': {
-    label: 'Utilitas',
-    desc: 'Función, uso, programa y habitabilidad',
-    color: 'rgb(var(--da-orange))',
-  },
-  'Topológicas': {
-    label: 'Topológicas',
-    desc: 'Relaciones de proximidad, inclusión, contigüidad y vecindad espacial',
-    color: 'rgb(var(--da-cyan))',
-  },
-  'Cronológicas': {
-    label: 'Cronológicas',
-    desc: 'Secuencias temporales, ritmos progresivos y permanencia',
-    color: 'rgb(var(--da-orange))',
-  },
-  'Proyectivas': {
-    label: 'Proyectivas',
-    desc: 'Perspectivas, líneas de fuga y orientaciones relativas',
-    color: 'rgb(var(--da-gold))',
-  },
-  'Euclidianas/No euclidianas': {
-    label: 'Euclidianas / No Euclidianas',
-    desc: 'Geometrías ortogonales, curvas, fracturas y deformaciones',
-    color: 'rgb(var(--da-cyan))',
-  },
+type Category = 'Temas Arquitectónicos' | 'Relaciones Paralógicas';
+
+const SUB_DESC: Record<string, string> = {
+  Todos: 'Todos los conceptos de esta categoría',
+  Firmitas: 'Tectónica, gravedad, solidez y estructura',
+  Venustas: 'Forma, estética, proporción, luz y balance',
+  Utilitas: 'Función, uso, programa y habitabilidad',
+  'Topológicas': 'Proximidad, inclusión, contigüidad y vecindad',
+  'Cronológicas': 'Secuencias temporales, ritmos y permanencia',
+  Proyectivas: 'Perspectivas, líneas de fuga y orientaciones',
+  'Euclidianas/No euclidianas': 'Geometrías ortogonales, curvas y deformaciones',
 };
 
-export const LeftSidebar: React.FC = () => {
-  const [activeCategory, setActiveCategory] = useState<'Temas Arquitectónicos' | 'Relaciones Paralógicas'>('Temas Arquitectónicos');
+/** Color de acento por subcategoría (token CSS) */
+const subColor = (sub: string): string => {
+  if (sub === 'Venustas' || sub === 'Topológicas' || sub === 'Euclidianas/No euclidianas') return 'var(--da-cyan)';
+  if (sub === 'Utilitas' || sub === 'Cronológicas') return 'var(--da-orange)';
+  return 'var(--da-gold)';
+};
+
+interface LeftSidebarProps {
+  onClose?: () => void;
+}
+
+export const LeftSidebar: React.FC<LeftSidebarProps> = ({ onClose }) => {
+  const [activeCategory, setActiveCategory] = useState<Category>('Temas Arquitectónicos');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('Todos');
   const [searchQuery, setSearchQuery] = useState('');
-  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
 
   const { activeConcepts, toggleConcept } = useProjectStore();
 
-  const toggleCategoryCollapse = (cat: string) => {
-    setCollapsedCategories((prev) => ({ ...prev, [cat]: !prev[cat] }));
-  };
+  const availableSubcategories = useMemo(
+    () =>
+      activeCategory === 'Temas Arquitectónicos'
+        ? ['Todos', 'Firmitas', 'Venustas', 'Utilitas']
+        : ['Todos', 'Topológicas', 'Cronológicas', 'Proyectivas', 'Euclidianas/No euclidianas'],
+    [activeCategory]
+  );
 
-  // Subcategorías según la categoría activa
-  const availableSubcategories = useMemo(() => {
-    if (activeCategory === 'Temas Arquitectónicos') {
-      return ['Todos', 'Firmitas', 'Venustas', 'Utilitas'] as const;
-    } else {
-      return ['Todos', 'Topológicas', 'Cronológicas', 'Proyectivas', 'Euclidianas/No euclidianas'] as const;
-    }
-  }, [activeCategory]);
-
-  // Cambiar categoría resetea subcategoría a 'Todos' si no aplica
-  const handleSelectCategory = (cat: 'Temas Arquitectónicos' | 'Relaciones Paralógicas') => {
+  const handleSelectCategory = (cat: Category) => {
     setActiveCategory(cat);
     setSelectedSubcategory('Todos');
   };
 
-  // Filtrado
   const filteredConcepts = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     let concepts = CONCEPTS_DATA.filter((c) => c.category === activeCategory);
-
-    if (selectedSubcategory !== 'Todos') {
-      concepts = concepts.filter((c) => c.subcategory === selectedSubcategory);
-    }
-
+    if (selectedSubcategory !== 'Todos') concepts = concepts.filter((c) => c.subcategory === selectedSubcategory);
     if (!q) return concepts;
-
     return concepts.filter(
       (c) =>
         c.name.toLowerCase().includes(q) ||
@@ -93,8 +61,7 @@ export const LeftSidebar: React.FC = () => {
     );
   }, [activeCategory, selectedSubcategory, searchQuery]);
 
-  // Agrupado por subcategorías
-  const subcategoryGroups = useMemo(() => {
+  const groups = useMemo(() => {
     const map: Record<string, typeof CONCEPTS_DATA> = {};
     filteredConcepts.forEach((c) => {
       if (!map[c.subcategory]) map[c.subcategory] = [];
@@ -103,250 +70,148 @@ export const LeftSidebar: React.FC = () => {
     return map;
   }, [filteredConcepts]);
 
-  const totalInCurrentCategory = CONCEPTS_DATA.filter((c) => c.category === activeCategory).length;
-
   return (
-    <aside className="w-[340px] min-w-[340px] h-full bg-diagramaxis-surface border-r border-diagramaxis-border flex flex-col z-20 select-none text-diagramaxis-text">
-      {/* Cabecera Principal de la Bandeja */}
-      <div className="p-3 bg-diagramaxis-bg border-b border-diagramaxis-border flex flex-col gap-2">
-        <div className="flex items-center justify-between px-1">
-          <div className="flex items-center gap-2">
-            <Layers className="w-4 h-4 text-diagramaxis-gold" />
-            <span className="font-mono text-[11px] uppercase tracking-widest text-diagramaxis-gold font-bold">
-              Bandeja de Fichas
-            </span>
+    <aside className="w-full h-full flex flex-col select-none text-diagramaxis-text">
+      {/* Cabecera */}
+      <div className="px-4 pt-4 pb-3 flex flex-col gap-3 border-b border-diagramaxis-border">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-[15px] font-semibold">Biblioteca</h2>
+            <p className="text-[12px] text-diagramaxis-textDim">Arrastra una ficha sobre un volumen 3D</p>
           </div>
-          <span className="font-mono text-[10.5px] px-2 py-0.5 bg-diagramaxis-surface2 text-diagramaxis-gold border border-diagramaxis-gold/30 rounded-xs font-semibold">
-            {totalInCurrentCategory} fichas
-          </span>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              title="Cerrar"
+              className="w-7 h-7 flex items-center justify-center rounded-md text-diagramaxis-textDim hover:text-diagramaxis-text hover:bg-diagramaxis-surface2 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
-        {/* Pestañas Principales: Temas Arquitectónicos vs Relaciones Paralógicas */}
-        <div className="grid grid-cols-2 gap-1 pt-1">
-          <button
-            onClick={() => handleSelectCategory('Temas Arquitectónicos')}
-            className={`py-1.5 px-2 rounded-xs border text-center font-mono text-[10.5px] uppercase tracking-wider transition-all ${
-              activeCategory === 'Temas Arquitectónicos'
-                ? 'bg-diagramaxis-surface2 border-diagramaxis-gold text-diagramaxis-gold font-bold shadow-xs'
-                : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
-            }`}
-          >
-            Temas (Tríada)
-          </button>
-          <button
-            onClick={() => handleSelectCategory('Relaciones Paralógicas')}
-            className={`py-1.5 px-2 rounded-xs border text-center font-mono text-[10.5px] uppercase tracking-wider transition-all ${
-              activeCategory === 'Relaciones Paralógicas'
-                ? 'bg-diagramaxis-surface2 border-diagramaxis-cyan text-diagramaxis-cyan font-bold shadow-xs'
-                : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
-            }`}
-          >
-            Paralógicas
-          </button>
+        {/* Categoría */}
+        <div className="grid grid-cols-2 p-0.5 rounded-lg bg-diagramaxis-surface2">
+          {(['Temas Arquitectónicos', 'Relaciones Paralógicas'] as Category[]).map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => handleSelectCategory(cat)}
+              className={`h-7 rounded-md text-[12.5px] font-medium transition-all ${
+                activeCategory === cat
+                  ? 'bg-diagramaxis-surface text-diagramaxis-text shadow-sm'
+                  : 'text-diagramaxis-textMuted hover:text-diagramaxis-text'
+              }`}
+            >
+              {cat === 'Temas Arquitectónicos' ? 'Temas' : 'Paralógicas'}
+            </button>
+          ))}
         </div>
 
-        <p className="font-mono text-[10px] text-diagramaxis-textMuted px-1 leading-snug">
-          {activeCategory === 'Temas Arquitectónicos'
-            ? 'Cuestiones clave y operaciones rectoras del proyecto (Firmitas, Venustas, Utilitas).'
-            : 'Relaciones espaciales, temporales y proyectivas entre elementos (Topológicas, Cronológicas, Proyectivas, Euclidianas).'}
-        </p>
-
-        {/* Pestañas de Subcategoría */}
-        <div className={`grid ${availableSubcategories.length > 4 ? 'grid-cols-3' : 'grid-cols-4'} gap-1 pt-0.5`}>
-          {availableSubcategories.map((tab) => {
-            const isSelected = selectedSubcategory === tab;
-            const count =
-              tab === 'Todos'
-                ? totalInCurrentCategory
-                : CONCEPTS_DATA.filter(
-                    (c) => c.category === activeCategory && c.subcategory === tab
-                  ).length;
-            return (
-              <button
-                key={tab}
-                onClick={() => setSelectedSubcategory(tab)}
-                title={SUB_PILL_INFO[tab]?.desc}
-                className={`py-1 px-1 rounded-xs border text-center font-mono text-[9.5px] uppercase tracking-wider transition-all truncate ${
-                  isSelected
-                    ? activeCategory === 'Temas Arquitectónicos'
-                      ? 'bg-diagramaxis-surface2 border-diagramaxis-gold text-diagramaxis-gold font-bold shadow-xs'
-                      : 'bg-diagramaxis-surface2 border-diagramaxis-cyan text-diagramaxis-cyan font-bold shadow-xs'
-                    : 'bg-diagramaxis-surface border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
-                }`}
-              >
-                <span>{tab === 'Euclidianas/No euclidianas' ? 'Euclidianas' : tab}</span>
-                <span className="text-[8.5px] opacity-70 ml-1">({count})</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Resumen pedagógico del filtro activo */}
-        <div className="text-[9.5px] font-mono px-1.5 py-1 text-diagramaxis-textMuted bg-diagramaxis-surface2/60 rounded-xs border border-diagramaxis-border/60">
-          <span className={`font-bold ${activeCategory === 'Temas Arquitectónicos' ? 'text-diagramaxis-gold' : 'text-diagramaxis-cyan'}`}>
-            {SUB_PILL_INFO[selectedSubcategory]?.label || selectedSubcategory}:{' '}
-          </span>
-          <span>{SUB_PILL_INFO[selectedSubcategory]?.desc || 'Filtro por subcategoría conceptual.'}</span>
-        </div>
-      </div>
-
-      {/* Barra de Búsqueda */}
-      <div className="p-3 border-b border-diagramaxis-border bg-diagramaxis-surface">
+        {/* Búsqueda */}
         <div className="relative flex items-center">
-          <Search className="w-4 h-4 text-diagramaxis-textDim absolute left-3 pointer-events-none" />
+          <Search className="w-4 h-4 text-diagramaxis-textDim absolute left-2.5 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={`Buscar en ${activeCategory}...`}
-            className="w-full pl-9 pr-3 py-2 bg-diagramaxis-surface2 border border-diagramaxis-border focus:border-diagramaxis-gold rounded-xs font-mono text-[12px] text-diagramaxis-text outline-none placeholder:text-diagramaxis-textDim transition-colors"
+            placeholder="Buscar fichas…"
+            className="w-full h-8 pl-8 pr-3 bg-diagramaxis-surface border border-diagramaxis-border focus:border-diagramaxis-gold rounded-md text-[13px] text-diagramaxis-text outline-none placeholder:text-diagramaxis-textDim transition-colors"
           />
+        </div>
+
+        {/* Subcategorías */}
+        <div className="flex flex-wrap gap-1.5">
+          {availableSubcategories.map((tab) => {
+            const isSelected = selectedSubcategory === tab;
+            return (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setSelectedSubcategory(tab)}
+                title={SUB_DESC[tab]}
+                className={`flex items-center gap-1.5 h-6 px-2.5 rounded-full text-[11.5px] font-medium border transition-colors ${
+                  isSelected
+                    ? 'border-diagramaxis-text bg-diagramaxis-text text-diagramaxis-bg'
+                    : 'border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text hover:border-diagramaxis-borderLight'
+                }`}
+              >
+                {tab !== 'Todos' && (
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: `rgb(${subColor(tab)})` }} />
+                )}
+                {tab === 'Euclidianas/No euclidianas' ? 'Euclidianas' : tab}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Listado de Fichas Arquitectónicas Mejoradas */}
-      <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3.5 custom-scrollbar">
-        {Object.keys(subcategoryGroups).length === 0 ? (
-          <div className="p-6 text-center font-mono text-[12px] text-diagramaxis-textDim">
-            No se encontraron fichas para &quot;{searchQuery}&quot;.
+      {/* Lista */}
+      <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-4 custom-scrollbar">
+        {Object.keys(groups).length === 0 ? (
+          <div className="p-6 text-center text-[13px] text-diagramaxis-textDim">
+            Sin resultados para “{searchQuery}”.
           </div>
         ) : (
-          Object.entries(subcategoryGroups).map(([subcategory, concepts]) => {
-            const isCollapsed = collapsedCategories[subcategory];
-            return (
-              <div key={subcategory} className="flex flex-col gap-2">
-                <div
-                  onClick={() => toggleCategoryCollapse(subcategory)}
-                  className="flex items-center justify-between py-2 px-2.5 bg-diagramaxis-surface2 hover:bg-diagramaxis-surface3 rounded-xs cursor-pointer border border-diagramaxis-border transition-colors"
-                >
-                  <span className={`font-mono text-[11px] uppercase tracking-widest font-bold ${
-                    activeCategory === 'Temas Arquitectónicos' ? 'text-diagramaxis-gold' : 'text-diagramaxis-cyan'
-                  }`}>
-                    {subcategory} ({concepts.length})
-                  </span>
-                  {isCollapsed ? (
-                    <ChevronRight className="w-4 h-4 text-diagramaxis-textDim" />
-                  ) : (
-                    <ChevronDown className={`w-4 h-4 ${activeCategory === 'Temas Arquitectónicos' ? 'text-diagramaxis-gold' : 'text-diagramaxis-cyan'}`} />
-                  )}
-                </div>
+          Object.entries(groups).map(([subcategory, concepts]) => (
+            <section key={subcategory} className="flex flex-col gap-1">
+              <div className="flex items-center gap-2 px-1.5 pb-1">
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: `rgb(${subColor(subcategory)})` }} />
+                <span className="text-[11.5px] font-semibold text-diagramaxis-textMuted">{subcategory}</span>
+                <span className="text-[11px] text-diagramaxis-textDim">{concepts.length}</span>
+              </div>
 
-                {!isCollapsed && (
-                  <div className="flex flex-col gap-2.5 pt-0.5">
-                    {concepts.map((c) => {
-                      const isActive = activeConcepts.includes(c.id);
-                      const op = getVolumetricOperation(c.id);
-                      return (
-                        <div
-                          key={c.id}
-                          draggable
-                          onDragStart={(e) => {
-                            e.dataTransfer.setData('application/json', JSON.stringify({ type: 'concept', id: c.id, name: c.name }));
-                            e.dataTransfer.setData('text/plain', c.id);
-                            e.dataTransfer.effectAllowed = 'copyMove';
-                          }}
-                          onClick={() => toggleConcept(c.id)}
-                          title="Haz clic para activar o arrastra directamente sobre el volumen 3D para aplicarlo"
-                          className={`p-3 border cursor-grab active:cursor-grabbing transition-all flex flex-col gap-1.5 select-none hover:scale-[1.01] ${
+              {concepts.map((c) => {
+                const isActive = activeConcepts.includes(c.id);
+                const op = getVolumetricOperation(c.id);
+                return (
+                  <div
+                    key={c.id}
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('application/json', JSON.stringify({ type: 'concept', id: c.id, name: c.name }));
+                      e.dataTransfer.setData('text/plain', c.id);
+                      e.dataTransfer.effectAllowed = 'copyMove';
+                    }}
+                    onClick={() => toggleConcept(c.id)}
+                    title="Clic para añadir al tablero · arrastra sobre un volumen 3D para aplicarlo"
+                    className={`group relative flex gap-2 p-2.5 rounded-lg border cursor-grab active:cursor-grabbing transition-colors ${
+                      isActive
+                        ? 'border-diagramaxis-gold/40 bg-diagramaxis-gold/[0.05]'
+                        : 'border-transparent hover:border-diagramaxis-border hover:bg-diagramaxis-surface2'
+                    }`}
+                  >
+                    <GripVertical className="w-3.5 h-3.5 mt-0.5 shrink-0 text-diagramaxis-textDim opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[13.5px] font-medium text-diagramaxis-text truncate">{c.name}</span>
+                        <span
+                          className={`shrink-0 w-5 h-5 flex items-center justify-center rounded-md transition-colors ${
                             isActive
-                              ? activeCategory === 'Temas Arquitectónicos'
-                                ? 'bg-diagramaxis-surface2 border-diagramaxis-gold ring-1 ring-diagramaxis-gold shadow-md'
-                                : 'bg-diagramaxis-surface2 border-diagramaxis-cyan ring-1 ring-diagramaxis-cyan shadow-md'
-                              : 'bg-diagramaxis-surface2/60 border-diagramaxis-border hover:border-diagramaxis-gold/70 hover:bg-diagramaxis-surface3'
+                              ? 'bg-diagramaxis-gold text-white'
+                              : 'text-diagramaxis-textDim opacity-0 group-hover:opacity-100 bg-diagramaxis-surface border border-diagramaxis-border'
                           }`}
                         >
-                          {/* Header de la Ficha */}
-                          <div className="flex items-center justify-between gap-1">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <Disc
-                                className={`w-3.5 h-3.5 shrink-0 ${
-                                  isActive
-                                    ? activeCategory === 'Temas Arquitectónicos' ? 'text-diagramaxis-gold' : 'text-diagramaxis-cyan'
-                                    : 'text-diagramaxis-textDim'
-                                }`}
-                              />
-                              <span className="font-serif italic font-bold text-[15px] text-diagramaxis-text truncate">
-                                {c.name}
-                              </span>
-                            </div>
-                            <span
-                              className={`text-[8.5px] font-mono px-1.5 py-0.5 rounded-xs border font-semibold shrink-0 uppercase ${
-                                c.subcategory === 'Firmitas'
-                                  ? 'border-diagramaxis-gold/50 text-diagramaxis-gold bg-diagramaxis-gold/10'
-                                  : c.subcategory === 'Venustas'
-                                  ? 'border-diagramaxis-cyan/50 text-diagramaxis-cyan bg-diagramaxis-cyan/10'
-                                  : c.subcategory === 'Utilitas'
-                                  ? 'border-diagramaxis-orange/50 text-diagramaxis-orange bg-diagramaxis-orange/10'
-                                  : 'border-diagramaxis-cyan/40 text-diagramaxis-cyan bg-diagramaxis-cyan/10'
-                              }`}
-                            >
-                              {c.subcategory}
-                            </span>
-                          </div>
-
-                          {/* Badges de Naturalezas */}
-                          <div className="flex items-center gap-1">
-                            {(c.natures || ['G']).map((nat) => (
-                              <span
-                                key={nat}
-                                className="text-[8px] font-mono px-1 py-0.5 rounded-xs border border-diagramaxis-border bg-diagramaxis-bg text-diagramaxis-textMuted font-bold"
-                              >
-                                {nat === 'G'
-                                  ? 'G · Generador'
-                                  : nat === 'R'
-                                  ? 'R · Relacional'
-                                  : 'Co · Condicionante'}
-                              </span>
-                            ))}
-                          </div>
-
-                          {/* Definición Arquitectónica */}
-                          <p className="font-mono text-[11px] text-diagramaxis-textBright leading-snug">
-                            {c.description}
-                          </p>
-
-                          {/* Operación 3D y Botón de Estado */}
-                          <div className="flex items-center justify-between pt-1.5 border-t border-diagramaxis-border/60 text-[10px] font-mono">
-                            {op ? (
-                              <span className="flex items-center gap-1 text-diagramaxis-gold font-semibold truncate max-w-[190px]">
-                                <Sparkles className="w-3 h-3 shrink-0 text-diagramaxis-gold" />
-                                <span className="truncate">{op.label}</span>
-                              </span>
-                            ) : (
-                              <span className="text-diagramaxis-textDim text-[9.5px]">
-                                Vínculo de orden
-                              </span>
-                            )}
-
-                            <span
-                              className={`px-2 py-0.5 rounded-xs font-bold text-[10px] transition-colors ${
-                                isActive
-                                  ? 'bg-diagramaxis-gold text-diagramaxis-bg'
-                                  : 'text-diagramaxis-textDim hover:text-diagramaxis-gold'
-                              }`}
-                            >
-                              {isActive ? '✓ En Tablero' : '+ Añadir'}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
+                          {isActive ? <Check className="w-3 h-3" strokeWidth={2.5} /> : <Plus className="w-3 h-3" strokeWidth={2.5} />}
+                        </span>
+                      </div>
+                      <p className="text-[12px] text-diagramaxis-textMuted leading-snug line-clamp-2">{c.description}</p>
+                      {op && <span className="text-[11px] text-diagramaxis-textDim pt-0.5 truncate">↳ {op.label}</span>}
+                    </div>
                   </div>
-                )}
-              </div>
-            );
-          })
+                );
+              })}
+            </section>
+          ))
         )}
       </div>
 
-      {/* Resumen Inferior de Fichas en Juego */}
-      <div className="p-3.5 border-t border-diagramaxis-border bg-diagramaxis-bg flex items-center justify-between text-[11px] font-mono text-diagramaxis-textMuted">
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-diagramaxis-gold" />
-          <span>Fichas activas</span>
-        </div>
-        <span className="text-diagramaxis-gold font-bold text-[12px]">
-          {activeConcepts.length} en el tablero
+      {/* Pie */}
+      <div className="px-4 py-2.5 border-t border-diagramaxis-border flex items-center justify-between text-[12px] text-diagramaxis-textMuted">
+        <span>{filteredConcepts.length} fichas</span>
+        <span>
+          <span className="font-semibold text-diagramaxis-text tabular-nums">{activeConcepts.length}</span> en el tablero
         </span>
       </div>
     </aside>

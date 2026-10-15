@@ -3,184 +3,180 @@
 @tailwind utilities;
 
 /* ============================================================
-   ThoughtStream Design System + Living Architectural Accents
-   Minimal, zen, distraction-free with vibrant Vitruvian accents:
-   - Firmitas: Gold / Amber (#C27812)
-   - Venustas: Cyan / Teal (#0E87AF)
-   - Utilitas: Terracotta / Orange (#D95312)
-   - Success: Emerald (#2E9432)
-   - Circular, tactile slider knobs (50% border radius)
+   DIAGRAMAXIS · Clean Canvas Design System
+   - Superficies blancas y neutros fríos: el lienzo es el protagonista.
+   - Un acento vivo principal (azul) + dos acentos de categoría:
+       Firmitas  → token "gold"   (azul primario)
+       Venustas  → token "cyan"   (teal)
+       Utilitas  → token "orange" (coral)
+   - Los nombres de tokens se conservan para que todos los
+     componentes hereden la nueva paleta sin cambios de API.
    ============================================================ */
 :root {
   color-scheme: light;
 
-  /* Surface Palette (ThoughtStream Neutral Paper) */
-  --da-bg: 250 250 249;          /* #FAFAF9 Warm white page background */
-  --da-surface: 245 245 244;     /* #F5F5F4 Card and section backgrounds */
-  --da-surface2: 239 237 235;    /* #EFEDEB Surface Raised / subtle callouts */
-  --da-surface3: 231 229 228;    /* #E7E5E4 Hover states / active */
-  --da-border: 231 229 228;      /* #E7E5E4 Border Subtle */
-  --da-border-light: 214 211 209;/* #D6D3D1 Border Medium */
-  --da-brand-chip: 28 25 23;     /* #1C1917 Warm Black */
+  /* Superficies */
+  --da-bg: 255 255 255;
+  --da-surface: 255 255 255;
+  --da-surface2: 246 247 249;
+  --da-surface3: 238 240 244;
+  --da-border: 232 234 238;
+  --da-border-light: 214 218 225;
+  --da-brand-chip: 17 19 24;
 
-  /* Living Brand & Architectural Accent Palette */
-  --da-gold: 194 120 18;         /* #C27812 Warm Architectural Gold / Firmitas */
-  --da-gold-muted: 168 110 30;   /* #A86E1E */
-  --da-gold-hover: 160 95 12;    /* #A05F0C */
-  --da-gold-engraved: 120 70 8;   /* #784608 */
-  --da-orange: 217 83 18;        /* #D95312 Vibrant Terracotta / Utilitas */
-  --da-orange-ink: 185 65 12;    /* #B9410C */
-  --da-cyan: 14 135 175;         /* #0E87AF Crisp Architectural Cyan / Venustas */
-  --da-cyan-bright: 2 132 199;   /* #0284C7 Sky Blue */
-  --da-cyan-ink: 7 100 135;      /* #076487 */
+  /* Acentos */
+  --da-gold: 59 91 253;          /* #3B5BFD Acento primario */
+  --da-gold-muted: 120 142 254;
+  --da-gold-hover: 41 72 230;
+  --da-gold-engraved: 30 55 190;
+  --da-orange: 242 98 46;        /* #F2622E Coral */
+  --da-orange-ink: 214 78 30;
+  --da-cyan: 13 160 158;         /* #0DA09E Teal */
+  --da-cyan-bright: 20 184 166;
+  --da-cyan-ink: 13 128 128;
 
-  /* Neutral Materials */
-  --da-kraft: 245 245 244;       /* #F5F5F4 */
-  --da-kraft-dark: 28 25 23;     /* #1C1917 */
-  --da-kraft-border: 214 211 209;/* #D6D3D1 */
-  --da-kraft-fg: 87 83 78;       /* #57534E */
-  --da-cork: 239 237 235;        /* #EFEDEB */
-  --da-cork-light: 245 245 244;  /* #F5F5F4 */
-  --da-block-white: 250 250 249; /* #FAFAF9 */
+  /* Materiales neutros (compatibilidad) */
+  --da-kraft: 246 247 249;
+  --da-kraft-dark: 17 19 24;
+  --da-kraft-border: 214 218 225;
+  --da-kraft-fg: 91 97 112;
+  --da-cork: 238 240 244;
+  --da-cork-light: 246 247 249;
+  --da-block-white: 255 255 255;
 
-  /* Content Palette */
-  --da-text: 28 25 23;           /* #1C1917 Text Primary */
-  --da-text-bright: 28 25 23;    /* #1C1917 */
-  --da-text-muted: 87 83 78;     /* #57534E Text Secondary */
-  --da-text-dim: 168 162 158;    /* #A8A29E Text Tertiary */
+  /* Texto */
+  --da-text: 17 19 24;
+  --da-text-bright: 33 37 45;
+  --da-text-muted: 91 97 112;
+  --da-text-dim: 150 156 168;
 
-  /* Semantic Colors */
-  --da-success: 46 148 50;       /* #2E9432 Emerald */
-  --da-success-hover: 34 120 38;
-  --da-success-ink: 250 250 249;
-  --da-warn: 217 119 6;          /* #D97706 Amber */
-  --da-danger: 220 38 38;        /* #DC2626 Red */
-  --da-white: 250 250 249;
+  /* Semánticos */
+  --da-success: 22 163 74;
+  --da-success-hover: 21 128 61;
+  --da-success-ink: 255 255 255;
+  --da-warn: 217 119 6;
+  --da-danger: 220 38 38;
+  --da-white: 255 255 255;
 
-  /* Panels */
-  --da-eval-bg: 245 245 244;     /* #F5F5F4 */
-  --da-eval-deep: 239 237 235;   /* #EFEDEB */
-  --da-eval-border: 231 229 228; /* #E7E5E4 */
-  --da-eval-hover: 239 237 235;
-  --da-overlay: 28 25 23;
+  /* Paneles */
+  --da-eval-bg: 246 247 249;
+  --da-eval-deep: 238 240 244;
+  --da-eval-border: 232 234 238;
+  --da-eval-hover: 238 240 244;
+  --da-overlay: 17 19 24;
 
-  /* Card & Node Tokens */
-  --da-node-head: 245 245 244;
-  --da-node-head-border: 214 211 209;
-  --da-chip-bg: 245 245 244;
-  --da-chip-border: 214 211 209;
-  --da-wood-a: 250 250 249;
-  --da-wood-b: 245 245 244;
-  --da-wood-a-art: 245 245 244;
-  --da-wood-b-art: 239 237 235;
-  --da-wood-muted: 87 83 78;
+  /* Fichas / nodos */
+  --da-node-head: 246 247 249;
+  --da-node-head-border: 232 234 238;
+  --da-chip-bg: 246 247 249;
+  --da-chip-border: 232 234 238;
+  --da-wood-a: 255 255 255;
+  --da-wood-b: 250 251 252;
+  --da-wood-a-art: 250 251 252;
+  --da-wood-b-art: 246 247 249;
+  --da-wood-muted: 91 97 112;
 
-  /* Range & Scrollbar */
-  --da-range-track: 220 216 210; /* Soft neutral track */
-  --da-scroll-thumb: 214 211 209;/* #D6D3D1 */
-  --da-scroll-thumb-hover: 120 113 108; /* #78716C */
+  /* Range & scroll */
+  --da-range-track: 228 231 236;
+  --da-scroll-thumb: 214 218 225;
+  --da-scroll-thumb-hover: 150 156 168;
 
-  /* React Flow: Living Color Accents */
-  --xy-selection-background-color: rgb(194 120 18 / 0.08);
-  --xy-selection-border: 1px dotted rgb(194 120 18 / 0.6);
-  --xy-connectionline-stroke: rgb(194 120 18);
-  --xy-edge-stroke: rgb(194 120 18);
-  --xy-minimap-background-color: rgb(245 245 244);
-  --xy-minimap-mask-background-color: rgba(239, 237, 235, 0.85);
+  /* React Flow */
+  --xy-selection-background-color: rgb(59 91 253 / 0.06);
+  --xy-selection-border: 1px solid rgb(59 91 253 / 0.5);
+  --xy-connectionline-stroke: rgb(59 91 253);
+  --xy-edge-stroke: rgb(150 156 168);
+  --xy-minimap-background-color: rgb(255 255 255);
+  --xy-minimap-mask-background-color: rgba(246, 247, 249, 0.85);
   --xy-attribution-background-color: transparent;
 
-  /* 3D Viewport */
-  --da-3d-bg: 250 250 249;       /* #FAFAF9 */
-  --da-3d-ground: 239 237 235;   /* #EFEDEB */
-  --da-3d-grid-major: 194 120 18; /* warm gold grid line */
-  --da-3d-grid-minor: 214 211 209; /* #D6D3D1 */
-  --da-3d-fog: 250 250 249;
+  /* Visor 3D */
+  --da-3d-bg: 250 251 252;
+  --da-3d-ground: 243 245 248;
+  --da-3d-grid-major: 205 211 221;
+  --da-3d-grid-minor: 230 233 238;
+  --da-3d-fog: 250 251 252;
+
+  /* Elevación de elementos flotantes */
+  --da-float-shadow: 0 1px 2px rgb(16 24 40 / 0.04), 0 8px 24px -6px rgb(16 24 40 / 0.12);
 }
 
 .dark {
   color-scheme: dark;
 
-  /* Surface Palette (ThoughtStream Contemplative Dark) */
-  --da-bg: 28 25 23;             /* #1C1917 Warm Black */
-  --da-surface: 41 37 36;        /* #292524 stone-800 */
-  --da-surface2: 68 64 60;       /* #44403C stone-700 */
-  --da-surface3: 87 83 78;       /* #57534E stone-600 */
-  --da-border: 41 37 36;         /* #292524 */
-  --da-border-light: 68 64 60;   /* #44403C */
-  --da-brand-chip: 250 250 249;  /* #FAFAF9 */
+  --da-bg: 14 15 18;
+  --da-surface: 22 24 28;
+  --da-surface2: 30 33 38;
+  --da-surface3: 40 44 51;
+  --da-border: 38 41 47;
+  --da-border-light: 54 58 66;
+  --da-brand-chip: 245 246 248;
 
-  /* Living Brand & Architectural Accent Palette */
-  --da-gold: 229 169 59;         /* #E5A93B Warm Gold / Firmitas */
-  --da-gold-muted: 180 130 45;
-  --da-gold-hover: 245 185 75;
-  --da-gold-engraved: 250 215 130;
-  --da-orange: 249 115 22;       /* #F97316 Vibrant Orange / Utilitas */
-  --da-orange-ink: 251 146 60;
-  --da-cyan: 56 189 248;         /* #38BDF8 Electric Cyan / Venustas */
-  --da-cyan-bright: 14 165 233;
-  --da-cyan-ink: 125 211 252;
+  --da-gold: 110 134 255;
+  --da-gold-muted: 90 110 220;
+  --da-gold-hover: 140 160 255;
+  --da-gold-engraved: 180 192 255;
+  --da-orange: 255 128 82;
+  --da-orange-ink: 255 155 115;
+  --da-cyan: 45 212 191;
+  --da-cyan-bright: 94 234 212;
+  --da-cyan-ink: 153 246 228;
 
-  /* Materials */
-  --da-kraft: 41 37 36;
-  --da-kraft-dark: 28 25 23;
-  --da-kraft-border: 68 64 60;
-  --da-kraft-fg: 214 211 209;
-  --da-cork: 68 64 60;
-  --da-cork-light: 87 83 78;
-  --da-block-white: 250 250 249;
+  --da-kraft: 30 33 38;
+  --da-kraft-dark: 14 15 18;
+  --da-kraft-border: 54 58 66;
+  --da-kraft-fg: 200 205 214;
+  --da-cork: 40 44 51;
+  --da-cork-light: 54 58 66;
+  --da-block-white: 245 246 248;
 
-  /* Content Palette */
-  --da-text: 250 250 249;        /* #FAFAF9 */
-  --da-text-bright: 250 250 249;
-  --da-text-muted: 214 211 209;  /* #D6D3D1 */
-  --da-text-dim: 168 162 158;    /* #A8A29E */
+  --da-text: 240 242 245;
+  --da-text-bright: 228 231 236;
+  --da-text-muted: 170 176 188;
+  --da-text-dim: 115 122 135;
 
-  /* Semantics */
-  --da-success: 34 197 94;       /* #22C55E */
+  --da-success: 34 197 94;
   --da-success-hover: 74 222 128;
-  --da-success-ink: 28 25 23;
-  --da-warn: 245 158 11;         /* #F59E0B */
-  --da-danger: 239 68 68;        /* #EF4444 */
-  --da-white: 250 250 249;
+  --da-success-ink: 14 15 18;
+  --da-warn: 245 158 11;
+  --da-danger: 239 68 68;
+  --da-white: 245 246 248;
 
-  /* Panels */
-  --da-eval-bg: 41 37 36;
-  --da-eval-deep: 28 25 23;
-  --da-eval-border: 68 64 60;
-  --da-eval-hover: 68 64 60;
-  --da-overlay: 14 12 11;
+  --da-eval-bg: 22 24 28;
+  --da-eval-deep: 14 15 18;
+  --da-eval-border: 38 41 47;
+  --da-eval-hover: 40 44 51;
+  --da-overlay: 0 0 0;
 
-  /* Card & Node Tokens */
-  --da-node-head: 41 37 36;
-  --da-node-head-border: 68 64 60;
-  --da-chip-bg: 41 37 36;
-  --da-chip-border: 68 64 60;
-  --da-wood-a: 41 37 36;
-  --da-wood-b: 28 25 23;
-  --da-wood-a-art: 41 37 36;
-  --da-wood-b-art: 28 25 23;
-  --da-wood-muted: 214 211 209;
+  --da-node-head: 30 33 38;
+  --da-node-head-border: 54 58 66;
+  --da-chip-bg: 30 33 38;
+  --da-chip-border: 54 58 66;
+  --da-wood-a: 22 24 28;
+  --da-wood-b: 14 15 18;
+  --da-wood-a-art: 22 24 28;
+  --da-wood-b-art: 14 15 18;
+  --da-wood-muted: 200 205 214;
 
-  /* Range & Scrollbar */
-  --da-range-track: 68 64 60;
-  --da-scroll-thumb: 68 64 60;
-  --da-scroll-thumb-hover: 168 162 158;
+  --da-range-track: 54 58 66;
+  --da-scroll-thumb: 54 58 66;
+  --da-scroll-thumb-hover: 115 122 135;
 
-  /* React Flow */
-  --xy-selection-background-color: rgb(229 169 59 / 0.12);
-  --xy-selection-border: 1px dotted rgb(229 169 59 / 0.6);
-  --xy-connectionline-stroke: rgb(229 169 59);
-  --xy-edge-stroke: rgb(229 169 59);
-  --xy-minimap-background-color: rgb(41 37 36);
-  --xy-minimap-mask-background-color: rgba(28, 25, 23, 0.85);
+  --xy-selection-background-color: rgb(110 134 255 / 0.1);
+  --xy-selection-border: 1px solid rgb(110 134 255 / 0.5);
+  --xy-connectionline-stroke: rgb(110 134 255);
+  --xy-edge-stroke: rgb(115 122 135);
+  --xy-minimap-background-color: rgb(22 24 28);
+  --xy-minimap-mask-background-color: rgba(14, 15, 18, 0.85);
   --xy-attribution-background-color: transparent;
 
-  /* 3D Viewport */
-  --da-3d-bg: 28 25 23;          /* #1C1917 */
-  --da-3d-ground: 35 32 30;
-  --da-3d-grid-major: 229 169 59;
-  --da-3d-grid-minor: 68 64 60;
-  --da-3d-fog: 28 25 23;
+  --da-3d-bg: 14 15 18;
+  --da-3d-ground: 20 22 26;
+  --da-3d-grid-major: 54 58 66;
+  --da-3d-grid-minor: 32 35 40;
+  --da-3d-fog: 14 15 18;
+
+  --da-float-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 30px -8px rgb(0 0 0 / 0.6);
 }
 
 @layer base {
@@ -188,186 +184,169 @@
     background-color: rgb(var(--da-bg));
     color: rgb(var(--da-text));
     font-family: 'Inter', -apple-system, 'Segoe UI', Helvetica, sans-serif;
+    font-feature-settings: 'cv11', 'ss01';
     user-select: none;
     -webkit-user-select: none;
     transition: background-color 0.2s ease, color 0.2s ease;
   }
 
-  /* ThoughtStream Typography: Libre Baskerville for headings */
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Libre Baskerville', Georgia, 'Times New Roman', serif;
+    font-family: 'Inter', -apple-system, 'Segoe UI', Helvetica, sans-serif;
+    letter-spacing: -0.015em;
   }
 
-  /* ThoughtStream Typography: Source Code Pro for mono/code */
   code, pre, kbd, samp {
-    font-family: 'Source Code Pro', 'Fira Code', Consolas, monospace;
+    font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
   }
 
-  /* Focus Ring */
   :focus-visible {
     outline: none !important;
-    box-shadow: 0 0 0 2px rgb(var(--da-bg)), 0 0 0 4px rgb(var(--da-gold)) !important;
+    box-shadow: 0 0 0 2px rgb(var(--da-bg)), 0 0 0 4px rgb(var(--da-gold) / 0.6) !important;
   }
 
-  /* Selection style */
   ::selection {
-    background: rgb(var(--da-gold) / 0.25);
+    background: rgb(var(--da-gold) / 0.2);
     color: inherit;
   }
 
-  /* Flat & Sharp edges rule:
-     0px radius for containers and inputs, but keep full rounding for circular thumbs, radios, pills, avatars */
-  button, input:not([type='range']):not([type='radio']):not(.rounded-full), select, textarea, div:not(.rounded-full):not([class*="rounded-full"]), span:not(.rounded-full):not([class*="rounded-full"]) {
-    border-radius: 0px !important;
-  }
-  .rounded-full {
-    border-radius: 9999px !important;
-  }
-
   /* ============================================================
-     Circular Sliders (Modificadores y Parámetros con perillas redondas)
+     Sliders minimalistas
      ============================================================ */
   input[type='range'] {
     -webkit-appearance: none;
     appearance: none;
     background: rgb(var(--da-range-track));
-    border-radius: 9999px !important;
-    height: 6px;
+    border-radius: 9999px;
+    height: 4px !important;
     outline: none;
     cursor: pointer;
-    transition: background 0.15s ease;
   }
 
-  /* Webkit Circular Thumbs */
   input[type='range']::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 16px;
-    height: 16px;
-    border-radius: 50% !important;
-    background: rgb(var(--da-gold));
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgb(var(--da-surface));
     cursor: pointer;
-    border: 2.5px solid rgb(var(--da-bg));
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25) !important;
-    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s ease;
+    border: 2px solid rgb(var(--da-gold));
+    box-shadow: 0 1px 3px rgb(16 24 40 / 0.18);
+    transition: transform 0.12s ease;
   }
 
-  /* Firefox Circular Thumbs */
   input[type='range']::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    border-radius: 50% !important;
-    background: rgb(var(--da-gold));
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgb(var(--da-surface));
     cursor: pointer;
-    border: 2.5px solid rgb(var(--da-bg));
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25) !important;
-    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s ease;
+    border: 2px solid rgb(var(--da-gold));
+    box-shadow: 0 1px 3px rgb(16 24 40 / 0.18);
+    transition: transform 0.12s ease;
   }
 
-  input[type='range']:hover::-webkit-slider-thumb {
-    transform: scale(1.22);
-    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.35) !important;
+  input[type='range']:hover::-webkit-slider-thumb { transform: scale(1.15); }
+  input[type='range']:hover::-moz-range-thumb { transform: scale(1.15); }
+
+  input[type='range'][class*='accent-diagramaxis-cyan']::-webkit-slider-thumb { border-color: rgb(var(--da-cyan)); }
+  input[type='range'][class*='accent-diagramaxis-cyan']::-moz-range-thumb { border-color: rgb(var(--da-cyan)); }
+  input[type='range'][class*='accent-diagramaxis-orange']::-webkit-slider-thumb { border-color: rgb(var(--da-orange)); }
+  input[type='range'][class*='accent-diagramaxis-orange']::-moz-range-thumb { border-color: rgb(var(--da-orange)); }
+  input[type='range'][class*='accent-diagramaxis-success']::-webkit-slider-thumb { border-color: rgb(var(--da-success)); }
+  input[type='range'][class*='accent-diagramaxis-success']::-moz-range-thumb { border-color: rgb(var(--da-success)); }
+}
+
+@layer utilities {
+  /* Las familias "serif" y "mono" heredadas se normalizan a Inter:
+     elimina la mezcla tipográfica serif-itálica + monoespaciada. */
+  .font-serif {
+    font-style: normal !important;
+    letter-spacing: -0.01em;
   }
-  input[type='range']:hover::-moz-range-thumb {
-    transform: scale(1.22);
-    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.35) !important;
+  .font-mono {
+    font-variant-numeric: tabular-nums;
   }
 
-  /* Mapeo de acentos de color vibrantes a las perillas circulares */
-  input[type='range'].accent-diagramaxis-gold::-webkit-slider-thumb,
-  input[type='range'][class*='accent-diagramaxis-gold']::-webkit-slider-thumb {
-    background: rgb(var(--da-gold)) !important;
-  }
-  input[type='range'].accent-diagramaxis-gold::-moz-range-thumb,
-  input[type='range'][class*='accent-diagramaxis-gold']::-moz-range-thumb {
-    background: rgb(var(--da-gold)) !important;
-  }
-
-  input[type='range'].accent-diagramaxis-cyan::-webkit-slider-thumb,
-  input[type='range'][class*='accent-diagramaxis-cyan']::-webkit-slider-thumb {
-    background: rgb(var(--da-cyan)) !important;
-  }
-  input[type='range'].accent-diagramaxis-cyan::-moz-range-thumb,
-  input[type='range'][class*='accent-diagramaxis-cyan']::-moz-range-thumb {
-    background: rgb(var(--da-cyan)) !important;
-  }
-
-  input[type='range'].accent-diagramaxis-orange::-webkit-slider-thumb,
-  input[type='range'][class*='accent-diagramaxis-orange']::-webkit-slider-thumb {
-    background: rgb(var(--da-orange)) !important;
-  }
-  input[type='range'].accent-diagramaxis-orange::-moz-range-thumb,
-  input[type='range'][class*='accent-diagramaxis-orange']::-moz-range-thumb {
-    background: rgb(var(--da-orange)) !important;
-  }
-
-  input[type='range'].accent-diagramaxis-success::-webkit-slider-thumb,
-  input[type='range'][class*='accent-diagramaxis-success']::-webkit-slider-thumb {
-    background: rgb(var(--da-success)) !important;
-  }
-  input[type='range'].accent-diagramaxis-success::-moz-range-thumb,
-  input[type='range'][class*='accent-diagramaxis-success']::-moz-range-thumb {
-    background: rgb(var(--da-success)) !important;
+  .float-surface {
+    background: rgb(var(--da-surface));
+    border: 1px solid rgb(var(--da-border));
+    box-shadow: var(--da-float-shadow);
   }
 }
 
-/* Thin flat scrollbars */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+/* Etiquetas: se elimina el estilo "gritado" (mayúsculas + tracking amplio)
+   heredado en toda la app, sin tocar cada componente. */
+.uppercase[class*='tracking-wid'] {
+  text-transform: none;
+  letter-spacing: -0.005em !important;
+  font-weight: 600;
 }
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
+.inspector-panel .uppercase[class*='tracking-wid'].text-diagramaxis-gold,
+.inspector-panel .uppercase[class*='tracking-wid'] .text-diagramaxis-gold {
+  color: rgb(var(--da-text));
 }
+.inspector-panel .shadow-md,
+.inspector-panel .shadow-sm,
+.inspector-panel .shadow-xs {
+  box-shadow: none;
+}
+.inspector-panel > div > div[class*='bg-diagramaxis-surface2'][class*='border'] {
+  background: rgb(var(--da-surface));
+}
+
+/* Scrollbars finos */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: rgb(var(--da-scroll-thumb));
-  border-radius: 9999px !important;
+  border-radius: 9999px;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgb(var(--da-scroll-thumb-hover));
-}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgb(var(--da-scroll-thumb-hover)); }
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgb(var(--da-scroll-thumb)) transparent;
 }
 
-/* React Flow styles */
-.react-flow .react-flow__background-pattern.dots {
-  fill: rgb(var(--da-border-light));
-}
+/* React Flow */
+.react-flow .react-flow__background-pattern.dots { fill: rgb(var(--da-border-light)); }
 .react-flow .react-flow__background-pattern.lines,
-.react-flow .react-flow__background-pattern.cross {
-  stroke: rgb(var(--da-border));
-}
-
-.react-flow__pane {
-  cursor: default;
-}
-
-.react-flow__attribution {
-  background: transparent !important;
-  opacity: 0.6;
-}
-.react-flow__attribution a {
-  color: rgb(var(--da-text-dim)) !important;
-}
-
+.react-flow .react-flow__background-pattern.cross { stroke: rgb(var(--da-border)); }
+.react-flow__pane { cursor: default; }
+.react-flow__attribution { background: transparent !important; opacity: 0.5; }
+.react-flow__attribution a { color: rgb(var(--da-text-dim)) !important; }
 .react-flow__minimap {
-  border-radius: 0px !important;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgb(var(--da-border));
+  box-shadow: var(--da-float-shadow);
+}
+.react-flow__controls {
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: var(--da-float-shadow) !important;
+  border: 1px solid rgb(var(--da-border));
+}
+.react-flow__controls-button {
+  background: rgb(var(--da-surface)) !important;
+  border-bottom: 1px solid rgb(var(--da-border)) !important;
+  fill: rgb(var(--da-text-muted)) !important;
 }
 
-/* Subtle animations */
+/* Animaciones */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translate(-50%, 4px);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
+  from { opacity: 0; transform: translate(-50%, 6px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
 }
+.animate-fade-in { animation: fadeIn 0.18s ease-out forwards; }
 
-.animate-fade-in {
-  animation: fadeIn 0.18s ease-out forwards;
+@keyframes panelInLeft {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
 }
+@keyframes panelInRight {
+  from { opacity: 0; transform: translateX(10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.animate-panel-left { animation: panelInLeft 0.18s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+.animate-panel-right { animation: panelInRight 0.18s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }

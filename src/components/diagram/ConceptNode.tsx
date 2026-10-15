@@ -2,7 +2,7 @@ import React, { memo, useState } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { useProjectStore } from '../../store/useProjectStore';
 import { getVolumetricOperation } from '../../data/volumetricOperations';
-import { X, Sparkles, Disc, HelpCircle } from 'lucide-react';
+import { X, Sparkles, HelpCircle } from 'lucide-react';
 
 interface ConceptNodeData {
   id: string;
@@ -14,6 +14,12 @@ interface ConceptNodeData {
   isArtifact: boolean;
   weight?: number;
 }
+
+const subDotColor = (sub: string): string => {
+  if (sub === 'Venustas' || sub === 'Topológicas' || sub === 'Euclidianas/No euclidianas') return 'rgb(var(--da-cyan))';
+  if (sub === 'Utilitas' || sub === 'Cronológicas') return 'rgb(var(--da-orange))';
+  return 'rgb(var(--da-gold))';
+};
 
 export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) => {
   const nodeData = data as unknown as ConceptNodeData;
@@ -30,7 +36,6 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
   const [showTaxonomyHelp, setShowTaxonomyHelp] = useState(false);
 
   const assignedObjs = objects.filter((o) => o.assignedConcepts.includes(id));
-
   const param = nodeParams[id] || { weight: 0.6, intensity: 0.5 };
   const op = getVolumetricOperation(id);
 
@@ -54,22 +59,19 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
   return (
     <div
       onClick={() => setSelectedNodeId(id)}
-      className={`relative min-w-[190px] max-w-[240px] bg-diagramaxis-bg dark:bg-diagramaxis-surface transition-colors select-none ${
+      className={`relative min-w-[200px] max-w-[240px] rounded-xl bg-diagramaxis-surface transition-all select-none shadow-sm hover:shadow-md ${
         selected
-          ? 'border-2 border-diagramaxis-gold ring-1 ring-diagramaxis-gold'
-          : isArtifact
-          ? 'border border-diagramaxis-borderLight hover:border-diagramaxis-gold'
+          ? 'border-2 border-diagramaxis-gold shadow-md'
           : 'border border-diagramaxis-border hover:border-diagramaxis-borderLight'
       }`}
     >
       {/* Conectores en Serie: 1 Entrada (Izquierda) y 1 Salida (Derecha) */}
-      {/* 1. Puerto de Entrada */}
       <Handle
         type="target"
         position={Position.Left}
         id="input"
-        title="Entrada: Recibe la transformación anterior en la cadena en serie."
-        className="!w-3 !h-3 !bg-diagramaxis-cyan !border !border-diagramaxis-bg cursor-crosshair hover:scale-110 transition-transform !z-10"
+        title="Entrada: recibe la transformación anterior"
+        className="!w-3 !h-3 !rounded-full !bg-diagramaxis-cyan !border-2 !border-diagramaxis-surface cursor-crosshair hover:scale-125 transition-transform !z-10"
       />
       <Handle
         type="source"
@@ -79,13 +81,12 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
         className="!w-3 !h-3 !opacity-0 cursor-crosshair !z-20"
       />
 
-      {/* 2. Puerto de Salida */}
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        title="Salida: Conecta al siguiente modificador en serie o al volumen principal."
-        className="!w-3 !h-3 !bg-diagramaxis-gold !border !border-diagramaxis-bg cursor-crosshair hover:scale-110 transition-transform !z-10"
+        title="Salida: conecta al siguiente modificador o al volumen"
+        className="!w-3 !h-3 !rounded-full !bg-diagramaxis-gold !border-2 !border-diagramaxis-surface cursor-crosshair hover:scale-125 transition-transform !z-10"
       />
       <Handle
         type="target"
@@ -95,118 +96,90 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
         className="!w-3 !h-3 !opacity-0 cursor-crosshair !z-20"
       />
 
-      {/* Cabecera de la Ficha Grabada */}
-      <div
-        className={`px-3 py-1.5 border-b flex items-center justify-between text-[9px] uppercase tracking-wider font-mono font-bold ${
-          isArtifact
-            ? 'bg-diagramaxis-cyan/15 text-diagramaxis-cyanInk border-diagramaxis-cyan/25'
-            : 'bg-diagramaxis-nodeHead text-diagramaxis-goldEngraved border-diagramaxis-nodeHeadBorder'
-        }`}
-      >
-        <div className="flex items-center gap-1 truncate max-w-[130px]">
-          <Disc className="w-2.5 h-2.5 shrink-0" />
-          <span className="truncate">{nodeData.subcategory || 'Ficha'}</span>
+      {/* Cabecera limpia */}
+      <div className="px-3 pt-2.5 pb-1 flex items-center justify-between text-[11px] text-diagramaxis-textMuted">
+        <div className="flex items-center gap-1.5 truncate max-w-[140px]">
+          <span
+            className="w-2 h-2 rounded-full shrink-0"
+            style={{ background: subDotColor(nodeData.subcategory) }}
+          />
+          <span className="font-medium truncate">{nodeData.subcategory || 'Ficha'}</span>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           <button
             onClick={(e) => {
               e.stopPropagation();
               setShowTaxonomyHelp(!showTaxonomyHelp);
             }}
-            title="Ayuda taxonómica y propósito de las etiquetas"
-            className="nodrag nopan text-diagramaxis-woodMuted hover:text-diagramaxis-gold p-0.5 rounded transition-colors"
+            title="Ayuda taxonómica"
+            className="nodrag nopan text-diagramaxis-textDim hover:text-diagramaxis-text p-1 rounded-md transition-colors"
           >
             <HelpCircle className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={handleDelete}
-            title="Retirar ficha del tablero"
-            className="nodrag nopan text-diagramaxis-woodMuted hover:text-diagramaxis-danger p-0.5 rounded transition-colors"
+            title="Retirar ficha"
+            className="nodrag nopan text-diagramaxis-textDim hover:text-diagramaxis-danger p-1 rounded-md transition-colors"
           >
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
-      {/* Popover Explicativo de Taxonomía y Metadatos */}
+      {/* Popover Explicativo */}
       {showTaxonomyHelp && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="nodrag nopan absolute top-7 left-0 right-0 z-30 bg-diagramaxis-surface2 border border-diagramaxis-gold shadow-2xl p-2.5 rounded-sm flex flex-col gap-1.5 font-mono text-[10px] text-diagramaxis-text"
+          className="nodrag nopan absolute top-9 left-0 right-0 z-30 bg-diagramaxis-surface border border-diagramaxis-border shadow-xl p-3 rounded-xl flex flex-col gap-2 text-[11.5px] text-diagramaxis-text"
         >
-          <div className="flex items-center justify-between border-b border-diagramaxis-border pb-1 font-bold text-diagramaxis-gold">
+          <div className="flex items-center justify-between border-b border-diagramaxis-border pb-1.5 font-semibold">
             <span>Taxonomía ARPV</span>
             <button onClick={() => setShowTaxonomyHelp(false)} className="hover:text-diagramaxis-danger">
-              <X className="w-3 h-3" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
           <div>
-            <strong className="text-diagramaxis-gold">Categoría:</strong>{' '}
-            <span className="text-diagramaxis-textMuted">{nodeData.category} ({nodeData.subcategory})</span>
-            <p className="text-[9px] text-diagramaxis-textBright leading-tight mt-0.5">
-              {nodeData.subcategory === 'Firmitas' && 'Dimensión constructiva, tectónica y gravitacional (firmeza/estructura).'}
-              {nodeData.subcategory === 'Venustas' && 'Dimensión estética, formal, ritmo y proporción (belleza/forma).'}
-              {nodeData.subcategory === 'Utilitas' && 'Dimensión programática, funcional y de habitabilidad (uso/espacio).'}
+            <strong className="text-diagramaxis-gold">{nodeData.category} ({nodeData.subcategory}):</strong>
+            <p className="text-[11px] text-diagramaxis-textMuted leading-snug mt-0.5">
+              {nodeData.subcategory === 'Firmitas' && 'Tectónica, gravedad y estructura.'}
+              {nodeData.subcategory === 'Venustas' && 'Forma, ritmo, luz y proporción.'}
+              {nodeData.subcategory === 'Utilitas' && 'Función, uso y habitabilidad.'}
               {!['Firmitas', 'Venustas', 'Utilitas'].includes(nodeData.subcategory) && 'Marco conceptual del sistema proyectual.'}
             </p>
           </div>
-          <div>
-            <strong className="text-diagramaxis-cyan">Naturalezas:</strong>
-            <ul className="text-[9px] text-diagramaxis-textBright list-disc list-inside leading-tight mt-0.5">
-              <li><strong>G (Generador):</strong> Engendra la geometría y la forma rectora.</li>
-              <li><strong>R (Relacional):</strong> Vincula o tensiona dos o más conceptos.</li>
-              <li><strong>Co (Condicionante):</strong> Restringe o deforma según el entorno.</li>
-            </ul>
-          </div>
-          {op && (
-            <div>
-              <strong className="text-diagramaxis-orange">Operación 3D:</strong>{' '}
-              <span className="text-diagramaxis-textBright">{op.label}</span>
-              <p className="text-[9px] text-diagramaxis-textMuted leading-tight mt-0.5">
-                {op.pedagogicalTip || 'Transformación morfológica aplicada al sólido Three.js.'}
-              </p>
-            </div>
-          )}
         </div>
       )}
 
-      {/* Cuerpo de la Ficha */}
-      <div className="p-3 flex flex-col gap-2">
-        {/* Título grabado */}
-        <div className="font-serif italic text-[16px] leading-tight font-bold text-diagramaxis-text">
+      {/* Cuerpo */}
+      <div className="px-3 pb-3 pt-1 flex flex-col gap-2">
+        <div className="text-[14px] font-semibold text-diagramaxis-text leading-snug">
           {nodeData.name}
         </div>
 
-        {/* Badges de Naturaleza ARPV */}
+        {/* Badges de Naturaleza */}
         <div className="flex flex-wrap items-center gap-1">
           {natures.map((nat) => (
             <span
               key={nat}
-              className={`text-[8.5px] font-mono px-1.5 py-0.5 rounded-xs border font-semibold ${
-                nat === 'G'
-                  ? 'border-diagramaxis-gold/50 text-diagramaxis-goldEngraved bg-diagramaxis-gold/10'
-                  : nat === 'R'
-                  ? 'border-diagramaxis-cyan/50 text-diagramaxis-cyanInk bg-diagramaxis-cyan/10'
-                  : 'border-diagramaxis-orange/50 text-diagramaxis-orangeInk bg-diagramaxis-orange/10'
-              }`}
+              className="text-[9.5px] font-medium px-1.5 py-0.5 rounded-full border border-diagramaxis-border bg-diagramaxis-surface2 text-diagramaxis-textMuted"
             >
               {nat === 'G' ? 'Generador' : nat === 'R' ? 'Relacional' : 'Condicionante'}
             </span>
           ))}
         </div>
 
-        {/* Indicador de Operación 3D */}
+        {/* Operación 3D */}
         {op && (
-          <div className="flex items-center gap-1.5 text-[9.5px] font-mono text-diagramaxis-kraftFg bg-diagramaxis-chipBg px-2 py-1 rounded-xs border border-diagramaxis-chipBorder">
-            <Sparkles className="w-3 h-3 text-diagramaxis-goldEngraved shrink-0" />
+          <div className="flex items-center gap-1.5 text-[11px] text-diagramaxis-textMuted bg-diagramaxis-surface2 px-2 py-1 rounded-md border border-diagramaxis-border">
+            <Sparkles className="w-3 h-3 text-diagramaxis-gold shrink-0" />
             <span className="truncate">{op.label}</span>
           </div>
         )}
 
-        {/* Slider de Peso Jerárquico */}
-        <div className="flex items-center justify-between gap-1.5 pt-1 border-t border-diagramaxis-nodeHeadBorder">
-          <span className="text-[9px] font-mono text-diagramaxis-woodMuted">Peso:</span>
+        {/* Slider de Peso */}
+        <div className="flex items-center justify-between gap-2 pt-1 border-t border-diagramaxis-border text-[11px]">
+          <span className="text-diagramaxis-textDim">Peso:</span>
           <input
             type="range"
             min="0.1"
@@ -214,17 +187,17 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
             step="0.05"
             value={param.weight || 0.6}
             onChange={handleWeightChange}
-            className="nodrag nopan w-18 h-1 accent-diagramaxis-gold cursor-pointer"
+            className="nodrag nopan flex-1 h-1 accent-diagramaxis-gold cursor-pointer"
           />
-          <span className="text-[10px] font-mono font-bold text-diagramaxis-goldEngraved">
+          <span className="font-semibold text-diagramaxis-text tabular-nums w-6 text-right">
             {(param.weight || 0.6).toFixed(1)}
           </span>
         </div>
 
-        {/* Asignación a Objeto 3D (cuando hay 2 o más objetos) */}
+        {/* Asignación a Objeto */}
         {objects.length > 1 && (
-          <div className="flex items-center justify-between gap-1 pt-1 border-t border-diagramaxis-nodeHeadBorder/60 text-[9px] font-mono">
-            <span className="text-diagramaxis-woodMuted">Objeto:</span>
+          <div className="flex items-center justify-between gap-1 pt-1 border-t border-diagramaxis-border text-[11px]">
+            <span className="text-diagramaxis-textDim">Aplica a:</span>
             <select
               value={assignedObjs[0]?.id || ''}
               onChange={(e) => {
@@ -240,7 +213,7 @@ export const ConceptNode: React.FC<NodeProps> = memo(({ id, data, selected }) =>
                 }
               }}
               onClick={(e) => e.stopPropagation()}
-              className="nodrag nopan bg-diagramaxis-chipBg border border-diagramaxis-chipBorder text-diagramaxis-textBright px-1 py-0.5 rounded-xs outline-none cursor-pointer max-w-[125px] truncate font-sans"
+              className="nodrag nopan bg-diagramaxis-surface2 border border-diagramaxis-border text-diagramaxis-text px-1.5 py-0.5 rounded-md outline-none cursor-pointer max-w-[130px] truncate text-[11px]"
             >
               {objects.map((obj) => (
                 <option key={obj.id} value={obj.id}>

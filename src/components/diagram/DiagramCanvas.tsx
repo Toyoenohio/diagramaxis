@@ -13,7 +13,7 @@ import { useProjectStore } from '../../store/useProjectStore';
 import { ConceptNode } from './ConceptNode';
 import { VolumeNode } from './VolumeNode';
 import { CustomEdge } from './CustomEdge';
-import { LayoutGrid, Plus, Compass, HelpCircle, X } from 'lucide-react';
+import { Compass, HelpCircle, X } from 'lucide-react';
 
 const DiagramCanvasInner: React.FC = () => {
   const {
@@ -22,8 +22,6 @@ const DiagramCanvasInner: React.FC = () => {
     onNodesChange,
     onEdgesChange,
     addRelation,
-    autoLayoutNodes,
-    setModalOpen,
     setSelectedNodeId,
     activeConcepts,
     activeArtifacts,
@@ -89,40 +87,22 @@ const DiagramCanvasInner: React.FC = () => {
         />
       </ReactFlow>
 
-      {/* Barra de Herramientas Superior del Tablero */}
-      <div className="absolute top-3.5 left-3.5 flex items-center bg-diagramaxis-surface/95 border border-diagramaxis-border p-1.5 gap-1.5 z-10">
-        <button
-          onClick={() => setModalOpen('relation', true)}
-          disabled={totalElements < 2}
-          className="flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider bg-diagramaxis-gold hover:bg-diagramaxis-goldHover text-diagramaxis-bg font-bold disabled:opacity-30 transition-all"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>+ Hilo / Vínculo</span>
-        </button>
-        <button
-          onClick={autoLayoutNodes}
-          disabled={totalElements === 0}
-          className="flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider bg-diagramaxis-surface2 hover:bg-diagramaxis-surface3 text-diagramaxis-textBright hover:text-diagramaxis-text border border-diagramaxis-border disabled:opacity-30 transition-all"
-        >
-          <LayoutGrid className="w-3.5 h-3.5" />
-          <span>Ordenar Fichas</span>
-        </button>
-        <button
-          onClick={() => setShowPortGuide(!showPortGuide)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider border transition-all ${
-            showPortGuide
-              ? 'bg-diagramaxis-cyan text-diagramaxis-bg font-bold border-diagramaxis-cyan'
-              : 'bg-diagramaxis-surface2 hover:bg-diagramaxis-surface3 text-diagramaxis-textBright hover:text-diagramaxis-text border border-diagramaxis-border'
-          }`}
-        >
-          <HelpCircle className="w-3.5 h-3.5" />
-          <span>Guía de Puertos & Taxonomía</span>
-        </button>
-      </div>
+      {/* Ayuda flotante mínima */}
+      <button
+        onClick={() => setShowPortGuide(!showPortGuide)}
+        title="Guía de puertos y taxonomía"
+        className={`absolute top-3.5 left-3.5 z-10 w-8 h-8 flex items-center justify-center rounded-lg float-surface transition-colors ${
+          showPortGuide
+            ? '!bg-diagramaxis-gold text-white !border-diagramaxis-gold shadow-sm'
+            : 'text-diagramaxis-textMuted hover:text-diagramaxis-text bg-diagramaxis-surface/90 hover:bg-diagramaxis-surface'
+        }`}
+      >
+        <HelpCircle className="w-4 h-4" strokeWidth={1.75} />
+      </button>
 
       {/* Modal / Overlay de Guía de Puertos y Taxonomía ARPV */}
       {showPortGuide && (
-        <div className="absolute top-16 left-3.5 z-30 w-full max-w-[440px] bg-diagramaxis-surface border border-diagramaxis-border p-4 text-diagramaxis-text select-none">
+        <div className="absolute top-14 left-3.5 z-30 w-full max-w-[420px] rounded-xl float-surface p-4 text-diagramaxis-text select-none shadow-xl border border-diagramaxis-border bg-diagramaxis-surface/95 backdrop-blur-md">
           <div className="flex items-center justify-between border-b border-diagramaxis-border pb-2 mb-3">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-diagramaxis-gold" />
@@ -196,24 +176,16 @@ const DiagramCanvasInner: React.FC = () => {
         </div>
       )}
 
-      {/* Indicador de Ayuda Inferior */}
-      {totalElements === 0 ? (
+      {/* Estado vacío */}
+      {totalElements === 0 && (
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none p-6 text-center">
-          <div className="w-16 h-16 rounded-full border border-dashed border-diagramaxis-gold/50 flex items-center justify-center mb-3 bg-diagramaxis-surface/80 shadow-[0_0_15px_rgb(var(--da-gold)/0.15)]">
-            <Compass className="w-8 h-8 text-diagramaxis-gold" />
+          <div className="w-11 h-11 rounded-xl border border-diagramaxis-border bg-diagramaxis-surface flex items-center justify-center mb-3">
+            <Compass className="w-5 h-5 text-diagramaxis-textDim" strokeWidth={1.5} />
           </div>
-          <h3 className="font-serif italic text-[20px] text-diagramaxis-text mb-1">
-            Tablero Proyectual DIAGRAMAXIS Vacío
-          </h3>
-          <p className="font-mono text-[11px] text-diagramaxis-textMuted max-w-[340px] leading-relaxed">
-            Selecciona fichas grabadas de los 4 mazos en la bandeja izquierda para disponerlas sobre el tablero y tejer las relaciones con hilos.
+          <h3 className="text-[15px] font-semibold text-diagramaxis-text mb-1">Tablero vacío</h3>
+          <p className="text-[13px] text-diagramaxis-textMuted max-w-[300px] leading-relaxed">
+            Abre la biblioteca desde la barra lateral y añade fichas para empezar a tejer relaciones.
           </p>
-        </div>
-      ) : (
-        <div className="absolute bottom-3.5 left-3.5 pointer-events-none bg-diagramaxis-surface/90 backdrop-blur-md border border-diagramaxis-border px-3 py-1.5 rounded-sm shadow-md">
-          <span className="font-mono text-[10.5px] text-diagramaxis-textMuted">
-            Conecta los pines de las fichas para tejer la red diagramática.
-          </span>
         </div>
       )}
     </div>

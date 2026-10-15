@@ -1,73 +1,21 @@
 import React from 'react';
 import { useProjectStore } from '../../store/useProjectStore';
-import { ShieldCheck, MapPin, Box } from 'lucide-react';
 
+/**
+ * Antes era una barra de estado fija. En el diseño de lienzo limpio los
+ * indicadores viven en la barra superior / herramientas, y aquí solo queda
+ * la notificación flotante (toast).
+ */
 export const StatusBar: React.FC = () => {
-  const {
-    activeConcepts,
-    activeArtifacts,
-    relations,
-    location,
-    baseDimensions,
-    toastMessage,
-    getCoherenceReport,
-  } = useProjectStore();
+  const { toastMessage } = useProjectStore();
 
-  const coherence = getCoherenceReport();
+  if (!toastMessage) return null;
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 h-[38px] bg-diagramaxis-surface border-t border-diagramaxis-border z-30 flex items-center px-4 justify-between font-mono text-[12px] select-none text-diagramaxis-textMuted">
-      {/* Indicadores Izquierdos */}
-      <div className="flex items-center gap-5">
-        <div className="flex items-center gap-1.5">
-          <span className="text-diagramaxis-textDim uppercase text-[10px] font-bold">Fichas Activas:</span>
-          <strong className="text-diagramaxis-gold text-[13px]">{activeConcepts.length}</strong>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <span className="text-diagramaxis-textDim uppercase text-[10px] font-bold">Artefactos:</span>
-          <strong className="text-diagramaxis-cyan text-[13px]">{activeArtifacts.length}</strong>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <span className="text-diagramaxis-textDim uppercase text-[10px] font-bold">Hilos:</span>
-          <strong className="text-diagramaxis-orange text-[13px]">{relations.length}</strong>
-        </div>
-
-        {location && (
-          <div className="hidden sm:flex items-center gap-1.5 text-diagramaxis-textBright text-[11.5px]">
-            <MapPin className="w-3.5 h-3.5 text-diagramaxis-gold" />
-            <span>{location}</span>
-          </div>
-        )}
+    <div className="fixed bottom-6 left-1/2 z-[60] animate-fade-in pointer-events-none">
+      <div className="px-4 py-2 rounded-lg bg-diagramaxis-brandChip text-diagramaxis-bg text-[13px] font-medium shadow-2xl max-w-[480px] text-center">
+        {toastMessage}
       </div>
-
-      {/* Toast Notificación Central */}
-      {toastMessage && (
-        <div className="absolute left-1/2 -translate-x-1/2 bg-diagramaxis-gold text-diagramaxis-bg font-bold px-4 py-1 border border-diagramaxis-gold font-mono text-[12px] animate-fade-in flex items-center gap-1.5">
-          <span>{toastMessage}</span>
-        </div>
-      )}
-
-      {/* Indicadores Derechos */}
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-1.5">
-          <ShieldCheck
-            className={`w-4 h-4 ${
-              coherence.score >= 70 ? 'text-diagramaxis-gold' : coherence.score >= 40 ? 'text-diagramaxis-orange' : 'text-diagramaxis-danger'
-            }`}
-          />
-          <span className="text-diagramaxis-textDim uppercase text-[10px] font-bold">Coherencia:</span>
-          <strong className="text-diagramaxis-text text-[13px]">{coherence.score}%</strong>
-        </div>
-
-        <div className="hidden md:flex items-center gap-1.5 text-diagramaxis-textBright text-[11.5px]">
-          <Box className="w-3.5 h-3.5 text-diagramaxis-gold" />
-          <span>
-            {baseDimensions.w} × {baseDimensions.d} × {baseDimensions.h} m
-          </span>
-        </div>
-      </div>
-    </footer>
+    </div>
   );
 };

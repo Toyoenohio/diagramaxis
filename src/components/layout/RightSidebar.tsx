@@ -8,8 +8,29 @@ import { CoherenceMeter } from '../evaluation/CoherenceMeter';
 import { FirmitasSliders, ARCHITECTURAL_CUSTOM_LIST, VENUSTAS_LIST, UTILITAS_LIST } from './FirmitasSliders';
 import { Sparkles, X, Plus, Trash2, Move, Layers, Box, RotateCcw, ChevronDown, ChevronRight, Sliders } from 'lucide-react';
 
-export const RightSidebar: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'params' | 'relations' | 'discourse' | 'coherence' | 'active'>('params');
+export type RightPanelTab = 'params' | 'relations' | 'discourse' | 'coherence' | 'active';
+
+const PANEL_TITLES: Record<RightPanelTab, { title: string; subtitle: string }> = {
+  params: { title: 'Inspector', subtitle: 'Volúmenes y modificadores' },
+  relations: { title: 'Vínculos', subtitle: 'Hilos entre fichas' },
+  discourse: { title: 'Discurso', subtitle: 'Fundamento del proyecto' },
+  coherence: { title: 'Coherencia', subtitle: 'Gráfico · espacio · discurso' },
+  active: { title: 'Secuencia', subtitle: 'Fichas en juego' },
+};
+
+interface RightSidebarProps {
+  tab?: RightPanelTab;
+  onTabChange?: (tab: RightPanelTab) => void;
+  onClose?: () => void;
+}
+
+export const RightSidebar: React.FC<RightSidebarProps> = ({ tab, onTabChange, onClose }) => {
+  const [internalTab, setInternalTab] = useState<RightPanelTab>('params');
+  const activeTab = tab ?? internalTab;
+  const setActiveTab = (t: RightPanelTab) => {
+    setInternalTab(t);
+    onTabChange?.(t);
+  };
   const [showAdvancedParams, setShowAdvancedParams] = useState(false);
 
   const {
@@ -61,63 +82,27 @@ export const RightSidebar: React.FC = () => {
   const categoryAccentClass = isVenustas ? 'accent-diagramaxis-cyan' : isUtilitas ? 'accent-diagramaxis-orange' : 'accent-diagramaxis-gold';
 
   return (
-    <aside className="w-[340px] min-w-[340px] h-full bg-diagramaxis-surface border-l border-diagramaxis-border flex flex-col z-20 select-none text-diagramaxis-text">
-      {/* Pestañas de Navegación Derecha */}
-      <div className="flex border-b border-diagramaxis-border bg-diagramaxis-bg overflow-x-auto custom-scrollbar">
-        <button
-          onClick={() => setActiveTab('params')}
-          className={`flex-1 min-w-[70px] py-3 font-mono text-[11.5px] uppercase tracking-wider text-center border-b-2 transition-all ${
-            activeTab === 'params'
-              ? 'border-diagramaxis-gold text-diagramaxis-gold font-bold bg-diagramaxis-surface'
-              : 'border-transparent text-diagramaxis-textDim hover:text-diagramaxis-textMuted'
-          }`}
-        >
-          Parámetros
-        </button>
-        <button
-          onClick={() => setActiveTab('relations')}
-          className={`flex-1 min-w-[70px] py-3 font-mono text-[11.5px] uppercase tracking-wider text-center border-b-2 transition-all ${
-            activeTab === 'relations'
-              ? 'border-diagramaxis-cyan text-diagramaxis-cyan font-bold bg-diagramaxis-surface'
-              : 'border-transparent text-diagramaxis-textDim hover:text-diagramaxis-textMuted'
-          }`}
-        >
-          Hilos ({relations.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('discourse')}
-          className={`flex-1 min-w-[70px] py-3 font-mono text-[11.5px] uppercase tracking-wider text-center border-b-2 transition-all ${
-            activeTab === 'discourse'
-              ? 'border-diagramaxis-orange text-diagramaxis-orange font-bold bg-diagramaxis-surface'
-              : 'border-transparent text-diagramaxis-textDim hover:text-diagramaxis-textMuted'
-          }`}
-        >
-          Discurso
-        </button>
-        <button
-          onClick={() => setActiveTab('coherence')}
-          className={`flex-1 min-w-[70px] py-3 font-mono text-[11.5px] uppercase tracking-wider text-center border-b-2 transition-all ${
-            activeTab === 'coherence'
-              ? 'border-diagramaxis-success text-diagramaxis-success font-bold bg-diagramaxis-surface'
-              : 'border-transparent text-diagramaxis-textDim hover:text-diagramaxis-textMuted'
-          }`}
-        >
-          Coherencia
-        </button>
-        <button
-          onClick={() => setActiveTab('active')}
-          className={`flex-1 min-w-[60px] py-3 font-mono text-[11.5px] uppercase tracking-wider text-center border-b-2 transition-all ${
-            activeTab === 'active'
-              ? 'border-diagramaxis-gold text-diagramaxis-gold font-bold bg-diagramaxis-surface'
-              : 'border-transparent text-diagramaxis-textDim hover:text-diagramaxis-textMuted'
-          }`}
-        >
-          Fichas ({allActive.length})
-        </button>
+    <aside className="w-full h-full flex flex-col select-none text-diagramaxis-text">
+      {/* Cabecera del panel */}
+      <div className="px-4 pt-4 pb-3 flex items-center justify-between border-b border-diagramaxis-border">
+        <div>
+          <h2 className="text-[15px] font-semibold">{PANEL_TITLES[activeTab].title}</h2>
+          <p className="text-[12px] text-diagramaxis-textDim">{PANEL_TITLES[activeTab].subtitle}</p>
+        </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            title="Cerrar (Esc)"
+            className="w-7 h-7 flex items-center justify-center rounded-md text-diagramaxis-textDim hover:text-diagramaxis-text hover:bg-diagramaxis-surface2 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
-      {/* Contenido de la Pestaña Activa */}
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar">
+      {/* Contenido */}
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar inspector-panel">
         {activeTab === 'params' && (
           <div className="flex flex-col gap-4">
             {/* Panel de Objetos Principales Multivolumen */}

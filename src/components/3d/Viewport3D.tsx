@@ -329,22 +329,22 @@ export const Viewport3D: React.FC = () => {
     // Luces (matizadas por tema: día = papel claro con sol suave)
     const isDarkScene = theme === 'dark';
     const ambientLight = new THREE.AmbientLight(
-      isDarkScene ? 0xfffaed : 0xffffff,
+      isDarkScene ? 0xf5f7ff : 0xffffff,
       isDarkScene ? 0.7 : 0.55
     );
     scene.add(ambientLight);
     ambientLightRef.current = ambientLight;
 
     const hemiLight = new THREE.HemisphereLight(
-      isDarkScene ? 0xe5a93b : 0xf8edcf,
-      isDarkScene ? 0x0f1013 : 0xd8ceb6,
+      isDarkScene ? 0x8ea2ff : 0xf2f5fb,
+      isDarkScene ? 0x0e0f12 : 0xd5dbe5,
       isDarkScene ? 0.45 : 0.85
     );
     hemiLight.position.set(0, 50, 0);
     scene.add(hemiLight);
     hemiLightRef.current = hemiLight;
 
-    const dirLight = new THREE.DirectionalLight(isDarkScene ? 0xfff8ea : 0xfff7e3, isDarkScene ? 1.6 : 1.45);
+    const dirLight = new THREE.DirectionalLight(isDarkScene ? 0xffffff : 0xffffff, isDarkScene ? 1.6 : 1.45);
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.set(2048, 2048);
     dirLight.shadow.camera.left = -40;
@@ -512,16 +512,16 @@ export const Viewport3D: React.FC = () => {
     scene.fog = new THREE.FogExp2(bgHex, isDarkScene ? 0.006 : 0.0042);
 
     if (ambientLightRef.current) {
-      ambientLightRef.current.color.setHex(isDarkScene ? 0xfffaed : 0xffffff);
+      ambientLightRef.current.color.setHex(isDarkScene ? 0xf5f7ff : 0xffffff);
       ambientLightRef.current.intensity = isDarkScene ? 0.7 : 0.55;
     }
     if (hemiLightRef.current) {
-      hemiLightRef.current.color.setHex(isDarkScene ? 0xe5a93b : 0xf8edcf);
-      hemiLightRef.current.groundColor.setHex(isDarkScene ? 0x0f1013 : 0xd8ceb6);
+      hemiLightRef.current.color.setHex(isDarkScene ? 0x8ea2ff : 0xf2f5fb);
+      hemiLightRef.current.groundColor.setHex(isDarkScene ? 0x0e0f12 : 0xd5dbe5);
       hemiLightRef.current.intensity = isDarkScene ? 0.45 : 0.85;
     }
     if (dirLightRef.current) {
-      dirLightRef.current.color.setHex(isDarkScene ? 0xfff8ea : 0xfff7e3);
+      dirLightRef.current.color.setHex(isDarkScene ? 0xffffff : 0xffffff);
       dirLightRef.current.intensity = isDarkScene ? 1.6 : 1.45;
     }
     if (groundMeshRef.current) {
@@ -641,7 +641,7 @@ export const Viewport3D: React.FC = () => {
 
       // Resalte visual del volumen objetivo durante drag-and-drop
       if (obj.id === hoveredObjectId) {
-        const hoverHelper = new THREE.BoxHelper(objGroup, 0x06b6d4);
+        const hoverHelper = new THREE.BoxHelper(objGroup, 0x0da09e);
         hoverHelper.renderOrder = 1000;
         if (hoverHelper.material) {
           (hoverHelper.material as THREE.LineBasicMaterial).depthTest = false;
@@ -653,7 +653,7 @@ export const Viewport3D: React.FC = () => {
 
       // Resalte visual del volumen activo si hay múltiples objetos
       if (obj.id === selectedObjectId && renderObjects.length > 1) {
-        const boxHelper = new THREE.BoxHelper(objGroup, 0xe5a93b);
+        const boxHelper = new THREE.BoxHelper(objGroup, 0x3b5bfd);
         boxHelper.name = 'selection_helper';
         boxHelper.renderOrder = 999;
         if (boxHelper.material) {
@@ -673,7 +673,7 @@ export const Viewport3D: React.FC = () => {
         // 1. Tirador Superior (+Y, Alto) - Dorado
         const yHandleGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.55, 8);
         const yHeadGeo = new THREE.ConeGeometry(0.24, 0.45, 12);
-        const yMat = new THREE.MeshBasicMaterial({ color: 0xe5a93b, depthTest: false });
+        const yMat = new THREE.MeshBasicMaterial({ color: 0x3b5bfd, depthTest: false });
         const yShaft = new THREE.Mesh(yHandleGeo, yMat);
         const yHead = new THREE.Mesh(yHeadGeo, yMat);
         yHead.position.y = 0.42;
@@ -687,7 +687,7 @@ export const Viewport3D: React.FC = () => {
         handlesGroup.add(yHandle);
 
         // 2. Tirador Lateral (+X, Ancho) - Cyan
-        const xMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4, depthTest: false });
+        const xMat = new THREE.MeshBasicMaterial({ color: 0x0da09e, depthTest: false });
         const xShaft = new THREE.Mesh(yHandleGeo, xMat);
         const xHead = new THREE.Mesh(yHeadGeo, xMat);
         xHead.position.y = 0.42;
@@ -702,7 +702,7 @@ export const Viewport3D: React.FC = () => {
         handlesGroup.add(xHandle);
 
         // 3. Tirador Frontal (+Z, Profundidad) - Naranja
-        const zMat = new THREE.MeshBasicMaterial({ color: 0xf97316, depthTest: false });
+        const zMat = new THREE.MeshBasicMaterial({ color: 0xf2622e, depthTest: false });
         const zShaft = new THREE.Mesh(yHandleGeo, zMat);
         const zHead = new THREE.Mesh(yHeadGeo, zMat);
         zHead.position.y = 0.42;
@@ -1442,19 +1442,20 @@ export const Viewport3D: React.FC = () => {
       </div>
 
       {/* Selector de Vistas de Cámara */}
-      <div className="absolute top-3.5 left-1/2 -translate-x-1/2 flex items-center bg-diagramaxis-surface/95 backdrop-blur-md border border-diagramaxis-border shadow-xl rounded-sm p-1 gap-1 z-10">
+      {/* Selector de Vistas de Cámara */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center float-surface backdrop-blur-md rounded-xl p-1 gap-1 z-10 shadow-lg">
         {(['ext', 'int', 'iso', 'top', 'sec', 'alz'] as CameraViewMode[]).map((mode) => (
           <button
             key={mode}
             onClick={() => setCameraMode(mode)}
-            className={`px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider transition-all rounded-xs ${
+            className={`px-3 py-1 text-[12px] font-medium transition-all rounded-lg ${
               cameraMode === mode
-                ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold shadow-[0_0_10px_rgb(var(--da-gold)/0.3)]'
+                ? 'bg-diagramaxis-gold text-white font-semibold shadow-xs'
                 : 'text-diagramaxis-textMuted hover:text-diagramaxis-text hover:bg-diagramaxis-surface2'
             }`}
           >
             {mode === 'ext' && 'Perspectiva'}
-            {mode === 'int' && '🚶 Habitar (1:1)'}
+            {mode === 'int' && 'Habitar (1:1)'}
             {mode === 'iso' && 'Axonometría'}
             {mode === 'top' && 'Planta'}
             {mode === 'sec' && 'Sección'}
@@ -1465,25 +1466,25 @@ export const Viewport3D: React.FC = () => {
 
       {/* Rosa de los Vientos / Norte */}
       <div
-        className="absolute top-3.5 right-3.5 pointer-events-none transition-transform duration-300 drop-shadow-[0_0_10px_rgb(var(--da-gold)/0.3)]"
+        className="absolute top-3 right-3 pointer-events-none transition-transform duration-300 w-10 h-10 rounded-full float-surface flex items-center justify-center shadow-md"
         style={{ transform: `rotate(${northRotation}deg)` }}
       >
-        <svg width="48" height="48" viewBox="0 0 48 48">
+        <svg width="28" height="28" viewBox="0 0 48 48">
           <circle
             cx="24"
             cy="24"
             r="22"
-            style={{ fill: 'rgb(var(--da-surface))', stroke: 'rgb(var(--da-border))' }}
-            strokeWidth="1.2"
+            fill="none"
+            style={{ stroke: 'rgb(var(--da-border))' }}
+            strokeWidth="1.5"
           />
-          <polygon points="24,4 20,18 24,15 28,18" style={{ fill: 'rgb(var(--da-gold))' }} />
-          <polygon points="24,44 20,30 24,33 28,30" style={{ fill: 'rgb(var(--da-text-dim))' }} />
+          <polygon points="24,6 20,19 24,16 28,19" style={{ fill: 'rgb(var(--da-gold))' }} />
+          <polygon points="24,42 20,29 24,32 28,29" style={{ fill: 'rgb(var(--da-text-dim))' }} />
           <text
             x="24"
-            y="11"
+            y="13"
             textAnchor="middle"
             fontSize="8"
-            fontFamily="'Source Code Pro', monospace"
             style={{ fill: 'rgb(var(--da-gold))' }}
             fontWeight="bold"
           >
@@ -1493,47 +1494,47 @@ export const Viewport3D: React.FC = () => {
       </div>
 
       {/* Controles de Renderizado Inferiores */}
-      <div className="absolute bottom-3.5 right-3.5 flex items-center bg-diagramaxis-surface border border-diagramaxis-border p-1.5 gap-1.5 z-10">
+      <div className="absolute bottom-3 right-3 flex items-center float-surface backdrop-blur-md rounded-xl p-1 gap-1 z-10 shadow-lg">
         <button
           onClick={() => setShadingMode('solid')}
-          title="Modo Sólido (Bloques Blancos)"
-          className={`px-3 py-1.5 text-[11px] font-mono transition-colors ${
+          title="Modo Sólido (Bloques)"
+          className={`px-2.5 py-1 text-[12px] font-medium transition-colors rounded-lg ${
             shadingMode === 'solid'
-              ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold'
+              ? 'bg-diagramaxis-gold text-white font-semibold'
               : 'text-diagramaxis-textMuted hover:bg-diagramaxis-surface2 hover:text-diagramaxis-text'
           }`}
         >
-          ■ Bloques
+          Sólido
         </button>
         <button
           onClick={() => setShadingMode('wire')}
           title="Modo Alámbrico"
-          className={`px-3 py-1.5 text-[11px] font-mono transition-colors ${
+          className={`px-2.5 py-1 text-[12px] font-medium transition-colors rounded-lg ${
             shadingMode === 'wire'
-              ? 'bg-diagramaxis-cyan text-diagramaxis-bg font-bold'
+              ? 'bg-diagramaxis-gold text-white font-semibold'
               : 'text-diagramaxis-textMuted hover:bg-diagramaxis-surface2 hover:text-diagramaxis-text'
           }`}
         >
-          □ Alambre
+          Alambre
         </button>
         <button
           onClick={() => setShadingMode('ghost')}
           title="Modo Rayos X"
-          className={`px-3 py-1.5 text-[11px] font-mono transition-colors ${
+          className={`px-2.5 py-1 text-[12px] font-medium transition-colors rounded-lg ${
             shadingMode === 'ghost'
-              ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold'
+              ? 'bg-diagramaxis-gold text-white font-semibold'
               : 'text-diagramaxis-textMuted hover:bg-diagramaxis-surface2 hover:text-diagramaxis-text'
           }`}
         >
-          ◈ Rayos X
+          Rayos X
         </button>
-        <div className="w-[1px] h-5 bg-diagramaxis-border" />
+        <div className="w-px h-4 bg-diagramaxis-border my-auto mx-0.5" />
         <button
           onClick={toggleHumanFigure}
           title={showHumanFigure ? 'Ocultar Escala Humana (1.75m)' : 'Mostrar Escala Humana (1.75m)'}
-          className={`px-3 py-1.5 text-[11px] font-mono transition-colors ${
+          className={`px-2.5 py-1 text-[12px] font-medium transition-colors rounded-lg flex items-center gap-1 ${
             showHumanFigure
-              ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold'
+              ? 'bg-diagramaxis-gold text-white font-semibold'
               : 'text-diagramaxis-textMuted hover:bg-diagramaxis-surface2 hover:text-diagramaxis-text'
           }`}
         >
@@ -1542,45 +1543,45 @@ export const Viewport3D: React.FC = () => {
         <button
           onClick={handleResetCamera}
           title="Restablecer Vista"
-          className="p-1.5 text-diagramaxis-textMuted hover:text-diagramaxis-text hover:bg-diagramaxis-surface2 rounded-xs transition-colors"
+          className="w-7 h-7 flex items-center justify-center text-diagramaxis-textMuted hover:text-diagramaxis-text hover:bg-diagramaxis-surface2 rounded-lg transition-colors"
         >
-          <RotateCcw className="w-4 h-4" />
+          <RotateCcw className="w-3.5 h-3.5" />
         </button>
-        <div className="w-[1px] h-5 bg-diagramaxis-border" />
+        <div className="w-px h-4 bg-diagramaxis-border my-auto mx-0.5" />
         <button
           onClick={handleCapturePNG}
           title="Exportar Captura PNG en alta resolución"
-          className="p-1.5 text-diagramaxis-textMuted hover:text-diagramaxis-gold hover:bg-diagramaxis-surface2 rounded-xs transition-colors"
+          className="w-7 h-7 flex items-center justify-center text-diagramaxis-textMuted hover:text-diagramaxis-gold hover:bg-diagramaxis-surface2 rounded-lg transition-colors"
         >
-          <Camera className="w-4 h-4" />
+          <Camera className="w-3.5 h-3.5" />
         </button>
         <button
           onClick={handleExportOBJ}
           title="Exportar Modelo 3D (.OBJ)"
-          className="p-1.5 text-diagramaxis-textMuted hover:text-diagramaxis-gold hover:bg-diagramaxis-surface2 rounded-xs transition-colors"
+          className="w-7 h-7 flex items-center justify-center text-diagramaxis-textMuted hover:text-diagramaxis-gold hover:bg-diagramaxis-surface2 rounded-lg transition-colors"
         >
-          <Box className="w-4 h-4" />
+          <Box className="w-3.5 h-3.5" />
         </button>
         <button
           onClick={() => setShowVideoModal(true)}
           disabled={isExporting}
           title="Exportar Video de Transición (.WebM)"
-          className={`p-1.5 rounded-xs transition-colors ${
+          className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${
             isExporting
               ? 'text-diagramaxis-gold animate-pulse cursor-wait'
               : 'text-diagramaxis-textMuted hover:text-diagramaxis-gold hover:bg-diagramaxis-surface2'
           }`}
         >
-          <Video className="w-4 h-4" />
+          <Video className="w-3.5 h-3.5" />
         </button>
       </div>
 
       {/* Indicador de Dimensiones en Vivo */}
-      <div className="absolute bottom-3.5 left-3.5 pointer-events-none bg-diagramaxis-surface/95 backdrop-blur-md border border-diagramaxis-border px-3 py-1.5 rounded-sm shadow-xl">
-        <span className="font-mono text-[11px] text-diagramaxis-textMuted tracking-wider">
-          Masa: <strong className="text-diagramaxis-gold">{baseDimensions.w.toFixed(1)}m</strong> (X) ×{' '}
-          <strong className="text-diagramaxis-gold">{baseDimensions.d.toFixed(1)}m</strong> (Z) ×{' '}
-          <strong className="text-diagramaxis-gold">{baseDimensions.h.toFixed(1)}m</strong> (Y)
+      <div className="absolute bottom-3 left-3 pointer-events-none float-surface backdrop-blur-md px-3 py-1.5 rounded-xl shadow-md">
+        <span className="text-[12px] text-diagramaxis-textMuted">
+          Masa: <strong className="text-diagramaxis-text font-semibold">{baseDimensions.w.toFixed(1)}m</strong> (X) ×{' '}
+          <strong className="text-diagramaxis-text font-semibold">{baseDimensions.d.toFixed(1)}m</strong> (Z) ×{' '}
+          <strong className="text-diagramaxis-text font-semibold">{baseDimensions.h.toFixed(1)}m</strong> (Y)
         </span>
       </div>
 
@@ -1667,12 +1668,12 @@ export const Viewport3D: React.FC = () => {
 
       {/* Mini-HUD Flotante: Control Maestro del Modificador Activo */}
       {activeSelectedConcept && cameraMode !== 'int' && (
-        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 bg-diagramaxis-surface/95 backdrop-blur-md border border-diagramaxis-gold/50 shadow-2xl rounded-sm px-4 py-2 min-w-[360px] max-w-[520px]">
+        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 float-surface backdrop-blur-md shadow-xl rounded-xl px-4 py-2 min-w-[360px] max-w-[520px]">
           <div className="flex flex-col min-w-[110px]">
-            <span className="font-mono text-[8.5px] uppercase tracking-widest text-diagramaxis-gold font-bold">
-              Modificador Activo
+            <span className="text-[10px] text-diagramaxis-textDim font-medium">
+              Modificador activo
             </span>
-            <span className="font-serif italic font-bold text-[13.5px] text-diagramaxis-text truncate">
+            <span className="font-semibold text-[13.5px] text-diagramaxis-text truncate">
               {activeSelectedConcept.name}
             </span>
           </div>
@@ -1681,34 +1682,34 @@ export const Viewport3D: React.FC = () => {
           <div className="flex items-center gap-1 border-l border-r border-diagramaxis-border px-2.5">
             <button
               onClick={() => applyMasterIntensity(activeSelectedConcept.id, 0.3)}
-              className={`px-2 py-1 font-mono text-[9.5px] uppercase tracking-wider rounded-xs border transition-colors ${
+              className={`px-2 py-0.5 text-[11px] font-medium rounded-md transition-colors ${
                 Math.abs((activeConceptParam?.intensity ?? 0.6) - 0.3) < 0.1
-                  ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
-                  : 'border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
+                  ? 'bg-diagramaxis-gold text-white font-semibold'
+                  : 'text-diagramaxis-textMuted hover:text-diagramaxis-text hover:bg-diagramaxis-surface2'
               }`}
-              title="Gesto sutil / moderado (30%)"
+              title="Gesto sutil (30%)"
             >
               Sutil
             </button>
             <button
               onClick={() => applyMasterIntensity(activeSelectedConcept.id, 0.6)}
-              className={`px-2 py-1 font-mono text-[9.5px] uppercase tracking-wider rounded-xs border transition-colors ${
+              className={`px-2 py-0.5 text-[11px] font-medium rounded-md transition-colors ${
                 Math.abs((activeConceptParam?.intensity ?? 0.6) - 0.6) < 0.15
-                  ? 'bg-diagramaxis-gold text-diagramaxis-bg font-bold border-diagramaxis-gold'
-                  : 'border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-text'
+                  ? 'bg-diagramaxis-gold text-white font-semibold'
+                  : 'text-diagramaxis-textMuted hover:text-diagramaxis-text hover:bg-diagramaxis-surface2'
               }`}
-              title="Proporción equilibrada óptima (60%)"
+              title="Proporción equilibrada (60%)"
             >
               Medio
             </button>
             <button
               onClick={() => applyMasterIntensity(activeSelectedConcept.id, 1.0)}
-              className={`px-2 py-1 font-mono text-[9.5px] uppercase tracking-wider rounded-xs border transition-colors ${
+              className={`px-2 py-0.5 text-[11px] font-medium rounded-md transition-colors ${
                 (activeConceptParam?.intensity ?? 0.6) > 0.85
-                  ? 'bg-diagramaxis-cyan text-diagramaxis-bg font-bold border-diagramaxis-cyan'
-                  : 'border-diagramaxis-border text-diagramaxis-textMuted hover:text-diagramaxis-cyan'
+                  ? 'bg-diagramaxis-gold text-white font-semibold'
+                  : 'text-diagramaxis-textMuted hover:text-diagramaxis-text hover:bg-diagramaxis-surface2'
               }`}
-              title="Gesto radical / monumental (100%)"
+              title="Gesto radical (100%)"
             >
               Radical
             </button>
@@ -1726,14 +1727,14 @@ export const Viewport3D: React.FC = () => {
               className="w-full h-1.5 accent-diagramaxis-gold cursor-pointer"
               title="Fuerza del Gesto"
             />
-            <span className="font-mono text-[11px] text-diagramaxis-gold font-bold w-9 text-right">
+            <span className="text-[12px] text-diagramaxis-text font-semibold tabular-nums w-8 text-right">
               {Math.round((activeConceptParam?.intensity ?? 0.6) * 100)}%
             </span>
           </div>
 
           <button
             onClick={() => setSelectedNodeId(null)}
-            className="p-1 text-diagramaxis-textMuted hover:text-diagramaxis-text transition-colors"
+            className="w-6 h-6 flex items-center justify-center rounded-md text-diagramaxis-textDim hover:text-diagramaxis-text hover:bg-diagramaxis-surface2 transition-colors"
             title="Cerrar panel flotante"
           >
             <X className="w-3.5 h-3.5" />
